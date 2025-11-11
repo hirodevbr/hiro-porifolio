@@ -288,7 +288,7 @@ export default function DiscordProfile() {
       );
       
       // Tentar com a_ prefix removido em app-icons (para imagens animadas)
-      if (largeImage.startsWith("a_")) {
+      if (largeImage && largeImage.startsWith("a_")) {
         const baseImage = largeImage.substring(2);
         urls.push(
           `https://cdn.discordapp.com/app-icons/${applicationId}/${baseImage}.png`,
@@ -313,7 +313,7 @@ export default function DiscordProfile() {
       );
       
       // Tentar com a_ prefix (animated) em app-assets
-      if (largeImage.startsWith("a_")) {
+      if (largeImage && largeImage.startsWith("a_")) {
         const baseImage = largeImage.substring(2);
         urls.push(
           `https://cdn.discordapp.com/app-assets/${applicationId}/${baseImage}.png`,
@@ -323,7 +323,7 @@ export default function DiscordProfile() {
     }
 
     // PRIORIDADE 2: Se a imagem começa com "mp:", é uma URL externa (PreMiD, etc.)
-    if (largeImage.startsWith("mp:")) {
+    if (largeImage && largeImage.startsWith("mp:")) {
       const match = largeImage.match(/mp:external\/(.+)/);
       if (match) {
         const urlPart = match[1];
@@ -1207,7 +1207,7 @@ export default function DiscordProfile() {
 
                     useEffect(() => {
                       const urls = getActivityImageUrls(activity);
-                      const currentImageKey = `${activity.assets?.large_image}-${activity.application_id}`;
+                      const currentImageKey = `${activity.assets?.large_image || 'no-image'}-${activity.application_id || 'no-app-id'}`;
                       
                       // Só resetar se a imagem realmente mudou
                       if (prevImageKeyRef.current !== currentImageKey) {
