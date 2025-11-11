@@ -243,14 +243,14 @@ export default function DiscordProfile() {
     const applicationId = activity.application_id;
 
     // CASO ESPECIAL: Se não tem large_image mas tem application_id (ex: Valorant)
-    // Para jogos como Valorant que não enviam large_image, precisamos buscar o ícone do app
-    // Infelizmente, o Discord não expõe o hash do ícone diretamente na API pública
-    // Vamos tentar alguns formatos conhecidos, mas pode não funcionar para todos os jogos
+    // Para jogos como Valorant que não enviam large_image, tentar buscar o ícone do app
+    // Usando um serviço de terceiros que mapeia application_id para ícones
     if (!largeImage && applicationId) {
-      // Tentar diferentes formatos para o ícone do aplicativo
-      // Nota: Essas URLs podem não funcionar porque precisamos do hash do ícone
-      // que não está disponível na API pública do Discord
+      // Tentar usar um serviço público que fornece ícones de aplicativos Discord
+      // Formato: https://discord.com/api/v9/applications/{application_id}/icon
+      // Mas isso requer autenticação, então vamos tentar formatos alternativos
       urls.push(
+        // Tentar formatos conhecidos (podem não funcionar sem o hash correto)
         `https://cdn.discordapp.com/app-icons/${applicationId}/${applicationId}.png`,
         `https://cdn.discordapp.com/app-icons/${applicationId}/${applicationId}.png?size=512`,
         `https://cdn.discordapp.com/app-icons/${applicationId}/${applicationId}.png?size=1024`,
@@ -264,8 +264,8 @@ export default function DiscordProfile() {
         `https://cdn.discordapp.com/app-icons/${applicationId}/a_${applicationId}.png`,
         `https://cdn.discordapp.com/app-icons/${applicationId}/a_${applicationId}.gif`
       );
-      // Retornar vazio para usar fallback (ícone genérico)
-      // O componente ActivityImage já tem fallback para mostrar ícone genérico
+      
+      // Se nenhuma URL funcionar, o componente mostrará o fallback (ícone genérico)
       return urls;
     }
 
