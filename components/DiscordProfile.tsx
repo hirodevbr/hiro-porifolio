@@ -246,49 +246,26 @@ export default function DiscordProfile() {
     const largeImage = activity.assets.large_image;
     const applicationId = activity.application_id;
 
-    // Se a imagem começa com "mp:", é uma URL externa (PreMiD, etc.)
-    if (largeImage.startsWith("mp:")) {
-      const match = largeImage.match(/mp:external\/(.+)/);
-      if (match) {
-        const urlPart = match[1];
-        
-        // Se contém "https/" ou "http/", extrair a parte após isso
-        const httpsMatch = urlPart.match(/(?:https|http)\/(.+)/);
-        if (httpsMatch) {
-          const url = `https://${httpsMatch[1]}`;
-          // Para PreMiD, priorizar esta URL
-          urls.unshift(url);
-        } else {
-          // Tentar decodificar
-          try {
-            const decodedUrl = decodeURIComponent(urlPart);
-            if (decodedUrl.startsWith("http://") || decodedUrl.startsWith("https://")) {
-              urls.unshift(decodedUrl);
-            } else if (decodedUrl.startsWith("//")) {
-              urls.unshift(`https:${decodedUrl}`);
-            } else {
-              urls.unshift(`https://${decodedUrl}`);
-            }
-          } catch {
-            if (urlPart.startsWith("http://") || urlPart.startsWith("https://")) {
-              urls.unshift(urlPart);
-            } else {
-              urls.unshift(`https://${urlPart}`);
-            }
-          }
-        }
-      }
-    }
-
-    // Se tem application_id, adicionar URLs do CDN do Discord
-    // Tentar diferentes formatos e tamanhos
+    // PRIORIDADE 1: Se tem application_id, priorizar URLs do CDN do Discord (Rich Presence de jogos)
+    // Esta é a forma mais confiável para jogos como Valorant, League of Legends, etc.
     if (applicationId) {
-      // Formato padrão
+      // Formato padrão do Discord Rich Presence (prioridade máxima)
       urls.push(
         `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.png`,
+        `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.png?size=512`,
+        `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.png?size=1024`
+      );
+      
+      // Tentar outros formatos
+      urls.push(
         `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.jpg`,
         `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.webp`,
         `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.gif`
+      );
+      
+      // Tentar sem extensão (Discord às vezes usa hash sem extensão)
+      urls.push(
+        `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}`
       );
       
       // Tentar com a_ prefix (animated)
@@ -299,13 +276,40 @@ export default function DiscordProfile() {
           `https://cdn.discordapp.com/app-assets/${applicationId}/${baseImage}.gif`
         );
       }
-      
-      // Tentar sem extensão (Discord às vezes usa hash sem extensão)
-      urls.push(
-        `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}`,
-        `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.png?size=512`,
-        `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.png?size=1024`
-      );
+    }
+
+    // PRIORIDADE 2: Se a imagem começa com "mp:", é uma URL externa (PreMiD, etc.)
+    if (largeImage.startsWith("mp:")) {
+      const match = largeImage.match(/mp:external\/(.+)/);
+      if (match) {
+        const urlPart = match[1];
+        
+        // Se contém "https/" ou "http/", extrair a parte após isso
+        const httpsMatch = urlPart.match(/(?:https|http)\/(.+)/);
+        if (httpsMatch) {
+          const url = `https://${httpsMatch[1]}`;
+          // Para PreMiD, adicionar após URLs do Discord
+          urls.push(url);
+        } else {
+          // Tentar decodificar
+          try {
+            const decodedUrl = decodeURIComponent(urlPart);
+            if (decodedUrl.startsWith("http://") || decodedUrl.startsWith("https://")) {
+              urls.push(decodedUrl);
+            } else if (decodedUrl.startsWith("//")) {
+              urls.push(`https:${decodedUrl}`);
+            } else {
+              urls.push(`https://${decodedUrl}`);
+            }
+          } catch {
+            if (urlPart.startsWith("http://") || urlPart.startsWith("https://")) {
+              urls.push(urlPart);
+            } else {
+              urls.push(`https://${urlPart}`);
+            }
+          }
+        }
+      }
     }
 
     return urls;
