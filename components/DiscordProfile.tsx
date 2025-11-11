@@ -774,7 +774,7 @@ export default function DiscordProfile() {
     );
   }
 
-  const { discord_user, discord_status, activities, spotify, kv } = discordData;
+  const { discord_user, discord_status, activities = [], spotify, kv } = discordData;
   
   // Banner do Discord
   // Configuração manual do banner (encontrado na API do Discord)
