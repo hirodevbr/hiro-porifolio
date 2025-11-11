@@ -731,9 +731,6 @@ export default function DiscordProfile() {
   }
 
   const { discord_user, discord_status, activities, spotify, kv } = discordData;
-  const avatarUrl = discord_user.avatar
-    ? `https://cdn.discordapp.com/avatars/${discord_user.id}/${discord_user.avatar}.png?size=256`
-    : `https://cdn.discordapp.com/embed/avatars/${parseInt(discord_user.discriminator) % 5}.png`;
   
   // Banner do Discord
   // Configuração manual do banner (encontrado na API do Discord)
@@ -741,6 +738,10 @@ export default function DiscordProfile() {
   // Cor do banner: #232428
   const MANUAL_BANNER_HASH = "a_c09674aec6189e73e7d3073f6656f65d";
   const MANUAL_BANNER_COLOR = "#232428";
+  
+  const avatarUrl = discord_user.avatar
+    ? `https://cdn.discordapp.com/avatars/${discord_user.id}/${discord_user.avatar}.png?size=256`
+    : `https://cdn.discordapp.com/embed/avatars/${parseInt(discord_user.discriminator) % 5}.png`;
   
   const bannerUrl = discord_user.banner || MANUAL_BANNER_HASH
     ? (discord_user.banner || MANUAL_BANNER_HASH).startsWith("a_")
