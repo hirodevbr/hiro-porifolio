@@ -1,0 +1,43 @@
+{
+  "name": "Samuel (hiro) - Desenvolvedor Full Stack",
+  "short_name": "Samuel (hiro)",
+  "description": "Portfólio de Samuel (hiro) - Desenvolvedor Full Stack apaixonado por criar soluções incríveis com código",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "icons": [],
+  "categories": ["portfolio", "developer", "technology"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Contato",
+      "short_name": "Contato",
+      "description": "Entre em contato comigo",
+      "url": "/#contact",
+      "icons": []
+    },
+    {
+      "name": "Projetos",
+      "short_name": "Projetos",
+      "description": "Veja meus projetos",
+      "url": "/#projects",
+      "icons": []
+    }
+  ],
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
+}
+
