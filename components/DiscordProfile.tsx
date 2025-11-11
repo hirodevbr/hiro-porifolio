@@ -724,6 +724,112 @@ export default function DiscordProfile() {
     });
   };
 
+  // Memoizar badges ANTES de qualquer return condicional para evitar erro de hooks React #310
+  // Isso garante que o hook seja sempre chamado na mesma ordem em todas as renderizações
+  const badges = useMemo(() => {
+    if (!discordData?.discord_user) {
+      return [];
+    }
+    
+    const { discord_user, kv } = discordData;
+    const calculatedBadges = getBadges(
+      discord_user.public_flags, 
+      discord_user.premium_type, 
+      kv,
+      discord_user.avatar_decoration_data,
+      discord_user.primary_guild
+    );
+    
+    // Adicionar badges manuais se configuradas
+    if (ADDITIONAL_BADGES.nitro && !calculatedBadges.find(b => b.name === "Nitro" || b.name === "Nitro Classic")) {
+      calculatedBadges.push({
+        name: "Nitro",
+        iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/refs/heads/main/assets/subscriptions/badges/diamond.png",
+        icon: <Gem className="w-4 h-4" />,
+        color: "text-rose-400",
+        bgColor: "bg-rose-500/20 border-rose-500/50"
+      });
+    }
+    
+    if (ADDITIONAL_BADGES.pomelo && !calculatedBadges.find(b => b.name === "Pomelo")) {
+      calculatedBadges.push({
+        name: "Pomelo",
+        iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/username.png",
+        icon: <Gift className="w-4 h-4" />,
+        color: "text-fuchsia-400",
+        bgColor: "bg-fuchsia-500/20 border-fuchsia-500/50"
+      });
+    }
+    
+    if (ADDITIONAL_BADGES.orb && !calculatedBadges.find(b => b.name === "Orb")) {
+      calculatedBadges.push({
+        name: "Orb",
+        iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/orb.svg",
+        icon: <Circle className="w-4 h-4" />,
+        color: "text-cyan-400",
+        bgColor: "bg-cyan-500/20 border-cyan-500/50"
+      });
+    }
+    
+    if (ADDITIONAL_BADGES.impulso && !calculatedBadges.find(b => b.name === "Impulso de Servidor")) {
+      calculatedBadges.push({
+        name: "Impulso de Servidor",
+        iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/boosts/discordboost9.svg",
+        icon: <Rocket className="w-4 h-4" />,
+        color: "text-purple-400",
+        bgColor: "bg-purple-500/20 border-purple-500/50"
+      });
+    }
+    
+    if (ADDITIONAL_BADGES.missao && !calculatedBadges.find(b => b.name === "Missão Completa")) {
+      calculatedBadges.push({
+        name: "Missão Completa",
+        iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/quest.png",
+        icon: <Target className="w-4 h-4" />,
+        color: "text-yellow-400",
+        bgColor: "bg-yellow-500/20 border-yellow-500/50"
+      });
+    }
+    
+    // Reordenar badges
+    const badgeOrder = [
+      "Funcionário do Discord",
+      "Parceiro do Discord",
+      "Moderador Certificado",
+      "Desenvolvedor de Bot Verificado",
+      "Nitro",
+      "Nitro Classic",
+      "HypeSquad Events",
+      "HypeSquad Bravery",
+      "HypeSquad Brilliance",
+      "HypeSquad Balance",
+      "Desenvolvedor Ativo",
+      "Impulso de Servidor",
+      "Pomelo",
+      "Orb",
+      "Bug Hunter Nível 2",
+      "Bug Hunter Nível 1",
+      "Early Supporter",
+      "Missão Completa"
+    ];
+    
+    calculatedBadges.sort((a, b) => {
+      const indexA = badgeOrder.indexOf(a.name);
+      const indexB = badgeOrder.indexOf(b.name);
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
+    
+    return calculatedBadges;
+  }, [
+    discordData?.discord_user?.public_flags,
+    discordData?.discord_user?.premium_type,
+    discordData?.kv,
+    discordData?.discord_user?.avatar_decoration_data,
+    discordData?.discord_user?.primary_guild
+  ]);
+
   if (loading) {
     return (
       <section
@@ -794,113 +900,6 @@ export default function DiscordProfile() {
     : null;
   
   const bannerColor = discord_user.banner_color || MANUAL_BANNER_COLOR;
-  
-  // Memoizar badges ANTES do return condicional para evitar erro de hooks
-  const badges = useMemo(() => {
-    if (!discordData?.discord_user) {
-      return [];
-    }
-    
-    const { discord_user, kv } = discordData;
-    const calculatedBadges = getBadges(
-      discord_user.public_flags, 
-      discord_user.premium_type, 
-      kv,
-      discord_user.avatar_decoration_data,
-      discord_user.primary_guild
-    );
-    
-    // Adicionar badges manuais se configuradas
-    if (ADDITIONAL_BADGES.nitro && !calculatedBadges.find(b => b.name === "Nitro" || b.name === "Nitro Classic")) {
-      calculatedBadges.push({
-        name: "Nitro",
-        iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/refs/heads/main/assets/subscriptions/badges/diamond.png",
-        icon: <Gem className="w-4 h-4" />,
-        color: "text-rose-400",
-        bgColor: "bg-rose-500/20 border-rose-500/50"
-      });
-    }
-    
-    if (ADDITIONAL_BADGES.pomelo && !calculatedBadges.find(b => b.name === "Pomelo")) {
-      calculatedBadges.push({
-        name: "Pomelo",
-        iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/username.png",
-        icon: <Gift className="w-4 h-4" />,
-        color: "text-fuchsia-400",
-        bgColor: "bg-fuchsia-500/20 border-fuchsia-500/50"
-      });
-    }
-    
-    if (ADDITIONAL_BADGES.orb && !calculatedBadges.find(b => b.name === "Orb")) {
-      calculatedBadges.push({
-        name: "Orb",
-        iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/orb.svg",
-        icon: <Circle className="w-4 h-4" />,
-        color: "text-cyan-400",
-        bgColor: "bg-cyan-500/20 border-cyan-500/50"
-      });
-    }
-    
-    if (ADDITIONAL_BADGES.impulso && !calculatedBadges.find(b => b.name === "Impulso de Servidor")) {
-      calculatedBadges.push({
-        name: "Impulso de Servidor",
-        iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/boosts/discordboost9.svg",
-        icon: <Rocket className="w-4 h-4" />,
-        color: "text-purple-400",
-        bgColor: "bg-purple-500/20 border-purple-500/50"
-      });
-    }
-    
-    if (ADDITIONAL_BADGES.missao && !calculatedBadges.find(b => b.name === "Missão Completa")) {
-      calculatedBadges.push({
-        name: "Missão Completa",
-        iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/quest.png",
-        icon: <Target className="w-4 h-4" />,
-        color: "text-yellow-400",
-        bgColor: "bg-yellow-500/20 border-yellow-500/50"
-      });
-    }
-    
-    return calculatedBadges;
-  }, [
-    discordData?.discord_user?.public_flags,
-    discordData?.discord_user?.premium_type,
-    discordData?.kv,
-    discordData?.discord_user?.avatar_decoration_data,
-    discordData?.discord_user?.primary_guild
-  ]);
-  
-  // Reordenar badges após adicionar as manuais
-  const badgeOrder = [
-    "Funcionário do Discord",
-    "Parceiro do Discord",
-    "Moderador Certificado",
-    "Desenvolvedor de Bot Verificado",
-    "Nitro",
-    "Nitro Classic",
-    "HypeSquad Events",
-    "HypeSquad Bravery",
-    "HypeSquad Brilliance",
-    "HypeSquad Balance",
-    "Desenvolvedor Ativo",
-    "Impulso de Servidor",
-    "Pomelo",
-    "Orb",
-    "Bug Hunter Nível 2",
-    "Bug Hunter Nível 1",
-    "Early Supporter",
-    "Missão Completa"
-  ];
-  
-  badges.sort((a, b) => {
-    const indexA = badgeOrder.indexOf(a.name);
-    const indexB = badgeOrder.indexOf(b.name);
-    if (indexA === -1) return 1;
-    if (indexB === -1) return -1;
-    return indexA - indexB;
-  });
-  
-  // Debug removido para produção
 
   return (
     <section
