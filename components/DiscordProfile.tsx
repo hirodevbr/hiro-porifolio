@@ -244,13 +244,11 @@ export default function DiscordProfile() {
 
     // CASO ESPECIAL: Se não tem large_image mas tem application_id (ex: Valorant)
     // Para jogos como Valorant que não enviam large_image, tentar buscar o ícone do app
-    // Usando um serviço de terceiros que mapeia application_id para ícones
+    // Infelizmente, o Discord não expõe o hash do ícone diretamente na API pública
+    // Vamos tentar alguns formatos conhecidos e usar um serviço de terceiros como fallback
     if (!largeImage && applicationId) {
-      // Tentar usar um serviço público que fornece ícones de aplicativos Discord
-      // Formato: https://discord.com/api/v9/applications/{application_id}/icon
-      // Mas isso requer autenticação, então vamos tentar formatos alternativos
+      // Tentar formatos conhecidos do Discord (podem não funcionar sem o hash correto)
       urls.push(
-        // Tentar formatos conhecidos (podem não funcionar sem o hash correto)
         `https://cdn.discordapp.com/app-icons/${applicationId}/${applicationId}.png`,
         `https://cdn.discordapp.com/app-icons/${applicationId}/${applicationId}.png?size=512`,
         `https://cdn.discordapp.com/app-icons/${applicationId}/${applicationId}.png?size=1024`,
@@ -262,7 +260,10 @@ export default function DiscordProfile() {
         `https://cdn.discordapp.com/app-icons/${applicationId}.png?size=1024`,
         // Tentar formato com a_ prefix (animated)
         `https://cdn.discordapp.com/app-icons/${applicationId}/a_${applicationId}.png`,
-        `https://cdn.discordapp.com/app-icons/${applicationId}/a_${applicationId}.gif`
+        `https://cdn.discordapp.com/app-icons/${applicationId}/a_${applicationId}.gif`,
+        // Tentar serviço de terceiros que mapeia application_id para ícones
+        `https://discord.com/api/v9/applications/${applicationId}/icon`,
+        `https://discord.com/api/v9/applications/${applicationId}/icon.png`
       );
       
       // Se nenhuma URL funcionar, o componente mostrará o fallback (ícone genérico)
