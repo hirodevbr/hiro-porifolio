@@ -1263,7 +1263,7 @@ export default function DiscordProfile() {
                         <Image
                           key={imageUrlToUse} // Key para forçar re-render quando URL muda
                           src={imageUrlToUse}
-                          alt={activity.name}
+                          alt={activity.name || activity.details || 'Activity'}
                           fill
                           className={`rounded-lg object-cover flex-shrink-0 ${isLoading && !loadedImageUrl ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
                           loading="lazy"
@@ -1271,6 +1271,7 @@ export default function DiscordProfile() {
                           sizes="80px"
                           onError={handleImageError}
                           onLoad={handleImageLoad}
+                          referrerPolicy="no-referrer"
                         />
                       </div>
                     );
