@@ -246,7 +246,7 @@ export default function DiscordProfile() {
     const largeImage = activity.assets.large_image;
     const applicationId = activity.application_id;
 
-    // Se a imagem começa com "mp:", é uma URL externa
+    // Se a imagem começa com "mp:", é uma URL externa (PreMiD, etc.)
     if (largeImage.startsWith("mp:")) {
       const match = largeImage.match(/mp:external\/(.+)/);
       if (match) {
@@ -255,23 +255,25 @@ export default function DiscordProfile() {
         // Se contém "https/" ou "http/", extrair a parte após isso
         const httpsMatch = urlPart.match(/(?:https|http)\/(.+)/);
         if (httpsMatch) {
-          urls.push(`https://${httpsMatch[1]}`);
+          const url = `https://${httpsMatch[1]}`;
+          // Para PreMiD, priorizar esta URL
+          urls.unshift(url);
         } else {
           // Tentar decodificar
           try {
             const decodedUrl = decodeURIComponent(urlPart);
             if (decodedUrl.startsWith("http://") || decodedUrl.startsWith("https://")) {
-              urls.push(decodedUrl);
+              urls.unshift(decodedUrl);
             } else if (decodedUrl.startsWith("//")) {
-              urls.push(`https:${decodedUrl}`);
+              urls.unshift(`https:${decodedUrl}`);
             } else {
-              urls.push(`https://${decodedUrl}`);
+              urls.unshift(`https://${decodedUrl}`);
             }
           } catch {
             if (urlPart.startsWith("http://") || urlPart.startsWith("https://")) {
-              urls.push(urlPart);
+              urls.unshift(urlPart);
             } else {
-              urls.push(`https://${urlPart}`);
+              urls.unshift(`https://${urlPart}`);
             }
           }
         }
