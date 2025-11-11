@@ -1146,8 +1146,10 @@ export default function DiscordProfile() {
                     const [showFallback, setShowFallback] = useState(false);
                     const [imageError, setImageError] = useState(false);
                     const [isLoading, setIsLoading] = useState(true);
+                    const [loadedImageUrl, setLoadedImageUrl] = useState<string | null>(null);
                     const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
                     const prevImageKeyRef = useRef<string>('');
+                    const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
                     useEffect(() => {
                       const urls = getActivityImageUrls(activity);
@@ -1160,12 +1162,16 @@ export default function DiscordProfile() {
                         setShowFallback(false);
                         setImageError(false);
                         setIsLoading(true);
+                        setLoadedImageUrl(null);
                         prevImageKeyRef.current = currentImageKey;
                       }
                       
-                      // Limpar timeout anterior
+                      // Limpar timeouts anteriores
                       if (errorTimeoutRef.current) {
                         clearTimeout(errorTimeoutRef.current);
+                      }
+                      if (loadTimeoutRef.current) {
+                        clearTimeout(loadTimeoutRef.current);
                       }
                       // eslint-disable-next-line react-hooks/exhaustive-deps
                     }, [activity.assets?.large_image, activity.application_id]);
@@ -1176,22 +1182,44 @@ export default function DiscordProfile() {
                         clearTimeout(errorTimeoutRef.current);
                       }
 
-                      // Usar timeout para evitar múltiplos erros rápidos
+                      // Se já temos uma imagem carregada, não tentar outras URLs para evitar piscar
+                      if (loadedImageUrl) {
+                        return;
+                      }
+
+                      // Usar timeout maior para evitar múltiplos erros rápidos (especialmente para PreMiD)
                       errorTimeoutRef.current = setTimeout(() => {
-                        if (currentUrlIndex < imageUrls.length - 1) {
-                          setCurrentUrlIndex((prev) => prev + 1);
-                          setImageError(false);
-                        } else {
-                          setShowFallback(true);
-                          setImageError(true);
-                          setIsLoading(false);
-                        }
-                      }, 100);
+                        setCurrentUrlIndex((prev) => {
+                          if (prev < imageUrls.length - 1) {
+                            return prev + 1;
+                          } else {
+                            setShowFallback(true);
+                            setImageError(true);
+                            setIsLoading(false);
+                            return prev;
+                          }
+                        });
+                        setImageError(false);
+                      }, 300); // Aumentado de 100ms para 300ms
                     };
 
                     const handleImageLoad = () => {
-                      setIsLoading(false);
-                      setImageError(false);
+                      // Limpar timeout de erro se a imagem carregou
+                      if (errorTimeoutRef.current) {
+                        clearTimeout(errorTimeoutRef.current);
+                        errorTimeoutRef.current = null;
+                      }
+                      
+                      // Salvar URL da imagem carregada com sucesso
+                      if (imageUrls[currentUrlIndex]) {
+                        setLoadedImageUrl(imageUrls[currentUrlIndex]);
+                      }
+                      
+                      // Usar timeout pequeno para suavizar a transição
+                      loadTimeoutRef.current = setTimeout(() => {
+                        setIsLoading(false);
+                        setImageError(false);
+                      }, 50);
                     };
 
                     // Cleanup
@@ -1199,6 +1227,9 @@ export default function DiscordProfile() {
                       return () => {
                         if (errorTimeoutRef.current) {
                           clearTimeout(errorTimeoutRef.current);
+                        }
+                        if (loadTimeoutRef.current) {
+                          clearTimeout(loadTimeoutRef.current);
                         }
                       };
                     }, []);
@@ -1213,17 +1244,22 @@ export default function DiscordProfile() {
                       );
                     }
 
+                    // Se já temos uma imagem carregada e a URL atual é diferente, usar a carregada
+                    const imageUrlToUse = loadedImageUrl && loadedImageUrl === imageUrls[currentUrlIndex] 
+                      ? loadedImageUrl 
+                      : imageUrls[currentUrlIndex];
+
                     return (
                       <div className="relative w-20 h-20">
-                        {isLoading && (
+                        {isLoading && !loadedImageUrl && (
                           <div className="absolute inset-0 bg-gray-700 rounded-lg animate-pulse z-10" />
                         )}
                         <Image
-                          key={imageUrls[currentUrlIndex]} // Key para forçar re-render quando URL muda
-                          src={imageUrls[currentUrlIndex]}
+                          key={imageUrlToUse} // Key para forçar re-render quando URL muda
+                          src={imageUrlToUse}
                           alt={activity.name}
                           fill
-                          className={`rounded-lg object-cover flex-shrink-0 ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
+                          className={`rounded-lg object-cover flex-shrink-0 ${isLoading && !loadedImageUrl ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
                           loading="lazy"
                           unoptimized
                           sizes="80px"
