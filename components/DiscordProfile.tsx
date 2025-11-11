@@ -748,6 +748,8 @@ export default function DiscordProfile() {
       : `https://cdn.discordapp.com/banners/${discord_user.id}/${discord_user.banner || MANUAL_BANNER_HASH}.png?size=1024`
     : null;
   
+  const bannerColor = discord_user.banner_color || MANUAL_BANNER_COLOR;
+  
   // Memoizar badges ANTES do return condicional para evitar erro de hooks
   const badges = useMemo(() => {
     if (!discordData?.discord_user) {
