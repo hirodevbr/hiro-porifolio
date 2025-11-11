@@ -239,12 +239,30 @@ export default function DiscordProfile() {
   const getActivityImageUrls = (activity: DiscordActivity): string[] => {
     const urls: string[] = [];
     
-    if (!activity.assets?.large_image) {
+    const largeImage = activity.assets?.large_image;
+    const applicationId = activity.application_id;
+
+    // CASO ESPECIAL: Se não tem large_image mas tem application_id (ex: Valorant)
+    // Tentar buscar o ícone do aplicativo diretamente
+    if (!largeImage && applicationId) {
+      // Tentar diferentes formatos para o ícone do aplicativo
+      urls.push(
+        `https://cdn.discordapp.com/app-icons/${applicationId}/${applicationId}.png`,
+        `https://cdn.discordapp.com/app-icons/${applicationId}/${applicationId}.png?size=512`,
+        `https://cdn.discordapp.com/app-icons/${applicationId}/${applicationId}.png?size=1024`,
+        `https://cdn.discordapp.com/app-icons/${applicationId}/icon.png`,
+        `https://cdn.discordapp.com/app-icons/${applicationId}/icon.png?size=512`,
+        `https://cdn.discordapp.com/app-icons/${applicationId}/icon.png?size=1024`,
+        `https://cdn.discordapp.com/app-icons/${applicationId}.png`,
+        `https://cdn.discordapp.com/app-icons/${applicationId}.png?size=512`,
+        `https://cdn.discordapp.com/app-icons/${applicationId}.png?size=1024`
+      );
       return urls;
     }
 
-    const largeImage = activity.assets.large_image;
-    const applicationId = activity.application_id;
+    if (!largeImage) {
+      return urls;
+    }
 
     // PRIORIDADE 1: Se tem application_id, priorizar URLs do CDN do Discord (Rich Presence de jogos)
     // Esta é a forma mais confiável para jogos como Valorant, League of Legends, etc.
