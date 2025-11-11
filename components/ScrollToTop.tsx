@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUp } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -8,21 +8,39 @@ import { useLanguage } from "@/contexts/LanguageContext";
 export default function ScrollToTop() {
   const { t } = useLanguage();
   const [isVisible, setIsVisible] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const toggleVisibility = () => {
-      // Mostrar botão quando o usuário rolar mais de 300px
-      if (window.pageYOffset > 300) {
-        setIsVisible(true);
-      } else {
-        setIsVisible(false);
+      // Limpar timeout anterior se existir
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
+
+      // Usar debounce para evitar atualizações muito frequentes
+      timeoutRef.current = setTimeout(() => {
+        const shouldShow = window.pageYOffset > 300;
+        
+        // Só atualizar o estado se realmente mudou
+        setIsVisible((prev) => {
+          if (prev !== shouldShow) {
+            return shouldShow;
+          }
+          return prev;
+        });
+      }, 100); // Debounce de 100ms
     };
 
-    window.addEventListener("scroll", toggleVisibility);
+    // Verificar visibilidade inicial
+    toggleVisibility();
+
+    window.addEventListener("scroll", toggleVisibility, { passive: true });
 
     return () => {
       window.removeEventListener("scroll", toggleVisibility);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
   }, []);
 
@@ -34,12 +52,13 @@ export default function ScrollToTop() {
   };
 
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       {isVisible && (
         <motion.button
           initial={{ opacity: 0, scale: 0 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0 }}
+          transition={{ duration: 0.2 }}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={scrollToTop}
