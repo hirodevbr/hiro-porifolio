@@ -145,10 +145,28 @@ export default function DiscordProfile() {
         const data = await response.json();
         
         if (data.success && data.data) {
-          // Atualizar sempre para garantir que mudanças sejam refletidas
-          setDiscordData(data.data);
+          // Só atualizar se os dados realmente mudaram
+          setDiscordData((prevData) => {
+            if (!prevData) {
+              return data.data;
+            }
+            
+            // Comparar se houve mudanças significativas
+            const prevActivities = JSON.stringify(prevData.activities || []);
+            const newActivities = JSON.stringify(data.data.activities || []);
+            const prevStatus = prevData.discord_status;
+            const newStatus = data.data.discord_status;
+            
+            // Só atualizar se status ou atividades mudaram
+            if (prevStatus !== newStatus || prevActivities !== newActivities) {
+              return data.data;
+            }
+            
+            // Retornar dados anteriores se não houve mudanças
+            return prevData;
+          });
           hasDataRef.current = true;
-          setError(null); // Limpar erro se dados foram carregados com sucesso
+          setError(null);
         } else {
           throw new Error("Invalid Discord data");
         }
@@ -166,8 +184,8 @@ export default function DiscordProfile() {
     // Buscar imediatamente
     fetchDiscordData();
     
-    // Atualizar a cada 5 segundos para tempo real mais responsivo
-    const interval = setInterval(fetchDiscordData, 5000);
+    // Atualizar a cada 10 segundos (reduzido de 5 para evitar muitos re-renders)
+    const interval = setInterval(fetchDiscordData, 10000);
     
     return () => clearInterval(interval);
   }, []); // Array vazio para executar apenas uma vez na montagem
@@ -1122,14 +1140,21 @@ export default function DiscordProfile() {
                     const [imageError, setImageError] = useState(false);
                     const [isLoading, setIsLoading] = useState(true);
                     const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+                    const prevImageKeyRef = useRef<string>('');
 
                     useEffect(() => {
                       const urls = getActivityImageUrls(activity);
-                      setImageUrls(urls);
-                      setCurrentUrlIndex(0);
-                      setShowFallback(false);
-                      setImageError(false);
-                      setIsLoading(true);
+                      const currentImageKey = `${activity.assets?.large_image}-${activity.application_id}`;
+                      
+                      // Só resetar se a imagem realmente mudou
+                      if (prevImageKeyRef.current !== currentImageKey) {
+                        setImageUrls(urls);
+                        setCurrentUrlIndex(0);
+                        setShowFallback(false);
+                        setImageError(false);
+                        setIsLoading(true);
+                        prevImageKeyRef.current = currentImageKey;
+                      }
                       
                       // Limpar timeout anterior
                       if (errorTimeoutRef.current) {
