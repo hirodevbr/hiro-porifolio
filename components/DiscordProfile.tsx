@@ -900,20 +900,7 @@ export default function DiscordProfile() {
     return indexA - indexB;
   });
   
-  // Debug: log das badges detectadas
-  // Debug: Log das atividades para verificar dados
-  if (activities && activities.length > 0) {
-    activities.forEach((activity, index) => {
-      if (activity.application_id && activity.assets?.large_image) {
-        console.log(`Atividade ${index + 1}:`, {
-          name: activity.name,
-          application_id: activity.application_id,
-          large_image: activity.assets.large_image,
-          urls: getActivityImageUrls(activity).slice(0, 5) // Primeiras 5 URLs
-        });
-      }
-    });
-  }
+  // Debug removido para produção
 
   return (
     <section
