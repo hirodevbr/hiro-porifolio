@@ -1120,6 +1120,8 @@ export default function DiscordProfile() {
                     const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
                     const [showFallback, setShowFallback] = useState(false);
                     const [imageError, setImageError] = useState(false);
+                    const [isLoading, setIsLoading] = useState(true);
+                    const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
                     useEffect(() => {
                       const urls = getActivityImageUrls(activity);
@@ -1127,20 +1129,49 @@ export default function DiscordProfile() {
                       setCurrentUrlIndex(0);
                       setShowFallback(false);
                       setImageError(false);
+                      setIsLoading(true);
+                      
+                      // Limpar timeout anterior
+                      if (errorTimeoutRef.current) {
+                        clearTimeout(errorTimeoutRef.current);
+                      }
                       // eslint-disable-next-line react-hooks/exhaustive-deps
                     }, [activity.assets?.large_image, activity.application_id]);
 
                     const handleImageError = () => {
-                      if (currentUrlIndex < imageUrls.length - 1) {
-                        setCurrentUrlIndex(currentUrlIndex + 1);
-                        setImageError(false);
-                      } else {
-                        setShowFallback(true);
-                        setImageError(true);
+                      // Limpar timeout anterior
+                      if (errorTimeoutRef.current) {
+                        clearTimeout(errorTimeoutRef.current);
                       }
+
+                      // Usar timeout para evitar múltiplos erros rápidos
+                      errorTimeoutRef.current = setTimeout(() => {
+                        if (currentUrlIndex < imageUrls.length - 1) {
+                          setCurrentUrlIndex((prev) => prev + 1);
+                          setImageError(false);
+                        } else {
+                          setShowFallback(true);
+                          setImageError(true);
+                          setIsLoading(false);
+                        }
+                      }, 100);
                     };
 
-                    if (showFallback || imageUrls.length === 0 || imageError) {
+                    const handleImageLoad = () => {
+                      setIsLoading(false);
+                      setImageError(false);
+                    };
+
+                    // Cleanup
+                    useEffect(() => {
+                      return () => {
+                        if (errorTimeoutRef.current) {
+                          clearTimeout(errorTimeoutRef.current);
+                        }
+                      };
+                    }, []);
+
+                    if (showFallback || imageUrls.length === 0) {
                       return (
                         <div className="w-20 h-20 bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
                           <div className="text-primary-400">
@@ -1152,7 +1183,11 @@ export default function DiscordProfile() {
 
                     return (
                       <div className="relative w-20 h-20">
+                        {isLoading && (
+                          <div className="absolute inset-0 bg-gray-700 rounded-lg animate-pulse" />
+                        )}
                         <Image
+                          key={imageUrls[currentUrlIndex]} // Key para forçar re-render quando URL muda
                           src={imageUrls[currentUrlIndex]}
                           alt={activity.name}
                           fill
@@ -1161,6 +1196,7 @@ export default function DiscordProfile() {
                           unoptimized
                           sizes="80px"
                           onError={handleImageError}
+                          onLoad={handleImageLoad}
                         />
                       </div>
                     );
