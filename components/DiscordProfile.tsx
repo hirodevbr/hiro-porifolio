@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Image from "next/image";
 import { 
@@ -416,11 +416,7 @@ export default function DiscordProfile() {
   ): Badge[] => {
     const badges: Badge[] = [];
     
-    // Debug: decodificar flags
-    if (flags) {
-      console.log("Decodificando flags:", flags);
-      console.log("Flags binárias:", flags.toString(2));
-    }
+    // Debug removido para evitar logs excessivos
     
     // Discord Staff (1)
     if (flags && flags & 1) {
@@ -748,64 +744,75 @@ export default function DiscordProfile() {
   
   const bannerColor = discord_user.banner_color || MANUAL_BANNER_COLOR;
   
-  const badges = getBadges(
-    discord_user.public_flags, 
-    discord_user.premium_type, 
+  // Memoizar badges para evitar recálculo desnecessário
+  const badges = useMemo(() => {
+    const calculatedBadges = getBadges(
+      discord_user.public_flags, 
+      discord_user.premium_type, 
+      kv,
+      discord_user.avatar_decoration_data,
+      discord_user.primary_guild
+    );
+    
+    // Adicionar badges manuais se configuradas
+    if (ADDITIONAL_BADGES.nitro && !calculatedBadges.find(b => b.name === "Nitro" || b.name === "Nitro Classic")) {
+      calculatedBadges.push({
+        name: "Nitro",
+        iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/refs/heads/main/assets/subscriptions/badges/diamond.png",
+        icon: <Gem className="w-4 h-4" />,
+        color: "text-rose-400",
+        bgColor: "bg-rose-500/20 border-rose-500/50"
+      });
+    }
+    
+    if (ADDITIONAL_BADGES.pomelo && !calculatedBadges.find(b => b.name === "Pomelo")) {
+      calculatedBadges.push({
+        name: "Pomelo",
+        iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/username.png",
+        icon: <Gift className="w-4 h-4" />,
+        color: "text-fuchsia-400",
+        bgColor: "bg-fuchsia-500/20 border-fuchsia-500/50"
+      });
+    }
+    
+    if (ADDITIONAL_BADGES.orb && !calculatedBadges.find(b => b.name === "Orb")) {
+      calculatedBadges.push({
+        name: "Orb",
+        iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/orb.svg",
+        icon: <Circle className="w-4 h-4" />,
+        color: "text-cyan-400",
+        bgColor: "bg-cyan-500/20 border-cyan-500/50"
+      });
+    }
+    
+    if (ADDITIONAL_BADGES.impulso && !calculatedBadges.find(b => b.name === "Impulso de Servidor")) {
+      calculatedBadges.push({
+        name: "Impulso de Servidor",
+        iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/boosts/discordboost9.svg",
+        icon: <Rocket className="w-4 h-4" />,
+        color: "text-purple-400",
+        bgColor: "bg-purple-500/20 border-purple-500/50"
+      });
+    }
+    
+    if (ADDITIONAL_BADGES.missao && !calculatedBadges.find(b => b.name === "Missão Completa")) {
+      calculatedBadges.push({
+        name: "Missão Completa",
+        iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/quest.png",
+        icon: <Target className="w-4 h-4" />,
+        color: "text-yellow-400",
+        bgColor: "bg-yellow-500/20 border-yellow-500/50"
+      });
+    }
+    
+    return calculatedBadges;
+  }, [
+    discord_user.public_flags,
+    discord_user.premium_type,
     kv,
     discord_user.avatar_decoration_data,
     discord_user.primary_guild
-  );
-  
-  // Adicionar badges manuais se configuradas
-  if (ADDITIONAL_BADGES.nitro && !badges.find(b => b.name === "Nitro" || b.name === "Nitro Classic")) {
-    badges.push({
-      name: "Nitro",
-      iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/refs/heads/main/assets/subscriptions/badges/diamond.png",
-      icon: <Gem className="w-4 h-4" />,
-      color: "text-rose-400",
-      bgColor: "bg-rose-500/20 border-rose-500/50"
-    });
-  }
-  
-  if (ADDITIONAL_BADGES.pomelo && !badges.find(b => b.name === "Pomelo")) {
-    badges.push({
-      name: "Pomelo",
-      iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/username.png",
-      icon: <Gift className="w-4 h-4" />,
-      color: "text-fuchsia-400",
-      bgColor: "bg-fuchsia-500/20 border-fuchsia-500/50"
-    });
-  }
-  
-  if (ADDITIONAL_BADGES.orb && !badges.find(b => b.name === "Orb")) {
-    badges.push({
-      name: "Orb",
-      iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/orb.svg",
-      icon: <Circle className="w-4 h-4" />,
-      color: "text-cyan-400",
-      bgColor: "bg-cyan-500/20 border-cyan-500/50"
-    });
-  }
-  
-  if (ADDITIONAL_BADGES.impulso && !badges.find(b => b.name === "Impulso de Servidor")) {
-    badges.push({
-      name: "Impulso de Servidor",
-      iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/boosts/discordboost9.svg",
-      icon: <Rocket className="w-4 h-4" />,
-      color: "text-purple-400",
-      bgColor: "bg-purple-500/20 border-purple-500/50"
-    });
-  }
-  
-  if (ADDITIONAL_BADGES.missao && !badges.find(b => b.name === "Missão Completa")) {
-    badges.push({
-      name: "Missão Completa",
-      iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/quest.png",
-      icon: <Target className="w-4 h-4" />,
-      color: "text-yellow-400",
-      bgColor: "bg-yellow-500/20 border-yellow-500/50"
-    });
-  }
+  ]);
   
   // Reordenar badges após adicionar as manuais
   const badgeOrder = [
@@ -1209,14 +1216,14 @@ export default function DiscordProfile() {
                     return (
                       <div className="relative w-20 h-20">
                         {isLoading && (
-                          <div className="absolute inset-0 bg-gray-700 rounded-lg animate-pulse" />
+                          <div className="absolute inset-0 bg-gray-700 rounded-lg animate-pulse z-10" />
                         )}
                         <Image
                           key={imageUrls[currentUrlIndex]} // Key para forçar re-render quando URL muda
                           src={imageUrls[currentUrlIndex]}
                           alt={activity.name}
                           fill
-                          className="rounded-lg object-cover flex-shrink-0"
+                          className={`rounded-lg object-cover flex-shrink-0 ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
                           loading="lazy"
                           unoptimized
                           sizes="80px"
