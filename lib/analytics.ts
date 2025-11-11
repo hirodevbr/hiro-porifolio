@@ -37,7 +37,7 @@ export const trackEvent = (event: AnalyticsEvent): void => {
   if (typeof window === 'undefined') return;
 
   // Google Analytics 4
-  if (isGAEnabled()) {
+  if (isGAEnabled() && window.gtag) {
     window.gtag('event', event.action, {
       event_category: event.category,
       event_label: event.label,
@@ -58,7 +58,7 @@ export const trackEvent = (event: AnalyticsEvent): void => {
 export const trackPageView = (url: string): void => {
   if (typeof window === 'undefined') return;
 
-  if (isGAEnabled()) {
+  if (isGAEnabled() && window.gtag) {
     window.gtag('config', process.env.NEXT_PUBLIC_GA_ID || '', {
       page_path: url,
     });
