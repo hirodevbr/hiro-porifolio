@@ -249,42 +249,47 @@ export default function DiscordProfile() {
     // PRIORIDADE 1: Se tem application_id, priorizar URLs do CDN do Discord (Rich Presence de jogos)
     // Esta é a forma mais confiável para jogos como Valorant, League of Legends, etc.
     if (applicationId) {
-      // Formato padrão do Discord Rich Presence (prioridade máxima)
+      // PRIORIDADE MÁXIMA: app-icons primeiro (usado por Valorant e outros jogos para o ícone do app)
+      urls.push(
+        `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.png`,
+        `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.png?size=512`,
+        `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.png?size=1024`,
+        `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.jpg`,
+        `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.webp`,
+        `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}` // Sem extensão
+      );
+      
+      // Tentar com a_ prefix removido em app-icons (para imagens animadas)
+      if (largeImage.startsWith("a_")) {
+        const baseImage = largeImage.substring(2);
+        urls.push(
+          `https://cdn.discordapp.com/app-icons/${applicationId}/${baseImage}.png`,
+          `https://cdn.discordapp.com/app-icons/${applicationId}/${baseImage}.png?size=512`,
+          `https://cdn.discordapp.com/app-icons/${applicationId}/${baseImage}.png?size=1024`
+        );
+      }
+      
+      // Formato padrão do Discord Rich Presence (app-assets para imagens grandes)
       urls.push(
         `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.png`,
         `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.png?size=512`,
         `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.png?size=1024`
       );
       
-      // Tentar app-icons para ícones de aplicativos/jogos (usado por Valorant, etc.)
-      urls.push(
-        `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.png`,
-        `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.png?size=512`,
-        `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.png?size=1024`,
-        `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.jpg`,
-        `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.webp`
-      );
-      
       // Tentar outros formatos em app-assets
       urls.push(
         `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.jpg`,
         `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.webp`,
-        `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.gif`
+        `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.gif`,
+        `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}` // Sem extensão
       );
       
-      // Tentar sem extensão (Discord às vezes usa hash sem extensão)
-      urls.push(
-        `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}`,
-        `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}`
-      );
-      
-      // Tentar com a_ prefix (animated)
+      // Tentar com a_ prefix (animated) em app-assets
       if (largeImage.startsWith("a_")) {
         const baseImage = largeImage.substring(2);
         urls.push(
           `https://cdn.discordapp.com/app-assets/${applicationId}/${baseImage}.png`,
-          `https://cdn.discordapp.com/app-assets/${applicationId}/${baseImage}.gif`,
-          `https://cdn.discordapp.com/app-icons/${applicationId}/${baseImage}.png`
+          `https://cdn.discordapp.com/app-assets/${applicationId}/${baseImage}.gif`
         );
       }
     }
