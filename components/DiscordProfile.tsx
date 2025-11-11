@@ -909,21 +909,6 @@ export default function DiscordProfile() {
               />
             </div>
             <div className="flex-1">
-              <div className="mb-1">
-                {/* Display Name (nome principal) */}
-                <h3 className="text-xl font-semibold text-white">
-                  {discord_user.display_name || discord_user.global_name || discord_user.username}
-                </h3>
-                {/* Username (abaixo do display name) */}
-                <div className="flex items-center gap-1 mt-0.5">
-                  <span className="text-sm text-gray-400">
-                    {discord_user.username}
-                  </span>
-                  {discord_user.discriminator !== "0" && (
-                    <span className="text-sm text-gray-500">#{discord_user.discriminator}</span>
-                  )}
-                </div>
-              </div>
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-sm text-gray-400">
                   {getStatusText(discord_status)}
