@@ -256,7 +256,16 @@ export default function DiscordProfile() {
         `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.png?size=1024`
       );
       
-      // Tentar outros formatos
+      // Tentar app-icons para ícones de aplicativos/jogos (usado por Valorant, etc.)
+      urls.push(
+        `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.png`,
+        `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.png?size=512`,
+        `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.png?size=1024`,
+        `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.jpg`,
+        `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.webp`
+      );
+      
+      // Tentar outros formatos em app-assets
       urls.push(
         `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.jpg`,
         `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.webp`,
@@ -265,7 +274,8 @@ export default function DiscordProfile() {
       
       // Tentar sem extensão (Discord às vezes usa hash sem extensão)
       urls.push(
-        `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}`
+        `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}`,
+        `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}`
       );
       
       // Tentar com a_ prefix (animated)
@@ -273,7 +283,8 @@ export default function DiscordProfile() {
         const baseImage = largeImage.substring(2);
         urls.push(
           `https://cdn.discordapp.com/app-assets/${applicationId}/${baseImage}.png`,
-          `https://cdn.discordapp.com/app-assets/${applicationId}/${baseImage}.gif`
+          `https://cdn.discordapp.com/app-assets/${applicationId}/${baseImage}.gif`,
+          `https://cdn.discordapp.com/app-icons/${applicationId}/${baseImage}.png`
         );
       }
     }
