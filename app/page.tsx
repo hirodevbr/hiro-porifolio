@@ -6,6 +6,7 @@ import Contact from "@/components/Contact";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import DiscordProfile from "@/components/DiscordProfile";
+import DiscordServers from "@/components/DiscordServers";
 import ScrollToTop from "@/components/ScrollToTop";
 
 export default function Home() {
@@ -18,6 +19,7 @@ export default function Home() {
         <Skills />
         <Projects />
         <DiscordProfile />
+        <DiscordServers />
         <Contact />
       </div>
       <Footer />

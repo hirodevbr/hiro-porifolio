@@ -90,6 +90,14 @@ const translations = {
     discord_account_age_months: "meses",
     discord_account_age_day: "dia",
     discord_account_age_days: "dias",
+    discord_servers_title: "Servidores Discord",
+    discord_servers_subtitle: "Servidores onde trabalho como gerente de comunidade e moderador",
+    discord_servers_tab_community: "Gerente de Comunidade e Moderador",
+    discord_servers_tab_ecosystem: "Servidor do Ecossistema",
+    discord_servers_join: "Entrar no servidor",
+    discord_servers_itsatrap_desc: "Servidor de comunidade onde atuo como gerente e moderador, ajudando a manter um ambiente saudável e acolhedor.",
+    discord_servers_viggle_desc: "Servidor de comunidade onde atuo como gerente e moderador, promovendo interações positivas e crescimento da comunidade.",
+    discord_servers_admins_desc: "Comunidade oficial para administradores de servidores Discord. Um espaço para compartilhar conhecimento, experiências e melhores práticas de moderação e gestão de comunidades.",
     
     // Contact
     contact_title: "Entre em Contato",
@@ -193,6 +201,14 @@ const translations = {
     discord_account_age_months: "months",
     discord_account_age_day: "day",
     discord_account_age_days: "days",
+    discord_servers_title: "Discord Servers",
+    discord_servers_subtitle: "Servers where I work as community manager and moderator",
+    discord_servers_tab_community: "Community Manager & Moderator",
+    discord_servers_tab_ecosystem: "Ecosystem Server",
+    discord_servers_join: "Join server",
+    discord_servers_itsatrap_desc: "Community server where I work as manager and moderator, helping maintain a healthy and welcoming environment.",
+    discord_servers_viggle_desc: "Community server where I work as manager and moderator, promoting positive interactions and community growth.",
+    discord_servers_admins_desc: "Official community for Discord server administrators. A space to share knowledge, experiences and best practices for moderation and community management.",
     
     // Contact
     contact_title: "Get in Touch",
