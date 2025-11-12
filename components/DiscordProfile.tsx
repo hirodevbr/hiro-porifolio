@@ -1373,8 +1373,8 @@ export default function DiscordProfile() {
                       className="p-4 bg-gray-700/30 rounded-lg border border-gray-600/50"
                     >
                       <div className="flex items-start gap-4">
-                        {/* Imagem grande da atividade - COMENTADO PARA TESTE */}
-                        {/* <ActivityImage /> */}
+                        {/* Imagem grande da atividade */}
+                        <ActivityImage />
                         
                         {/* Conteúdo da atividade */}
                         <div className="flex-1 min-w-0">
