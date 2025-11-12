@@ -63,8 +63,6 @@ interface DiscordData {
     };
     global_name?: string;
     display_name?: string;
-    banner?: string;
-    banner_color?: string;
   };
   discord_status: "online" | "idle" | "dnd" | "offline";
   activities: DiscordActivity[];
