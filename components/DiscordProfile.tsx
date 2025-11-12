@@ -1320,25 +1320,31 @@ export default function DiscordProfile() {
                       };
                     }, []);
 
-                    // COMENTADO PARA TESTE: Verificar se o problema de carregar imagem está relacionado ao fallback
-                    // if (showFallback || imageUrls.length === 0) {
-                    //   return (
-                    //     <div className="w-20 h-20 bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
-                    //       <div className="text-primary-400">
-                    //         {getActivityIcon(activity)}
-                    //       </div>
-                    //     </div>
-                    //   );
-                    // }
+                    // Se todas as URLs falharam ou não há URLs, mostrar fallback com ícone apropriado
+                    if (showFallback || imageUrls.length === 0) {
+                      return (
+                        <div className="w-20 h-20 bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <div className="text-primary-400">
+                            {getActivityIcon(activity)}
+                          </div>
+                        </div>
+                      );
+                    }
 
                     // Se já temos uma imagem carregada e a URL atual é diferente, usar a carregada
                     const imageUrlToUse = loadedImageUrl && loadedImageUrl === imageUrls[currentUrlIndex] 
                       ? loadedImageUrl 
                       : imageUrls[currentUrlIndex];
 
-                    // Se não há URL válida, retornar null (sem renderizar nada) para teste
-                    if (!imageUrlToUse || imageUrls.length === 0) {
-                      return null;
+                    // Se não há URL válida, mostrar fallback
+                    if (!imageUrlToUse) {
+                      return (
+                        <div className="w-20 h-20 bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <div className="text-primary-400">
+                            {getActivityIcon(activity)}
+                          </div>
+                        </div>
+                      );
                     }
 
                     return (
