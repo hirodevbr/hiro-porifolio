@@ -235,97 +235,6 @@ export default function DiscordProfile() {
     }
   };
 
-  // Função para buscar logo do jogo automaticamente na internet
-  const getGameLogoUrls = (gameName: string, applicationId?: string): string[] => {
-    const urls: string[] = [];
-    const normalizedName = gameName.toLowerCase().trim();
-    
-    // Mapeamento de nomes conhecidos de jogos para seus logos
-    const knownGameLogos: { [key: string]: string[] } = {
-      'valorant': [
-        'https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/valorant.png',
-        'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/valorant.png',
-        'https://logos-world.net/wp-content/uploads/2021/09/Valorant-Logo.png',
-        'https://www.freepnglogos.com/uploads/valorant-logo-png/valorant-logo-png-transparent-0.png',
-      ],
-      'league of legends': [
-        'https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/league-of-legends.png',
-        'https://logos-world.net/wp-content/uploads/2020/11/League-of-Legends-Logo.png',
-      ],
-      'counter-strike': [
-        'https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/counter-strike.png',
-        'https://logos-world.net/wp-content/uploads/2020/11/Counter-Strike-Logo.png',
-      ],
-      'fortnite': [
-        'https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/fortnite.png',
-        'https://logos-world.net/wp-content/uploads/2020/04/Fortnite-Logo.png',
-      ],
-      'minecraft': [
-        'https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/minecraft.png',
-        'https://logos-world.net/wp-content/uploads/2020/04/Minecraft-Logo.png',
-      ],
-      'apex legends': [
-        'https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/apex-legends.png',
-        'https://logos-world.net/wp-content/uploads/2020/04/Apex-Legends-Logo.png',
-      ],
-      'overwatch': [
-        'https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/overwatch.png',
-        'https://logos-world.net/wp-content/uploads/2020/04/Overwatch-Logo.png',
-      ],
-      'rocket league': [
-        'https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/rocket-league.png',
-        'https://logos-world.net/wp-content/uploads/2020/04/Rocket-League-Logo.png',
-      ],
-      'among us': [
-        'https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/among-us.png',
-        'https://logos-world.net/wp-content/uploads/2020/09/Among-Us-Logo.png',
-      ],
-      'gta v': [
-        'https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/gta-v.png',
-        'https://logos-world.net/wp-content/uploads/2020/05/GTA-V-Logo.png',
-      ],
-      'call of duty': [
-        'https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/call-of-duty.png',
-        'https://logos-world.net/wp-content/uploads/2020/05/Call-of-Duty-Logo.png',
-      ],
-    };
-
-    // Verificar se temos um mapeamento conhecido
-    for (const [key, logoUrls] of Object.entries(knownGameLogos)) {
-      if (normalizedName.includes(key)) {
-        urls.push(...logoUrls);
-        break;
-      }
-    }
-
-    // Tentar usar serviços públicos de logos de jogos
-    // Usar CDN de logos baseado no nome do jogo
-    const gameSlug = normalizedName
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-    
-    // Adicionar URLs de serviços públicos de logos
-    urls.push(
-      // Serviço de logos de jogos (exemplo)
-      `https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/${gameSlug}.png`,
-      `https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/${gameSlug}.png`,
-      // Logos World
-      `https://logos-world.net/wp-content/uploads/${gameSlug}-logo.png`,
-      // Tentar com nome original (capitalizado)
-      `https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/${gameName.toLowerCase().replace(/\s+/g, '-')}.png`,
-    );
-
-    // Se temos application_id, tentar usar serviços que mapeiam IDs do Discord
-    if (applicationId) {
-      urls.push(
-        `https://discord.com/api/v9/applications/${applicationId}/icon`,
-        `https://discord.com/api/v9/applications/${applicationId}/icon.png`,
-      );
-    }
-
-    return urls;
-  };
-
   // Função para obter todas as URLs possíveis da imagem da atividade
   const getActivityImageUrls = (activity: DiscordActivity): string[] => {
     const urls: string[] = [];
@@ -357,12 +266,7 @@ export default function DiscordProfile() {
         `https://discord.com/api/v9/applications/${applicationId}/icon.png`
       );
       
-      // Se temos o nome da atividade, adicionar URLs de busca automática de logos
-      if (activity.name) {
-        const gameLogoUrls = getGameLogoUrls(activity.name, applicationId);
-        urls.push(...gameLogoUrls);
-      }
-      
+      // Se nenhuma URL funcionar, o componente mostrará o fallback (ícone genérico)
       return urls;
     }
 
@@ -1378,15 +1282,6 @@ export default function DiscordProfile() {
                           if (prev < imageUrls.length - 1) {
                             return prev + 1;
                           } else {
-                            // Se todas as URLs originais falharam, tentar buscar logo do jogo automaticamente
-                            if (activity.name && !imageUrls.some(url => url.includes('jsdelivr.net') || url.includes('logos-world.net'))) {
-                              const gameLogoUrls = getGameLogoUrls(activity.name, activity.application_id);
-                              if (gameLogoUrls.length > 0) {
-                                // Adicionar URLs de busca automática ao final da lista
-                                setImageUrls(prevUrls => [...prevUrls, ...gameLogoUrls]);
-                                return prev; // Manter o índice atual para tentar a próxima URL
-                              }
-                            }
                             setShowFallback(true);
                             setImageError(true);
                             setIsLoading(false);
