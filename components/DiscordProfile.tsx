@@ -480,6 +480,33 @@ export default function DiscordProfile() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Função para calcular a data de criação da conta Discord a partir do ID (snowflake)
+  const getAccountCreationDate = (userId: string): Date => {
+    // Discord epoch: 2015-01-01 00:00:00 UTC
+    const DISCORD_EPOCH = 1420070400000;
+    // Snowflake contém timestamp: (id >> 22) + epoch
+    const id = BigInt(userId);
+    const timestamp = Number(id >> BigInt(22)) + DISCORD_EPOCH;
+    return new Date(timestamp);
+  };
+
+  // Função para formatar a data de criação
+  const formatCreationDate = (date: Date): string => {
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffMonths = Math.floor(diffDays / 30);
+    const diffYears = Math.floor(diffDays / 365);
+
+    if (diffYears > 0) {
+      return `${diffYears} ${diffYears === 1 ? 'ano' : 'anos'}`;
+    } else if (diffMonths > 0) {
+      return `${diffMonths} ${diffMonths === 1 ? 'mês' : 'meses'}`;
+    } else {
+      return `${diffDays} ${diffDays === 1 ? 'dia' : 'dias'}`;
+    }
+  };
+
   const getBadges = (
     flags?: number, 
     premiumType?: number, 
@@ -1053,6 +1080,23 @@ export default function DiscordProfile() {
                     {getStatusText(discord_status)}
                   </span>
                 </div>
+                {/* Data de criação da conta */}
+                {(() => {
+                  const creationDate = getAccountCreationDate(discord_user.id);
+                  const formattedDate = creationDate.toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                  });
+                  const accountAge = formatCreationDate(creationDate);
+                  return (
+                    <div className="flex items-center gap-1 mt-1">
+                      <span className="text-xs text-gray-500">
+                        Conta criada em {formattedDate} ({accountAge} atrás)
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>
