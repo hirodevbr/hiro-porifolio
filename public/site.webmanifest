@@ -10,7 +10,25 @@
   "scope": "/",
   "lang": "pt-BR",
   "dir": "ltr",
-  "icons": [],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
   "categories": ["portfolio", "developer", "technology"],
   "screenshots": [],
   "shortcuts": [

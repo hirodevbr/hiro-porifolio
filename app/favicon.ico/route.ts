@@ -1,0 +1,40 @@
+import { NextResponse } from 'next/server';
+
+export async function GET() {
+  // Retorna um SVG moderno como favicon.ico
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="32" height="32" rx="7" fill="#0a0a0a"/>
+  <rect width="32" height="32" rx="7" fill="url(#gradientBg)" opacity="0.1"/>
+  
+  <!-- Letra S estilizada -->
+  <path d="M10 10C10 8.5 11 7.5 12.5 7.5C13.5 7.5 14.5 8 15 8.5L16.5 6.5C15.5 5.5 14 5 12.5 5C9.5 5 7 7.5 7 10.5C7 13 8.5 14.5 10.5 15.5C12.5 16.5 13 17 13 18C13 18.5 12.5 19 12 19C11 19 10 18.5 9.5 18L8 20C9 21 10.5 21.5 12 21.5C15 21.5 17.5 19 17.5 16C17.5 13.5 16 12 14 11C12.5 10.5 12 10 12 9C12 8.5 12.5 8 13 8C13.5 8 14 8.5 14.5 9L16 7C15 6 13.5 5.5 12 5.5C9 5.5 6.5 8 6.5 11C6.5 13.5 8 15 10 16C12 17 12.5 17.5 12.5 18.5C12.5 19.5 11.5 20.5 10 20.5Z" fill="url(#gradient)" transform="translate(7, 5)"/>
+  
+  <!-- Efeito de brilho -->
+  <circle cx="16" cy="16" r="12" fill="url(#glow)" opacity="0.3"/>
+  
+  <defs>
+    <linearGradient id="gradient" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0ea5e9"/>
+      <stop offset="50%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    <linearGradient id="gradientBg" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%">
+      <stop offset="0%" stop-color="#0ea5e9" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+</svg>`;
+
+  return new NextResponse(svg, {
+    headers: {
+      'Content-Type': 'image/svg+xml',
+      'Cache-Control': 'public, max-age=31536000, immutable',
+    },
+  });
+}
+
