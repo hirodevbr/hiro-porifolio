@@ -1337,6 +1337,11 @@ export default function DiscordProfile() {
                       ? loadedImageUrl 
                       : imageUrls[currentUrlIndex];
 
+                    // Se não há URL válida, retornar null (sem renderizar nada) para teste
+                    if (!imageUrlToUse || imageUrls.length === 0) {
+                      return null;
+                    }
+
                     return (
                       <div className="relative w-20 h-20">
                         {isLoading && !loadedImageUrl && (
