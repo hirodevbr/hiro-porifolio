@@ -1065,21 +1065,6 @@ export default function DiscordProfile() {
                     <span className="text-sm text-gray-500">#{discord_user.discriminator}</span>
                   )}
                 </div>
-                {/* Status do Discord */}
-                <div className="flex items-center gap-2 mt-1.5">
-                  <div
-                    className={`w-2 h-2 rounded-full ${getStatusColor(discord_status)}`}
-                    aria-hidden="true"
-                  />
-                  <span className={`text-xs ${
-                    discord_status === "online" ? "text-green-400" :
-                    discord_status === "idle" ? "text-yellow-400" :
-                    discord_status === "dnd" ? "text-red-400" :
-                    "text-gray-400"
-                  }`}>
-                    {getStatusText(discord_status)}
-                  </span>
-                </div>
                 {/* Data de criação da conta */}
                 {(() => {
                   const creationDate = getAccountCreationDate(discord_user.id);
