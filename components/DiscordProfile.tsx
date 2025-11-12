@@ -442,17 +442,14 @@ export default function DiscordProfile() {
     }
     
     switch (activity.type) {
-      case 0:
-      case 5:
-        return <Gamepad2 className="w-5 h-5" />;
-      case 1:
-        // return <Monitor className="w-5 h-5" />; // COMENTADO
-        return <Code className="w-5 h-5" />;
-      case 2:
+      case 0: // Playing
+      case 5: // Competing
+        return <Gamepad2 className="w-5 h-5" />; // Gamepad apenas para jogando
+      case 1: // Streaming
+      case 3: // Watching
+        return <Code className="w-5 h-5" />; // Monitor removido
+      case 2: // Listening
         return <Music className="w-5 h-5" />;
-      case 3:
-        // return <Monitor className="w-5 h-5" />; // COMENTADO
-        return <Code className="w-5 h-5" />;
       default:
         return <Code className="w-5 h-5" />;
     }
