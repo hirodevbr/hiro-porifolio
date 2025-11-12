@@ -905,18 +905,70 @@ export default function DiscordProfile() {
 
   const { discord_user, discord_status, activities = [], spotify, kv } = discordData;
   
-  // Avatar do Discord
+  // Avatar do Discord - suporta GIF animado
   const avatarUrl = discord_user.avatar
-    ? `https://cdn.discordapp.com/avatars/${discord_user.id}/${discord_user.avatar}.png?size=256`
+    ? discord_user.avatar.startsWith("a_")
+      ? `https://cdn.discordapp.com/avatars/${discord_user.id}/${discord_user.avatar}.gif?size=256`
+      : `https://cdn.discordapp.com/avatars/${discord_user.id}/${discord_user.avatar}.png?size=256`
     : `https://cdn.discordapp.com/embed/avatars/${parseInt(discord_user.discriminator) % 5}.png`;
+  
+  const isAnimatedAvatar = discord_user.avatar?.startsWith("a_") || false;
+  
+  // Componente para avatar GIF animado
+  const AnimatedAvatar = () => {
+    const imgRef = useRef<HTMLImageElement>(null);
+    const baseGifUrl = `https://cdn.discordapp.com/avatars/${discord_user.id}/${discord_user.avatar}.gif?size=256`;
+    
+    useEffect(() => {
+      const img = imgRef.current;
+      if (!img) return;
+      
+      // Recarregar o GIF para forçar animação
+      const reloadGif = () => {
+        if (img && img.src.includes('.gif')) {
+          const baseSrc = img.src.split('?')[0];
+          img.src = '';
+          setTimeout(() => {
+            img.src = `${baseSrc}?size=256&nocache=${Date.now()}`;
+          }, 10);
+        }
+      };
+      
+      img.addEventListener('load', reloadGif, { once: true });
+      const timer = setTimeout(reloadGif, 200);
+      
+      return () => {
+        clearTimeout(timer);
+        img.removeEventListener('load', reloadGif);
+      };
+    }, []);
+    
+    return (
+      <img
+        ref={imgRef}
+        src={baseGifUrl}
+        alt={discord_user.username}
+        width={80}
+        height={80}
+        className="rounded-full border-4 border-gray-700"
+        style={{
+          display: 'block',
+          objectFit: 'cover',
+          width: '80px',
+          height: '80px'
+        }}
+        loading="eager"
+      />
+    );
+  };
 
   return (
     <section
-      id="discord"
-      ref={ref}
-      className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-900/50"
-    >
-      <div className="max-w-4xl mx-auto">
+        id="discord"
+        ref={ref}
+        className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-900/50"
+      >
+        <div className="max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -948,15 +1000,19 @@ export default function DiscordProfile() {
                 transition={{ type: "spring", stiffness: 300 }}
                 className="relative w-20 h-20"
               >
-                <Image
-                  src={avatarUrl}
-                  alt={discord_user.username}
-                  width={80}
-                  height={80}
-                  className="rounded-full border-4 border-gray-700"
-                  loading="lazy"
-                  unoptimized
-                />
+                {isAnimatedAvatar ? (
+                  <AnimatedAvatar key={`avatar-${discord_user.id}-${discord_user.avatar}`} />
+                ) : (
+                  <Image
+                    src={avatarUrl}
+                    alt={discord_user.username}
+                    width={80}
+                    height={80}
+                    className="rounded-full border-4 border-gray-700"
+                    loading="lazy"
+                    unoptimized
+                  />
+                )}
               </motion.div>
               <div
                 className={`absolute bottom-0 right-0 w-6 h-6 ${getStatusColor(
