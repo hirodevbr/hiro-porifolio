@@ -91,7 +91,7 @@ interface Badge {
 }
 
 export default function DiscordProfile() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1,
@@ -499,11 +499,11 @@ export default function DiscordProfile() {
     const diffYears = Math.floor(diffDays / 365);
 
     if (diffYears > 0) {
-      return `${diffYears} ${diffYears === 1 ? 'ano' : 'anos'}`;
+      return `${diffYears} ${diffYears === 1 ? t('discord_account_age_year') : t('discord_account_age_years')}`;
     } else if (diffMonths > 0) {
-      return `${diffMonths} ${diffMonths === 1 ? 'mês' : 'meses'}`;
+      return `${diffMonths} ${diffMonths === 1 ? t('discord_account_age_month') : t('discord_account_age_months')}`;
     } else {
-      return `${diffDays} ${diffDays === 1 ? 'dia' : 'dias'}`;
+      return `${diffDays} ${diffDays === 1 ? t('discord_account_age_day') : t('discord_account_age_days')}`;
     }
   };
 
@@ -946,7 +946,8 @@ export default function DiscordProfile() {
   try {
     if (discord_user.id) {
       const creationDate = getAccountCreationDate(discord_user.id);
-      const formattedDate = creationDate.toLocaleDateString('pt-BR', {
+      const locale = language === 'pt_BR' ? 'pt-BR' : 'en-US';
+      const formattedDate = creationDate.toLocaleDateString(locale, {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric'
@@ -1086,7 +1087,7 @@ export default function DiscordProfile() {
                 {accountCreationInfo && (
                   <div className="flex items-center gap-1 mt-1">
                     <span className="text-xs text-gray-500">
-                      Conta criada em {accountCreationInfo.formattedDate} ({accountCreationInfo.accountAge} atrás)
+                      {t('discord_account_created_on')} {accountCreationInfo.formattedDate} ({accountCreationInfo.accountAge} {t('discord_account_age_ago')})
                     </span>
                   </div>
                 )}

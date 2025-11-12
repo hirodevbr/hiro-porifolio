@@ -82,6 +82,14 @@ const translations = {
     discord_competing: "Competindo",
     discord_no_activities: "Nenhuma atividade no momento",
     discord_ago: "Há",
+    discord_account_created_on: "Conta criada em",
+    discord_account_age_ago: "atrás",
+    discord_account_age_year: "ano",
+    discord_account_age_years: "anos",
+    discord_account_age_month: "mês",
+    discord_account_age_months: "meses",
+    discord_account_age_day: "dia",
+    discord_account_age_days: "dias",
     
     // Contact
     contact_title: "Entre em Contato",
@@ -177,6 +185,14 @@ const translations = {
     discord_competing: "Competing",
     discord_no_activities: "No activities at the moment",
     discord_ago: "Ago",
+    discord_account_created_on: "Account created on",
+    discord_account_age_ago: "ago",
+    discord_account_age_year: "year",
+    discord_account_age_years: "years",
+    discord_account_age_month: "month",
+    discord_account_age_months: "months",
+    discord_account_age_day: "day",
+    discord_account_age_days: "days",
     
     // Contact
     contact_title: "Get in Touch",
