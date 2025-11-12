@@ -446,11 +446,13 @@ export default function DiscordProfile() {
       case 5:
         return <Gamepad2 className="w-5 h-5" />;
       case 1:
-        return <Monitor className="w-5 h-5" />;
+        // return <Monitor className="w-5 h-5" />; // COMENTADO
+        return <Code className="w-5 h-5" />;
       case 2:
         return <Music className="w-5 h-5" />;
       case 3:
-        return <Monitor className="w-5 h-5" />;
+        // return <Monitor className="w-5 h-5" />; // COMENTADO
+        return <Code className="w-5 h-5" />;
       default:
         return <Code className="w-5 h-5" />;
     }
