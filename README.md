@@ -102,17 +102,43 @@ href="mailto:hiro.communitydev@exemplo.com"
 
 Para exibir seu perfil do Discord e rich presence:
 
-1. Encontre seu Discord User ID:
+1. **Encontre seu Discord User ID:**
    - Ative o Modo Desenvolvedor no Discord: Configurações > Avançado > Modo Desenvolvedor
    - Clique com botão direito no seu perfil > Copiar ID
    - Ou use: https://discord.id/
 
-2. Edite o arquivo `components/DiscordProfile.tsx`:
+2. **Edite o arquivo `components/DiscordProfile.tsx`:**
 ```typescript
 const DISCORD_USER_ID = "SEU_DISCORD_USER_ID_AQUI";
 ```
 
-3. Para que a rich presence funcione, você precisa:
+3. **Configure o Token do Discord (para banner, avatar e bio atualizados):**
+   
+   **Opção A - Bot Token (Recomendado):**
+   - Acesse https://discord.com/developers/applications
+   - Crie uma nova aplicação ou selecione uma existente
+   - Vá em "Bot" e copie o token
+   - Adicione no arquivo `.env.local`:
+   ```bash
+   DISCORD_BOT_TOKEN=seu_token_aqui
+   ```
+   
+   **Opção B - User Token (Alternativa):**
+   - Abra o Discord no navegador
+   - Pressione F12 para abrir DevTools
+   - Vá em Application > Local Storage > discord.com
+   - Procure por "token" e copie o valor
+   - Adicione no arquivo `.env.local`:
+   ```bash
+   DISCORD_USER_TOKEN=seu_token_aqui
+   ```
+   
+   ⚠️ **ATENÇÃO:** 
+   - Token de usuário expira e precisa ser renovado periodicamente
+   - Bot token é mais estável e recomendado
+   - NUNCA compartilhe seu token publicamente
+
+4. **Para que a rich presence funcione, você precisa:**
    - Ter o Discord aberto
    - Ter "Atividade de Jogo" habilitada nas configurações do Discord
    - Estar em um servidor onde o bot Lanyard pode ver seu status (ou usar um servidor público)
