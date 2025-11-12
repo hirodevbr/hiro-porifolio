@@ -142,7 +142,14 @@ export default function DiscordProfile() {
 
         const data = await response.json();
         
-        if (data.success && data.data) {
+        // Aceitar dados mesmo quando success é false (usuário pode estar offline)
+        // A API ainda retorna dados básicos quando o usuário está offline
+        if (data.data && data.data.discord_user) {
+          // Garantir que discord_status existe, padrão para "offline" se não estiver presente
+          if (!data.data.discord_status) {
+            data.data.discord_status = "offline";
+          }
+          
           // Só atualizar se os dados realmente mudaram
           setDiscordData((prevData) => {
             if (!prevData) {
@@ -166,7 +173,11 @@ export default function DiscordProfile() {
           hasDataRef.current = true;
           setError(null);
         } else {
-          throw new Error("Invalid Discord data");
+          // Se não temos dados e não temos dados anteriores, mostrar erro
+          if (!hasDataRef.current) {
+            throw new Error("Invalid Discord data");
+          }
+          // Se já temos dados anteriores, manter eles (usuário pode estar temporariamente indisponível)
         }
       } catch (err) {
         console.error("Error fetching Discord data:", err);
