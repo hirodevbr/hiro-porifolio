@@ -911,8 +911,6 @@ export default function DiscordProfile() {
   const avatarUrl = discord_user.avatar
     ? `https://cdn.discordapp.com/avatars/${discord_user.id}/${discord_user.avatar}.png?size=256`
     : `https://cdn.discordapp.com/embed/avatars/${parseInt(discord_user.discriminator) % 5}.png`;
-  
-  const bannerColor = discord_user.banner_color || null;
 
   return (
     <section
@@ -944,18 +942,8 @@ export default function DiscordProfile() {
           transition={{ duration: 0.5 }}
           className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 hover:border-primary-500/50 transition-all overflow-hidden"
         >
-          {/* Banner colorido do Discord */}
-          {bannerColor ? (
-            <div className="relative w-full h-32 md:h-40">
-              <div 
-                className="w-full h-full"
-                style={{ backgroundColor: bannerColor }}
-              />
-            </div>
-          ) : null}
-          
           {/* Perfil do Discord */}
-          <div className={`flex items-center gap-4 ${bannerColor ? 'mt-4' : ''} mb-6 pb-6 border-b border-gray-700 px-6 pt-6`}>
+          <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-700 px-6 pt-6">
             <div className="relative">
               <motion.div
                 whileHover={{ scale: 1.05 }}
