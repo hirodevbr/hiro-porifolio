@@ -953,7 +953,7 @@ export default function DiscordProfile() {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5, delay: 0.2 }}
+          transition={{ duration: 0.5 }}
           className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 hover:border-primary-500/50 transition-all overflow-hidden"
         >
           {/* Banner do Discord */}
@@ -1035,7 +1035,7 @@ export default function DiscordProfile() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: 0.25 }}
+              transition={{ duration: 0.3 }}
               className="mb-6 pb-6 border-b border-gray-700 px-6"
             >
               <h4 className="text-sm font-semibold text-gray-400 mb-3 flex items-center gap-2">
@@ -1048,7 +1048,7 @@ export default function DiscordProfile() {
                         key={index}
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={inView ? { opacity: 1, scale: 1 } : {}}
-                        transition={{ delay: 0.3 + index * 0.05 }}
+                        transition={{ duration: 0.3 }}
                         whileHover={{ scale: 1.1, y: -2 }}
                         className="relative group"
                       >
@@ -1095,7 +1095,7 @@ export default function DiscordProfile() {
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={inView ? { opacity: 1, x: 0 } : {}}
-              transition={{ delay: 0.3 }}
+              transition={{ duration: 0.3 }}
               className="mb-6 p-4 bg-gradient-to-r from-green-500/10 to-green-600/10 rounded-lg border border-green-500/20 mx-6"
             >
               {/* Componente Spotify Timer */}
@@ -1225,9 +1225,7 @@ export default function DiscordProfile() {
                     const [imageError, setImageError] = useState(false);
                     const [isLoading, setIsLoading] = useState(true);
                     const [loadedImageUrl, setLoadedImageUrl] = useState<string | null>(null);
-                    const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
                     const prevImageKeyRef = useRef<string>('');
-                    const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
                     useEffect(() => {
                       const urls = getActivityImageUrls(activity);
@@ -1252,74 +1250,39 @@ export default function DiscordProfile() {
                         setLoadedImageUrl(null);
                         prevImageKeyRef.current = currentImageKey;
                       }
-                      
-                      // Limpar timeouts anteriores
-                      if (errorTimeoutRef.current) {
-                        clearTimeout(errorTimeoutRef.current);
-                      }
-                      if (loadTimeoutRef.current) {
-                        clearTimeout(loadTimeoutRef.current);
-                      }
                       // eslint-disable-next-line react-hooks/exhaustive-deps
                     }, [activity.assets?.large_image, activity.application_id]);
 
                     const handleImageError = () => {
-                      // Limpar timeout anterior
-                      if (errorTimeoutRef.current) {
-                        clearTimeout(errorTimeoutRef.current);
-                      }
-
                       // Se já temos uma imagem carregada, não tentar outras URLs para evitar piscar
                       if (loadedImageUrl) {
                         return;
                       }
 
-                      // Usar timeout maior para evitar múltiplos erros rápidos (especialmente para PreMiD)
-                      errorTimeoutRef.current = setTimeout(() => {
-                        setCurrentUrlIndex((prev) => {
-                          if (prev < imageUrls.length - 1) {
-                            return prev + 1;
-                          } else {
-                            setShowFallback(true);
-                            setImageError(true);
-                            setIsLoading(false);
-                            return prev;
-                          }
-                        });
-                        setImageError(false);
-                      }, 300); // Aumentado de 100ms para 300ms
+                      // Tentar próxima URL imediatamente
+                      setCurrentUrlIndex((prev) => {
+                        if (prev < imageUrls.length - 1) {
+                          return prev + 1;
+                        } else {
+                          setShowFallback(true);
+                          setImageError(true);
+                          setIsLoading(false);
+                          return prev;
+                        }
+                      });
+                      setImageError(false);
                     };
 
                     const handleImageLoad = () => {
-                      // Limpar timeout de erro se a imagem carregou
-                      if (errorTimeoutRef.current) {
-                        clearTimeout(errorTimeoutRef.current);
-                        errorTimeoutRef.current = null;
-                      }
-                      
                       // Salvar URL da imagem carregada com sucesso
                       if (imageUrls[currentUrlIndex]) {
                         setLoadedImageUrl(imageUrls[currentUrlIndex]);
                       }
                       
-                      // Usar timeout pequeno para suavizar a transição
-                      loadTimeoutRef.current = setTimeout(() => {
-                        setIsLoading(false);
-                        setImageError(false);
-                      }, 50);
+                      // Atualizar estado imediatamente
+                      setIsLoading(false);
+                      setImageError(false);
                     };
-
-                    // Cleanup
-                    useEffect(() => {
-                      return () => {
-                        if (errorTimeoutRef.current) {
-                          clearTimeout(errorTimeoutRef.current);
-                        }
-                        if (loadTimeoutRef.current) {
-                          clearTimeout(loadTimeoutRef.current);
-                        }
-                      };
-                    }, []);
 
                     // Se todas as URLs falharam ou não há URLs, mostrar fallback com ícone apropriado
                     if (showFallback || imageUrls.length === 0) {
@@ -1375,7 +1338,7 @@ export default function DiscordProfile() {
                       key={index}
                       initial={{ opacity: 0, x: -20 }}
                       animate={inView ? { opacity: 1, x: 0 } : {}}
-                      transition={{ delay: 0.4 + index * 0.1 }}
+                      transition={{ duration: 0.3 }}
                       className="p-4 bg-gray-700/30 rounded-lg border border-gray-600/50"
                     >
                       <div className="flex items-start gap-4">
