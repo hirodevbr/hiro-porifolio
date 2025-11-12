@@ -386,37 +386,50 @@ export default function DiscordProfile() {
     const smallImage = activity.assets.small_image;
     const applicationId = activity.application_id;
 
-    // Se a imagem começa com "mp:", é uma URL externa
-    if (smallImage.startsWith("mp:")) {
+    // PRIORIDADE 1: Se a imagem começa com "mp:", é uma URL externa (PreMiD, etc.)
+    // IMPORTANTE: URLs mp: não devem ser usadas no Discord CDN
+    if (smallImage && smallImage.startsWith("mp:")) {
       const match = smallImage.match(/mp:external\/(.+)/);
       if (match) {
         const urlPart = match[1];
         
         const httpsMatch = urlPart.match(/(?:https|http)\/(.+)/);
         if (httpsMatch) {
-          return `https://${httpsMatch[1]}`;
+          // Decodificar a URL que está após "https/"
+          try {
+            const decodedUrl = decodeURIComponent(httpsMatch[1]);
+            return decodedUrl.startsWith("http://") || decodedUrl.startsWith("https://")
+              ? decodedUrl
+              : `https://${decodedUrl}`;
+          } catch {
+            return `https://${httpsMatch[1]}`;
+          }
         }
         
+        // Tentar decodificar diretamente
         try {
           const decodedUrl = decodeURIComponent(urlPart);
           if (decodedUrl.startsWith("http://") || decodedUrl.startsWith("https://")) {
             return decodedUrl;
-          }
-          if (decodedUrl.startsWith("//")) {
+          } else if (decodedUrl.startsWith("//")) {
             return `https:${decodedUrl}`;
+          } else {
+            return `https://${decodedUrl}`;
           }
-          return `https://${decodedUrl}`;
         } catch {
           if (urlPart.startsWith("http://") || urlPart.startsWith("https://")) {
             return urlPart;
+          } else {
+            return `https://${urlPart}`;
           }
-          return `https://${urlPart}`;
         }
       }
+      // Retornar null se não conseguir decodificar
+      return null;
     }
 
-    // Se tem application_id, usar CDN do Discord
-    if (applicationId) {
+    // PRIORIDADE 2: Se tem application_id e smallImage NÃO começa com "mp:", usar CDN do Discord
+    if (applicationId && smallImage && !smallImage.startsWith("mp:")) {
       return `https://cdn.discordapp.com/app-assets/${applicationId}/${smallImage}.png`;
     }
 
