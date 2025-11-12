@@ -9,6 +9,8 @@ import {
   Cloud,
   GitBranch,
   Palette,
+  Brain,
+  Bot,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -55,6 +57,18 @@ export default function Skills() {
       icon: Palette,
       technologies: ["UI/UX", "Figma", "Tailwind CSS"],
       color: "from-pink-500 to-rose-500",
+    },
+    {
+      category: "IA",
+      icon: Brain,
+      technologies: ["IA"],
+      color: "from-indigo-500 to-purple-500",
+    },
+    {
+      category: "Discord Bot Developer",
+      icon: Bot,
+      technologies: ["Discord Bot Developer"],
+      color: "from-blue-500 to-indigo-500",
     },
   ];
 
