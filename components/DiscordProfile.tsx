@@ -941,6 +941,23 @@ export default function DiscordProfile() {
   
   const isAnimatedAvatar = discord_user.avatar?.startsWith("a_") || false;
   
+  // Calcular data de criação da conta
+  let accountCreationInfo: { formattedDate: string; accountAge: string } | null = null;
+  try {
+    if (discord_user.id) {
+      const creationDate = getAccountCreationDate(discord_user.id);
+      const formattedDate = creationDate.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+      const accountAge = formatCreationDate(creationDate);
+      accountCreationInfo = { formattedDate, accountAge };
+    }
+  } catch (error) {
+    console.error('Erro ao calcular data de criação:', error);
+  }
+  
   // Componente para avatar GIF animado
   const AnimatedAvatar = () => {
     const imgRef = useRef<HTMLImageElement>(null);
@@ -1066,22 +1083,13 @@ export default function DiscordProfile() {
                   )}
                 </div>
                 {/* Data de criação da conta */}
-                {(() => {
-                  const creationDate = getAccountCreationDate(discord_user.id);
-                  const formattedDate = creationDate.toLocaleDateString('pt-BR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                  });
-                  const accountAge = formatCreationDate(creationDate);
-                  return (
-                    <div className="flex items-center gap-1 mt-1">
-                      <span className="text-xs text-gray-500">
-                        Conta criada em {formattedDate} ({accountAge} atrás)
-                      </span>
-                    </div>
-                  );
-                })()}
+                {accountCreationInfo && (
+                  <div className="flex items-center gap-1 mt-1">
+                    <span className="text-xs text-gray-500">
+                      Conta criada em {accountCreationInfo.formattedDate} ({accountCreationInfo.accountAge} atrás)
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1427,7 +1435,7 @@ export default function DiscordProfile() {
                             </p>
                           )}
                           {activity.state && (
-                            <p className="text-sm text-gray-400 mb-1.5">
+                            <p className="text-sm text-gray-400 mb-1.5 font-medium">
                               {activity.state}
                             </p>
                           )}
