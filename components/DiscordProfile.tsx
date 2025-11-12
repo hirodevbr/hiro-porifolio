@@ -907,24 +907,12 @@ export default function DiscordProfile() {
 
   const { discord_user, discord_status, activities = [], spotify, kv } = discordData;
   
-  // Banner do Discord
-  // Configuração manual do banner (encontrado na API do Discord)
-  // Hash do banner: a_c09674aec6189e73e7d3073f6656f65d (animado)
-  // Cor do banner: #232428
-  const MANUAL_BANNER_HASH = "a_c09674aec6189e73e7d3073f6656f65d";
-  const MANUAL_BANNER_COLOR = "#232428";
-  
+  // Avatar do Discord
   const avatarUrl = discord_user.avatar
     ? `https://cdn.discordapp.com/avatars/${discord_user.id}/${discord_user.avatar}.png?size=256`
     : `https://cdn.discordapp.com/embed/avatars/${parseInt(discord_user.discriminator) % 5}.png`;
   
-  const bannerUrl = discord_user.banner || MANUAL_BANNER_HASH
-    ? (discord_user.banner || MANUAL_BANNER_HASH).startsWith("a_")
-      ? `https://cdn.discordapp.com/banners/${discord_user.id}/${discord_user.banner || MANUAL_BANNER_HASH}.gif?size=1024`
-      : `https://cdn.discordapp.com/banners/${discord_user.id}/${discord_user.banner || MANUAL_BANNER_HASH}.png?size=1024`
-    : null;
-  
-  const bannerColor = discord_user.banner_color || MANUAL_BANNER_COLOR;
+  const bannerColor = discord_user.banner_color || null;
 
   return (
     <section
@@ -956,36 +944,18 @@ export default function DiscordProfile() {
           transition={{ duration: 0.5 }}
           className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 hover:border-primary-500/50 transition-all overflow-hidden"
         >
-          {/* Banner do Discord */}
-          {bannerUrl ? (
-            <div className="relative w-full h-32 md:h-40 overflow-hidden">
-              <Image
-                src={bannerUrl}
-                alt="Banner"
-                fill
-                className="object-cover"
-                loading="lazy"
-                unoptimized
-                sizes="100vw"
-              />
-              {/* Overlay gradiente no banner */}
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-gray-800/50" />
-              {/* Fade para o card do perfil */}
-              <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-b from-transparent to-gray-800/50" />
-            </div>
-          ) : bannerColor ? (
+          {/* Banner colorido do Discord */}
+          {bannerColor ? (
             <div className="relative w-full h-32 md:h-40">
               <div 
                 className="w-full h-full"
                 style={{ backgroundColor: bannerColor }}
               />
-              {/* Fade para o card do perfil */}
-              <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-b from-transparent to-gray-800/50" />
             </div>
           ) : null}
           
           {/* Perfil do Discord */}
-          <div className={`flex items-center gap-4 ${bannerUrl || bannerColor ? 'mt-4' : ''} mb-6 pb-6 border-b border-gray-700 px-6 pt-6`}>
+          <div className={`flex items-center gap-4 ${bannerColor ? 'mt-4' : ''} mb-6 pb-6 border-b border-gray-700 px-6 pt-6`}>
             <div className="relative">
               <motion.div
                 whileHover={{ scale: 1.05 }}
