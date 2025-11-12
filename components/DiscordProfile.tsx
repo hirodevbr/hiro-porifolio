@@ -447,8 +447,8 @@ export default function DiscordProfile() {
         return <Code className="w-5 h-5" />; // Code para streaming
       case 2: // Listening
         return <Music className="w-5 h-5" />;
-      case 3: // Watching - Code para evitar bug do Monitor
-        return <Code className="w-5 h-5" />;
+      case 3: // Watching - não mostrar ícone
+        return null;
       default:
         return <Code className="w-5 h-5" />;
     }
@@ -1357,10 +1357,15 @@ export default function DiscordProfile() {
 
                     // Se todas as URLs falharam ou não há URLs, mostrar fallback com ícone apropriado
                     if (showFallback || imageUrls.length === 0) {
+                      const activityIcon = getActivityIcon(activity);
+                      // Se não há ícone (ex: watching), não mostrar fallback
+                      if (!activityIcon) {
+                        return null;
+                      }
                       return (
                         <div className="w-20 h-20 bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
                           <div className="text-primary-400">
-                            {getActivityIcon(activity)}
+                            {activityIcon}
                           </div>
                         </div>
                       );
@@ -1373,10 +1378,15 @@ export default function DiscordProfile() {
 
                     // Se não há URL válida, mostrar fallback
                     if (!imageUrlToUse) {
+                      const activityIcon = getActivityIcon(activity);
+                      // Se não há ícone (ex: watching), não mostrar fallback
+                      if (!activityIcon) {
+                        return null;
+                      }
                       return (
                         <div className="w-20 h-20 bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
                           <div className="text-primary-400">
-                            {getActivityIcon(activity)}
+                            {activityIcon}
                           </div>
                         </div>
                       );
