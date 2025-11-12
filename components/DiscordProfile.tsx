@@ -1231,11 +1231,20 @@ export default function DiscordProfile() {
 
                     useEffect(() => {
                       const urls = getActivityImageUrls(activity);
+                      // Filtrar URLs inválidas que contêm "mp:" no meio (não devem estar no Discord CDN)
+                      const validUrls = urls.filter(url => {
+                        // Se a URL contém "mp:external" e também contém "discordapp.com", é inválida
+                        if (url.includes('mp:external') && url.includes('discordapp.com')) {
+                          return false;
+                        }
+                        return true;
+                      });
+                      
                       const currentImageKey = `${activity.assets?.large_image || 'no-image'}-${activity.application_id || 'no-app-id'}`;
                       
                       // Só resetar se a imagem realmente mudou
                       if (prevImageKeyRef.current !== currentImageKey) {
-                        setImageUrls(urls);
+                        setImageUrls(validUrls);
                         setCurrentUrlIndex(0);
                         setShowFallback(false);
                         setImageError(false);
