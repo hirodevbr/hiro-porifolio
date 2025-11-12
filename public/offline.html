@@ -33,6 +33,27 @@
       opacity: 0.8;
     }
     
+    .gif-container {
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .gif-container img {
+      max-width: 200px;
+      height: auto;
+      image-rendering: auto;
+      -webkit-animation-play-state: running;
+      animation-play-state: running;
+      will-change: transform;
+    }
+    
+    /* Forçar animação do GIF */
+    .gif-container img[src$=".gif"] {
+      animation: none !important;
+    }
+    
     h1 {
       font-size: 32px;
       margin-bottom: 16px;
@@ -78,7 +99,12 @@
 </head>
 <body>
   <div class="container">
+    <!-- Opção 1: Usar GIF animado - Descomente a linha abaixo e adicione o caminho do seu GIF -->
+    <!-- Exemplo: <div class="gif-container"><img src="/seu-gif.gif" alt="Offline" loading="eager" /></div> -->
+    
+    <!-- Opção 2: Usar emoji (padrão) - Comente a linha abaixo se usar GIF -->
     <div class="icon">📡</div>
+    
     <h1>Você está offline</h1>
     <p>Parece que você perdeu a conexão com a internet. Não se preocupe, você ainda pode navegar pelo conteúdo que já foi carregado.</p>
     <a href="/" class="button">Voltar para o início</a>
@@ -89,6 +115,37 @@
     window.addEventListener('online', () => {
       window.location.reload();
     });
+    
+    // Forçar animação do GIF
+    // Verificar se o DOM já está pronto ou aguardar DOMContentLoaded
+    const initGifAnimation = () => {
+      const gifImages = document.querySelectorAll('.gif-container img[src$=".gif"]');
+      gifImages.forEach(img => {
+        // Forçar recarregamento do GIF para garantir animação
+        const src = img.src;
+        img.src = '';
+        img.src = src;
+        
+        // Garantir que o GIF não seja pausado pelo navegador
+        img.style.animationPlayState = 'running';
+        img.style.webkitAnimationPlayState = 'running';
+        
+        // Adicionar listener para garantir animação contínua
+        img.addEventListener('load', () => {
+          img.style.display = 'none';
+          img.offsetHeight; // Trigger reflow
+          img.style.display = '';
+        });
+      });
+    };
+    
+    // Executar imediatamente se o DOM já estiver pronto, senão aguardar
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initGifAnimation);
+    } else {
+      // DOM já está pronto, executar imediatamente
+      initGifAnimation();
+    }
   </script>
 </body>
 </html>
