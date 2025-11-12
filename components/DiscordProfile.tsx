@@ -446,10 +446,11 @@ export default function DiscordProfile() {
       case 5: // Competing
         return <Gamepad2 className="w-5 h-5" />; // Gamepad apenas para jogando
       case 1: // Streaming
-      case 3: // Watching
-        return <Code className="w-5 h-5" />; // Monitor removido
+        return <Code className="w-5 h-5" />; // Code para streaming
       case 2: // Listening
         return <Music className="w-5 h-5" />;
+      case 3: // Watching - Code para evitar bug do Monitor
+        return <Code className="w-5 h-5" />;
       default:
         return <Code className="w-5 h-5" />;
     }
