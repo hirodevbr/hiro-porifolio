@@ -61,7 +61,7 @@ export default function BugHunter() {
         index += 1;
         return next;
       });
-    }, 900);
+    }, 5000);
 
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
