@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { MapPin, Calendar, Heart } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import WeatherTime from "./WeatherTime";
 
 export default function About() {
   const { t } = useLanguage();
@@ -112,17 +113,11 @@ export default function About() {
                 <p className="text-white font-semibold">{t("about_passion_value")}</p>
               </motion.div>
             </div>
-          </motion.div>
-
-          <motion.div
-            variants={itemVariants}
-            initial="hidden"
-            animate={inView ? "visible" : "hidden"}
-            className="relative"
-          >
             <motion.div
-              className="bg-gradient-to-br from-primary-500/20 to-purple-500/20 rounded-2xl p-8 backdrop-blur-sm border border-gray-700 hover:border-primary-500/50 hover:shadow-xl hover:shadow-primary-500/20 card-hover"
-              whileHover={{ scale: 1.02, y: -4 }}
+              variants={itemVariants}
+              initial="hidden"
+              animate={inView ? "visible" : "hidden"}
+              className="bg-gradient-to-br from-primary-500/20 to-purple-500/20 rounded-2xl p-6 backdrop-blur-sm border border-gray-700 hover:border-primary-500/50 hover:shadow-xl hover:shadow-primary-500/20 card-hover mt-6"
             >
               <div className="space-y-4">
                 <div>
@@ -151,6 +146,15 @@ export default function About() {
                 </div>
               </div>
             </motion.div>
+          </motion.div>
+
+          <motion.div
+            variants={itemVariants}
+            initial="hidden"
+            animate={inView ? "visible" : "hidden"}
+            className="relative"
+          >
+            <WeatherTime />
           </motion.div>
         </div>
       </div>

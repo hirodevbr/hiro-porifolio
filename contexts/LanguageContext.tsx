@@ -49,6 +49,15 @@ const translations = {
     about_curiosity_title: "⚡ Curiosidade",
     about_curiosity_text: "As capas da Patrulha da Noite de Game of Thrones são feitas de tapetes da Ikea! 🎭",
     
+    // Bug Hunter
+    bughunter_title: "Bug Hunter",
+    bughunter_subtitle: "Eu adoro quebrar coisas para deixá-las melhores.",
+    bughunter_description_1: "Sou caçador de bugs em sites, aplicações web e servidores Discord.",
+    bughunter_description_2: "Procuro glitches visuais, comportamentos estranhos e problemas de experiência para que os usuários finais tenham uma navegação mais fluida.",
+    bughunter_chip_label: "Caçador de bugs",
+    bughunter_status_scanning: "Scaneando o site...",
+    bughunter_status_found: "Bug encontrado! Corrigindo...",
+
     // Skills
     skills_title: "Skills",
     skills_subtitle: "Tecnologias que domino",
@@ -158,6 +167,15 @@ const translations = {
     about_curiosity_title: "⚡ Curiosity",
     about_curiosity_text: "The Night's Watch cloaks from Game of Thrones are made from Ikea rugs! 🎭",
     
+    // Bug Hunter
+    bughunter_title: "Bug Hunter",
+    bughunter_subtitle: "I love breaking things to make them better.",
+    bughunter_description_1: "I'm a bug hunter in websites, web apps and Discord servers.",
+    bughunter_description_2: "I look for visual glitches, strange behaviors and UX problems so end users can have a smoother experience.",
+    bughunter_chip_label: "Bug hunter",
+    bughunter_status_scanning: "Scanning the site...",
+    bughunter_status_found: "Bug found! Fixing...",
+
     // Skills
     skills_title: "Skills",
     skills_subtitle: "Technologies I master",
