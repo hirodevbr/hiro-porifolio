@@ -57,6 +57,11 @@ const translations = {
     bughunter_chip_label: "Caçador de bugs",
     bughunter_status_scanning: "Scaneando o site...",
     bughunter_status_found: "Bug encontrado! Corrigindo...",
+    bughunter_log_scanning: "[scan] Procurando bugs em discord, web e APIs...",
+    bughunter_log_bug_found: "[warn] Bug encontrado em componente crítico.",
+    bughunter_log_reported: "[report] Bug reportado com evidências e passos de reprodução.",
+    bughunter_log_fixed: "[fix] Bug corrigido e validado em produção.",
+    bughunter_log_placeholder: "Aguardando execução do scanner de bugs...",
 
     // Skills
     skills_title: "Skills",
@@ -175,6 +180,11 @@ const translations = {
     bughunter_chip_label: "Bug hunter",
     bughunter_status_scanning: "Scanning the site...",
     bughunter_status_found: "Bug found! Fixing...",
+    bughunter_log_scanning: "[scan] Looking for bugs in discord, web and APIs...",
+    bughunter_log_bug_found: "[warn] Bug found in a critical component.",
+    bughunter_log_reported: "[report] Bug reported with evidence and reproduction steps.",
+    bughunter_log_fixed: "[fix] Bug fixed and validated in production.",
+    bughunter_log_placeholder: "Waiting for the bug scanner to start...",
 
     // Skills
     skills_title: "Skills",

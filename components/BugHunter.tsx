@@ -1,8 +1,30 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { useLanguage } from "@/contexts/LanguageContext";
+
+const floatingElements = [
+  {
+    id: "f1",
+    icon: "< />",
+    className:
+      "hidden md:block absolute -left-2 top-24 text-xs text-primary-500/40",
+  },
+  {
+    id: "f2",
+    icon: "{}",
+    className:
+      "hidden md:block absolute right-10 top-10 text-xs text-purple-400/40",
+  },
+  {
+    id: "f3",
+    icon: "🐞",
+    className:
+      "hidden md:block absolute left-10 bottom-10 text-2xl text-emerald-400/50",
+  },
+];
 
 export default function BugHunter() {
   const { t } = useLanguage();
@@ -10,6 +32,54 @@ export default function BugHunter() {
     triggerOnce: true,
     threshold: 0.1,
   });
+
+  const [visibleLogs, setVisibleLogs] = useState<string[]>([]);
+  const [caretVisible, setCaretVisible] = useState(true);
+
+  const logs = [
+    t("bughunter_log_scanning"),
+    t("bughunter_log_bug_found"),
+    t("bughunter_log_reported"),
+    t("bughunter_log_fixed"),
+  ];
+
+  useEffect(() => {
+    if (!inView) return;
+
+    setVisibleLogs([]);
+    let index = 0;
+
+    const interval = setInterval(() => {
+      setVisibleLogs((prev) => {
+        if (index >= logs.length) {
+          clearInterval(interval);
+          return prev;
+        }
+        const next = [...prev, logs[index]];
+        index += 1;
+        return next;
+      });
+    }, 700);
+
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inView, t]);
+
+  useEffect(() => {
+    const blink = setInterval(() => {
+      setCaretVisible((prev) => !prev);
+    }, 500);
+
+    return () => clearInterval(blink);
+  }, []);
+
+  const getLogColor = (line: string) => {
+    if (line.startsWith("[scan]")) return "text-cyan-300";
+    if (line.startsWith("[warn]")) return "text-yellow-300";
+    if (line.startsWith("[report]")) return "text-purple-300";
+    if (line.startsWith("[fix]")) return "text-emerald-300";
+    return "text-gray-300";
+  };
 
   return (
     <section
@@ -21,12 +91,49 @@ export default function BugHunter() {
       <motion.div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 opacity-20"
-        initial={{ opacity: 0 }}
-        animate={inView ? { opacity: 0.2 } : {}}
-        transition={{ duration: 1 }}
+        initial={{ opacity: 0, scale: 1 }}
+        animate={
+          inView
+            ? {
+                opacity: 0.2,
+                scale: [1, 1.03, 1],
+                rotate: [0, 0.5, -0.5, 0],
+              }
+            : {}
+        }
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
       >
         <div className="w-full h-full bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.15),_transparent_60%),radial-gradient(circle_at_bottom,_rgba(147,51,234,0.15),_transparent_60%)]" />
       </motion.div>
+
+      {/* elementos flutuando em volta da seção */}
+      {floatingElements.map((item, index) => (
+        <motion.span
+          key={item.id}
+          aria-hidden="true"
+          className={item.className}
+          animate={
+            inView
+              ? {
+                  y: [0, -10, 0],
+                  x: [0, index % 2 === 0 ? 8 : -8, 0],
+                  opacity: [0.4, 1, 0.4],
+                }
+              : {}
+          }
+          transition={{
+            duration: 6 + index * 1.2,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        >
+          {item.icon}
+        </motion.span>
+      ))}
 
       <div className="max-w-7xl mx-auto relative z-10">
         {/* título */}
@@ -69,7 +176,8 @@ export default function BugHunter() {
 
             <div className="grid sm:grid-cols-2 gap-4 pt-4">
               <motion.div
-                whileHover={{ y: -4, scale: 1.02 }}
+                whileHover={{ y: -4, scale: 1.04 }}
+                transition={{ type: "spring", stiffness: 200, damping: 18 }}
                 className="bg-gray-800/60 border border-gray-700 rounded-xl p-4"
               >
                 <p className="text-sm text-gray-400 mb-1">
@@ -84,7 +192,8 @@ export default function BugHunter() {
               </motion.div>
 
               <motion.div
-                whileHover={{ y: -4, scale: 1.02 }}
+                whileHover={{ y: -4, scale: 1.04 }}
+                transition={{ type: "spring", stiffness: 200, damping: 18 }}
                 className="bg-gray-800/60 border border-primary-500/40 rounded-xl p-4"
               >
                 <p className="text-sm text-gray-400 mb-1">
@@ -104,6 +213,7 @@ export default function BugHunter() {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={inView ? { opacity: 1, x: 0 } : {}}
+            whileHover={{ y: -8, scale: 1.02 }}
             transition={{ duration: 0.6 }}
             className="relative"
           >
@@ -193,6 +303,53 @@ export default function BugHunter() {
                 <p className="mt-1 text-xs md:text-sm text-primary-300 font-mono">
                   ✔ {t("bughunter_status_found")}
                 </p>
+
+                {/* logs com efeito de digitação */}
+                <motion.div
+                  className="mt-4 rounded-md bg-black/40 border border-gray-800 px-3 py-2 font-mono text-[11px] md:text-xs max-h-32 overflow-hidden"
+                  animate={
+                    inView
+                      ? {
+                          boxShadow: [
+                            "0 0 0 rgba(59,130,246,0)",
+                            "0 0 24px rgba(59,130,246,0.25)",
+                            "0 0 0 rgba(59,130,246,0)",
+                          ],
+                        }
+                      : {}
+                  }
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                >
+                  {visibleLogs.map((line, index) => {
+                    const isLast = index === visibleLogs.length - 1;
+                    return (
+                      <div
+                        key={`${line}-${index}`}
+                        className="flex items-center gap-2"
+                      >
+                        <span className="text-primary-500 select-none">
+                          {index === 0 ? ">" : "•"}
+                        </span>
+                        <span className={`whitespace-pre-wrap ${getLogColor(line)}`}>
+                          {line}
+                          {isLast && caretVisible ? " ▌" : ""}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {visibleLogs.length === 0 && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-primary-500 select-none">{">"}</span>
+                      <span className="whitespace-pre-wrap opacity-60">
+                        {t("bughunter_log_placeholder")}
+                      </span>
+                    </div>
+                  )}
+                </motion.div>
               </div>
 
               {/* linha de scan descendo */}
