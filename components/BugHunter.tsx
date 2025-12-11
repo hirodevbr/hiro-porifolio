@@ -26,6 +26,8 @@ const floatingElements = [
   },
 ];
 
+const platformSlugs = ["discord", "youtube", "instagram", "netflix", "github", "sites"];
+
 export default function BugHunter() {
   const { t, language } = useLanguage();
   const [ref, inView] = useInView({
@@ -35,6 +37,7 @@ export default function BugHunter() {
 
   const [visibleLogs, setVisibleLogs] = useState<string[]>([]);
   const [caretVisible, setCaretVisible] = useState(true);
+  const [currentPlatformIndex, setCurrentPlatformIndex] = useState(0);
 
   const platforms =
     language === "pt_BR"
@@ -54,6 +57,7 @@ export default function BugHunter() {
     setVisibleLogs([]);
     let index = 0;
     let platformIndex = 0;
+    setCurrentPlatformIndex(0);
     let currentLogs = getLogsForPlatform(platforms[platformIndex]);
 
     const interval = setInterval(() => {
@@ -62,6 +66,7 @@ export default function BugHunter() {
         if (index >= currentLogs.length) {
           index = 0;
           platformIndex = (platformIndex + 1) % platforms.length;
+          setCurrentPlatformIndex(platformIndex);
           currentLogs = getLogsForPlatform(platforms[platformIndex]);
           return [];
         }
@@ -91,6 +96,9 @@ export default function BugHunter() {
     if (line.startsWith("[fix]")) return "text-emerald-300";
     return "text-gray-300";
   };
+
+  const currentPlatformSlug =
+    platformSlugs[currentPlatformIndex] ?? "web";
 
   return (
     <section
@@ -192,10 +200,10 @@ export default function BugHunter() {
                 className="bg-gray-800/60 border border-gray-700 rounded-xl p-4"
               >
                 <p className="text-sm text-gray-400 mb-1">
-                  {t("about_location")}
+                  {t("bughunter_os_label")}
                 </p>
                 <p className="text-white font-semibold">
-                  {t("about_location_value")}
+                  {t("bughunter_os_value")}
                 </p>
                 <p className="text-xs text-gray-500 mt-2">
                   {t("bughunter_status_scanning")}
@@ -309,7 +317,7 @@ export default function BugHunter() {
                 </motion.div>
 
                 <p className="mt-6 text-sm md:text-base text-gray-400 font-mono">
-                  $ npm run scan --target="discord,web"
+                  $ npm run scan --target="{currentPlatformSlug},web"
                 </p>
                 <p className="mt-1 text-xs md:text-sm text-primary-300 font-mono">
                   ✔ {t("bughunter_status_found")}
