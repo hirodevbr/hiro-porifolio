@@ -51,15 +51,17 @@ export default function BugHunter() {
 
     const interval = setInterval(() => {
       setVisibleLogs((prev) => {
+        // quando termina a sequência, recomeça do zero e limpa o console
         if (index >= logs.length) {
-          clearInterval(interval);
-          return prev;
+          index = 0;
+          return [];
         }
+
         const next = [...prev, logs[index]];
         index += 1;
         return next;
       });
-    }, 700);
+    }, 900);
 
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
