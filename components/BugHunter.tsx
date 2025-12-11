@@ -27,7 +27,7 @@ const floatingElements = [
 ];
 
 export default function BugHunter() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1,
@@ -36,8 +36,13 @@ export default function BugHunter() {
   const [visibleLogs, setVisibleLogs] = useState<string[]>([]);
   const [caretVisible, setCaretVisible] = useState(true);
 
-  const logs = [
-    t("bughunter_log_scanning"),
+  const platforms =
+    language === "pt_BR"
+      ? ["Discord", "YouTube", "Instagram", "Netflix", "GitHub", "Outros sites"]
+      : ["Discord", "YouTube", "Instagram", "Netflix", "GitHub", "Other sites"];
+
+  const getLogsForPlatform = (platform: string) => [
+    `${t("bughunter_log_scanning")} ${platform}...`,
     t("bughunter_log_bug_found"),
     t("bughunter_log_reported"),
     t("bughunter_log_fixed"),
@@ -48,16 +53,20 @@ export default function BugHunter() {
 
     setVisibleLogs([]);
     let index = 0;
+    let platformIndex = 0;
+    let currentLogs = getLogsForPlatform(platforms[platformIndex]);
 
     const interval = setInterval(() => {
       setVisibleLogs((prev) => {
         // quando termina a sequência, recomeça do zero e limpa o console
-        if (index >= logs.length) {
+        if (index >= currentLogs.length) {
           index = 0;
+          platformIndex = (platformIndex + 1) % platforms.length;
+          currentLogs = getLogsForPlatform(platforms[platformIndex]);
           return [];
         }
 
-        const next = [...prev, logs[index]];
+        const next = [...prev, currentLogs[index]];
         index += 1;
         return next;
       });
