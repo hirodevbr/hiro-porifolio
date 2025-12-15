@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useMotionValue, useSpring, useTransform, useScroll } from "framer-motion";
-import { ArrowDown, Code, Sparkles } from "lucide-react";
+import { ArrowDown, Code, Sparkles, User } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -205,6 +205,33 @@ export default function Hero() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center">
+          {/* Avatar circular */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
+            className="mb-8 flex justify-center"
+          >
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 300 }}
+              className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-primary-500/20 to-purple-500/20 border-4 border-primary-500/50 flex items-center justify-center shadow-2xl shadow-primary-500/30 backdrop-blur-sm"
+            >
+              {/* Por enquanto usando ícone fictício - substitua por sua foto depois */}
+              <User className="w-16 h-16 md:w-20 md:h-20 text-primary-400" aria-hidden="true" />
+              {/* Quando tiver a foto, adicione: import Image from "next/image"; e use:
+              <Image
+                src="/sua-foto.jpg"
+                alt="Samuel (hiro)"
+                width={160}
+                height={160}
+                className="rounded-full object-cover w-full h-full"
+                priority
+              />
+              */}
+            </motion.div>
+          </motion.div>
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

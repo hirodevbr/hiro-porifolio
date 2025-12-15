@@ -769,11 +769,11 @@ export default function DiscordProfile() {
       "Desenvolvedor Ativo",
       "Impulso de Servidor",
       "Pomelo",
+      "Missão Completa",
       "Orb",
       "Bug Hunter Nível 2",
       "Bug Hunter Nível 1",
-      "Early Supporter",
-      "Missão Completa"
+      "Early Supporter"
     ];
     
     return badges.sort((a, b) => {
@@ -867,11 +867,11 @@ export default function DiscordProfile() {
       "Desenvolvedor Ativo",
       "Impulso de Servidor",
       "Pomelo",
+      "Missão Completa",
       "Orb",
       "Bug Hunter Nível 2",
       "Bug Hunter Nível 1",
-      "Early Supporter",
-      "Missão Completa"
+      "Early Supporter"
     ];
     
     calculatedBadges.sort((a, b) => {
