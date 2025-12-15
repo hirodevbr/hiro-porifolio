@@ -110,10 +110,15 @@ const translations = {
     discord_servers_subtitle: "Servidores onde trabalho como gerente de comunidade e moderador",
     discord_servers_tab_community: "Gerente de Comunidade e Moderador",
     discord_servers_tab_ecosystem: "Servidor do Ecossistema",
+    discord_servers_tab_friends: "Meu Servidor de Amigos",
+    discord_servers_tab_previous: "Servidores Anteriores",
     discord_servers_join: "Entrar no servidor",
     discord_servers_itsatrap_desc: "Servidor de comunidade onde atuo como desenvolvedor, criando soluções e contribuindo para o crescimento da plataforma.",
     discord_servers_viggle_desc: "Servidor de comunidade onde atuo como moderador, ajudando a manter um ambiente saudável e acolhedor.",
     discord_servers_admins_desc: "Comunidade oficial para administradores de servidores Discord. Um espaço para compartilhar conhecimento, experiências e melhores práticas de moderação e gestão de comunidades.",
+    discord_servers_friends_desc: "Meu servidor pessoal de amigos, um lugar descontraído para conversar e passar o tempo.",
+    discord_servers_previous_construction: "Em Construção",
+    discord_servers_previous_construction_desc: "Esta seção está sendo desenvolvida. Em breve você poderá ver os servidores onde já trabalhei anteriormente.",
     
     // Contact
     contact_title: "Entre em Contato",
@@ -237,10 +242,15 @@ const translations = {
     discord_servers_subtitle: "Servers where I work as community manager and moderator",
     discord_servers_tab_community: "Community Manager & Moderator",
     discord_servers_tab_ecosystem: "Ecosystem Server",
+    discord_servers_tab_friends: "My Friends Server",
+    discord_servers_tab_previous: "Previous Servers",
     discord_servers_join: "Join server",
     discord_servers_itsatrap_desc: "Community server where I work as a developer, creating solutions and contributing to platform growth.",
     discord_servers_viggle_desc: "Community server where I work as a moderator, helping maintain a healthy and welcoming environment.",
     discord_servers_admins_desc: "Official community for Discord server administrators. A space to share knowledge, experiences and best practices for moderation and community management.",
+    discord_servers_friends_desc: "My personal friends server, a relaxed place to chat and hang out.",
+    discord_servers_previous_construction: "Under Construction",
+    discord_servers_previous_construction_desc: "This section is being developed. Soon you'll be able to see the servers where I previously worked.",
     
     // Contact
     contact_title: "Get in Touch",
@@ -269,23 +279,32 @@ const translations = {
 };
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
+  // Sempre inicializar com pt_BR para consistência entre servidor e cliente
   const [language, setLanguageState] = useState<Language>("pt_BR");
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    // Carregar idioma salvo do localStorage
-    const savedLanguage = localStorage.getItem("language") as Language;
-    if (savedLanguage && (savedLanguage === "pt_BR" || savedLanguage === "en_US")) {
-      setLanguageState(savedLanguage);
+    // Após a hidratação, carregar o idioma do localStorage
+    setIsHydrated(true);
+    if (typeof window !== "undefined") {
+      const savedLanguage = localStorage.getItem("language") as Language;
+      if (savedLanguage && (savedLanguage === "pt_BR" || savedLanguage === "en_US")) {
+        setLanguageState(savedLanguage);
+      }
     }
   }, []);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem("language", lang);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("language", lang);
+    }
   };
 
   const t = (key: string): string => {
-    return translations[language][key as keyof typeof translations.pt_BR] || key;
+    // Durante a hidratação inicial, sempre usar pt_BR
+    const currentLang = isHydrated ? language : "pt_BR";
+    return translations[currentLang][key as keyof typeof translations.pt_BR] || key;
   };
 
   return (
