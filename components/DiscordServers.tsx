@@ -58,7 +58,7 @@ function DiscordServers() {
   const friendsServers = useMemo(() => {
     return [
       {
-        name: "(VoiD) Meu Servidor de Amigos",
+        name: "VoiD",
         invite: "https://discord.gg/AESBEcNSrV",
         icon: "https://cdn.discordapp.com/icons/1369237478682267690/bdd3e9e3ed0f66491a2b64cb9b5b280d.png?size=2048",
         description: t("discord_servers_friends_desc"),
