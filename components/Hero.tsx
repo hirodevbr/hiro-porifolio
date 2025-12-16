@@ -1,7 +1,8 @@
 "use client";
 
 import { motion, useMotionValue, useSpring, useTransform, useScroll } from "framer-motion";
-import { ArrowDown, Code, Sparkles, User } from "lucide-react";
+import { ArrowDown, Code, Sparkles } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -215,20 +216,17 @@ export default function Hero() {
             <motion.div
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 300 }}
-              className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-primary-500/20 to-purple-500/20 border-4 border-primary-500/50 flex items-center justify-center shadow-2xl shadow-primary-500/30 backdrop-blur-sm"
+              className="w-36 h-36 md:w-44 md:h-44 rounded-full bg-gradient-to-br from-primary-500/20 to-purple-500/20 border-4 border-primary-500/50 flex items-center justify-center shadow-2xl shadow-primary-500/30 backdrop-blur-sm"
             >
-              {/* Por enquanto usando ícone fictício - substitua por sua foto depois */}
-              <User className="w-16 h-16 md:w-20 md:h-20 text-primary-400" aria-hidden="true" />
-              {/* Quando tiver a foto, adicione: import Image from "next/image"; e use:
+              {/* Coloque sua foto/ícone em: public/profile/avatar.svg (ou substitua por .png/.jpg mantendo o nome) */}
               <Image
-                src="/sua-foto.jpg"
-                alt="Samuel (hiro)"
+                src="/profile/image.jpg"
+                alt="Foto de perfil"
                 width={160}
                 height={160}
-                className="rounded-full object-cover w-full h-full"
                 priority
+                className="rounded-full w-full h-full object-cover object-[50%_25%]"
               />
-              */}
             </motion.div>
           </motion.div>
 

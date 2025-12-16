@@ -1,8 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Image from "next/image";
 import { ExternalLink, Shield, Users, Heart, History, Wrench } from "lucide-react";
@@ -23,6 +23,8 @@ function DiscordServers() {
   });
 
   const [activeTab, setActiveTab] = useState<"community" | "ecosystem" | "friends" | "previous">("community");
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
 
   const communityServers = useMemo(() => {
     return [
@@ -109,6 +111,26 @@ function DiscordServers() {
   };
 
   const currentServers = getCurrentServers();
+  const activeServer = currentServers[currentIndex] ?? currentServers[0];
+
+  // Reset ao trocar de aba
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [activeTab]);
+
+  // Auto-rotacionar servidores (pausa no hover)
+  useEffect(() => {
+    if (!inView) return;
+    if (paused) return;
+    if (activeTab === "previous") return;
+    if (currentServers.length <= 1) return;
+
+    const id = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % currentServers.length);
+    }, 6500);
+
+    return () => clearInterval(id);
+  }, [inView, paused, activeTab, currentServers.length]);
 
   return (
     <section
@@ -252,67 +274,101 @@ function DiscordServers() {
             </div>
           </motion.div>
         ) : (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate={inView ? "visible" : "hidden"}
-            className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto"
+          <div
+            className="max-w-3xl mx-auto"
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
           >
-            {currentServers.map((server) => (
-              <motion.a
-                key={server.name}
-                href={server.invite}
-                target="_blank"
-                rel="noopener noreferrer"
-                variants={itemVariants}
-                whileHover={{ y: -10, scale: 1.03 }}
-                className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-xl border border-gray-700 hover:border-primary-500/50 hover:shadow-xl hover:shadow-primary-500/20 card-hover transition-all group relative"
-              >
-                {/* Verified Badge */}
-                {server.verified && (
-                  <div className="absolute top-4 right-4 z-10">
-                    <Image
-                      src={verifiedIcon}
-                      alt="Verified"
-                      width={24}
-                      height={24}
-                      className="w-6 h-6"
-                      unoptimized
-                    />
-                  </div>
-                )}
+            <AnimatePresence mode="wait">
+              {activeServer && (
+                <motion.a
+                  key={`${activeTab}-${activeServer.name}`}
+                  href={activeServer.invite}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  initial={{ opacity: 0, x: 24, scale: 0.98 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: -24, scale: 0.98 }}
+                  transition={{ duration: 0.45, type: "spring", stiffness: 120, damping: 18 }}
+                  whileHover={{ y: -8 }}
+                  className="bg-gray-800/50 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-gray-700 hover:border-primary-500/50 hover:shadow-2xl hover:shadow-primary-500/20 transition-all group relative block"
+                >
+                  {/* Verified Badge */}
+                  {activeServer.verified && (
+                    <div className="absolute top-4 right-4 z-10">
+                      <Image
+                        src={verifiedIcon}
+                        alt="Verified"
+                        width={24}
+                        height={24}
+                        className="w-6 h-6"
+                        unoptimized
+                      />
+                    </div>
+                  )}
 
-                {/* Server Icon */}
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="relative flex-shrink-0">
-                    <Image
-                      src={server.icon}
-                      alt={server.name}
-                      width={64}
-                      height={64}
-                      className="rounded-full"
-                    />
+                  {/* Server Icon */}
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="relative flex-shrink-0">
+                      <Image
+                        src={activeServer.icon}
+                        alt={activeServer.name}
+                        width={72}
+                        height={72}
+                        className="rounded-full"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-2xl font-semibold text-white group-hover:text-primary-400 transition-colors truncate">
+                        {activeServer.name}
+                      </h3>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {activeTab === "community"
+                          ? t("discord_servers_tab_community")
+                          : activeTab === "ecosystem"
+                            ? t("discord_servers_tab_ecosystem")
+                            : t("discord_servers_tab_friends")}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xl font-semibold text-white group-hover:text-primary-400 transition-colors truncate">
-                      {server.name}
-                    </h3>
+
+                  {/* Description */}
+                  <p className="text-gray-300 text-sm md:text-base mb-5 leading-relaxed">
+                    {activeServer.description}
+                  </p>
+
+                  {/* Link */}
+                  <div className="flex items-center gap-2 text-primary-400 group-hover:text-primary-300 transition-colors">
+                    <span className="text-sm font-medium">{t("discord_servers_join")}</span>
+                    <ExternalLink className="w-4 h-4" />
                   </div>
-                </div>
+                </motion.a>
+              )}
+            </AnimatePresence>
 
-                {/* Description */}
-                <p className="text-gray-400 text-sm mb-4 line-clamp-2">
-                  {server.description}
-                </p>
+            {/* Dots / controle */}
+            {currentServers.length > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-5">
+                {currentServers.map((_, i) => (
+                  <button
+                    key={`dot-${activeTab}-${i}`}
+                    onClick={() => setCurrentIndex(i)}
+                    className={`h-2.5 rounded-full transition-all ${
+                      i === currentIndex ? "w-8 bg-primary-500" : "w-2.5 bg-gray-700 hover:bg-gray-600"
+                    }`}
+                    aria-label={`Ir para servidor ${i + 1}`}
+                  />
+                ))}
+              </div>
+            )}
 
-                {/* Link */}
-                <div className="flex items-center gap-2 text-primary-400 group-hover:text-primary-300 transition-colors">
-                  <span className="text-sm font-medium">{t("discord_servers_join")}</span>
-                  <ExternalLink className="w-4 h-4" />
-                </div>
-              </motion.a>
-            ))}
-          </motion.div>
+            {/* Hint */}
+            {currentServers.length > 1 && (
+              <p className="text-center text-xs text-gray-500 mt-3">
+                Alternando automaticamente • pause no hover
+              </p>
+            )}
+          </div>
         )}
       </div>
     </section>

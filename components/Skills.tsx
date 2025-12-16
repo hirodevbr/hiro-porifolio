@@ -25,13 +25,31 @@ export default function Skills() {
     {
       category: "Frontend",
       icon: Code,
-      technologies: ["HTML", "CSS", "JavaScript", "TypeScript", "React", "Next.js"],
+      technologies: [
+        "HTML",
+        "CSS",
+        "JavaScript",
+        "TypeScript",
+        "React",
+        "Next.js",
+        "Tailwind CSS",
+        "Redux",
+      ],
       color: "from-blue-500 to-cyan-500",
     },
     {
       category: "Backend",
       icon: Database,
-      technologies: ["Node.js", "Express", "APIs REST", "GraphQL"],
+      technologies: [
+        "Node.js",
+        "Express",
+        "APIs REST",
+        "GraphQL",
+        "Prisma",
+        "PostgreSQL",
+        "MongoDB",
+        "Redis",
+      ],
       color: "from-green-500 to-emerald-500",
     },
     {
@@ -43,7 +61,7 @@ export default function Skills() {
     {
       category: "Cloud & DevOps",
       icon: Cloud,
-      technologies: ["Git", "GitHub", "Vercel", "Docker"],
+      technologies: ["Git", "GitHub", "Vercel", "Docker", "CI/CD", "Linux", "AWS"],
       color: "from-orange-500 to-red-500",
     },
     {
