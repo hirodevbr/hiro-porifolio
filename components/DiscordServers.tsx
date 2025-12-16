@@ -26,6 +26,13 @@ function DiscordServers() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 
+  const tabOrder: Array<"community" | "ecosystem" | "friends" | "previous"> = [
+    "community",
+    "ecosystem",
+    "friends",
+    "previous",
+  ];
+
   const communityServers = useMemo(() => {
     return [
       {
@@ -118,19 +125,43 @@ function DiscordServers() {
     setCurrentIndex(0);
   }, [activeTab]);
 
-  // Auto-rotacionar servidores (pausa no hover)
+  // Auto-rotacionar servidores (pausa no hover). Ao chegar no fim, troca para a próxima aba.
   useEffect(() => {
     if (!inView) return;
     if (paused) return;
-    if (activeTab === "previous") return;
-    if (currentServers.length <= 1) return;
+    const intervalMs = 6500;
 
     const id = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % currentServers.length);
-    }, 6500);
+      // Aba "previous" não tem servidores, então só avança para a próxima aba
+      if (activeTab === "previous") {
+        const nextTab =
+          tabOrder[(tabOrder.indexOf(activeTab) + 1) % tabOrder.length] ?? "community";
+        setActiveTab(nextTab);
+        return;
+      }
+
+      if (currentServers.length <= 1) {
+        // Sem itens suficientes para carrossel, avança a aba mesmo assim
+        const nextTab =
+          tabOrder[(tabOrder.indexOf(activeTab) + 1) % tabOrder.length] ?? "community";
+        setActiveTab(nextTab);
+        return;
+      }
+
+      setCurrentIndex((prev) => {
+        const isLast = prev >= currentServers.length - 1;
+        if (isLast) {
+          const nextTab =
+            tabOrder[(tabOrder.indexOf(activeTab) + 1) % tabOrder.length] ?? "community";
+          setActiveTab(nextTab);
+          return 0;
+        }
+        return prev + 1;
+      });
+    }, intervalMs);
 
     return () => clearInterval(id);
-  }, [inView, paused, activeTab, currentServers.length]);
+  }, [inView, paused, activeTab, currentServers.length, tabOrder]);
 
   return (
     <section
