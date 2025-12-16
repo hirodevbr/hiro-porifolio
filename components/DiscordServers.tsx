@@ -392,13 +392,6 @@ function DiscordServers() {
                 ))}
               </div>
             )}
-
-            {/* Hint */}
-            {currentServers.length > 1 && (
-              <p className="text-center text-xs text-gray-500 mt-3">
-                Alternando automaticamente • pause no hover
-              </p>
-            )}
           </div>
         )}
       </div>
