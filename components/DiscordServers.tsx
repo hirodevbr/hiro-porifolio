@@ -56,6 +56,13 @@ function DiscordServers() {
         description: t("discord_servers_chiliz_desc"),
         verified: false,
       },
+      {
+        name: "Community Org Dev",
+        invite: "https://discord.gg/y2HQcNT3Bv",
+        icon: "https://cdn.discordapp.com/icons/1422325011359858813/3c7cda9bd47113f8fe821d6b28d7e2c4.png?size=2048",
+        description: t("discord_servers_communityorg_dev_desc"),
+        verified: false,
+      },
     ];
   }, [t, language]);
 
