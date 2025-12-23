@@ -12,6 +12,7 @@ interface DiscordServer {
   invite: string;
   icon: string;
   description: string;
+  roleLabel?: string;
   verified?: boolean;
 }
 
@@ -61,6 +62,7 @@ function DiscordServers() {
         invite: "https://discord.gg/y2HQcNT3Bv",
         icon: "https://cdn.discordapp.com/icons/1422325011359858813/3c7cda9bd47113f8fe821d6b28d7e2c4.png?size=2048",
         description: t("discord_servers_communityorg_dev_desc"),
+        roleLabel: t("discord_servers_role_communityorg_dev"),
         verified: false,
       },
     ];
@@ -393,13 +395,14 @@ function DiscordServers() {
                         {activeServer.name}
                       </h3>
                       <p className="text-sm text-gray-500 mt-1">
-                        {activeTab === "community"
-                          ? t("discord_servers_tab_community")
-                          : activeTab === "ecosystem"
-                            ? t("discord_servers_tab_ecosystem")
-                            : activeTab === "friends"
-                              ? t("discord_servers_tab_friends")
-                              : t("discord_servers_tab_previous")}
+                        {activeServer.roleLabel ??
+                          (activeTab === "community"
+                            ? t("discord_servers_tab_community")
+                            : activeTab === "ecosystem"
+                              ? t("discord_servers_tab_ecosystem")
+                              : activeTab === "friends"
+                                ? t("discord_servers_tab_friends")
+                                : t("discord_servers_tab_previous"))}
                       </p>
                     </div>
                   </div>
