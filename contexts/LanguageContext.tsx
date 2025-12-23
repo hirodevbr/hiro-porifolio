@@ -113,16 +113,16 @@ const translations = {
     discord_servers_tab_friends: "Meu Servidor de Amigos",
     discord_servers_tab_previous: "Servidores Anteriores",
     discord_servers_join: "Entrar no servidor",
-    discord_servers_itsatrap_desc: "Desenvolvedor • Crio soluções e contribuo para o crescimento da comunidade.",
-    discord_servers_viggle_desc: "Moderador • Ajudo a manter um ambiente saudável e acolhedor.",
-    discord_servers_chiliz_desc: "Moderador • Ajudo a manter a comunidade organizada e ativa.",
-    discord_servers_communityorg_dev_desc: "Community Leader • Ajudo a liderar e organizar a comunidade.",
-    discord_servers_gou_desc: "Moderador (2021) • Servidor desativado em 2024.",
-    discord_servers_belugang_desc: "Moderador (2024) • Ajudei a manter a comunidade organizada e segura.",
-    discord_servers_celestrial_desc: "Moderador (2025) • Apoiei a comunidade e a moderação.",
-    discord_servers_leaguehu3br_desc: "Moderador e Líder de Desenvolvimento (2023–2024) • Atuação na moderação e liderança de dev.",
-    discord_servers_admins_desc: "Comunidade oficial • Espaço para admins compartilharem conhecimento e boas práticas.",
-    discord_servers_friends_desc: "Amigos • Um lugar descontraído para conversar e passar o tempo.",
+    discord_servers_itsatrap_desc: "Desenvolvedor • Atuo construindo melhorias e soluções para a comunidade (features, automações e ajustes). Também apoio o crescimento do servidor com suporte técnico e organização de processos.",
+    discord_servers_viggle_desc: "Moderador • Ajudo a manter um ambiente saudável e acolhedor (aplicação de regras, suporte aos membros e controle de spam). Também colaboro com a equipe para melhorar a experiência e a comunicação.",
+    discord_servers_chiliz_desc: "Moderador • Trabalho na organização do servidor e na qualidade das conversas, ajudando a orientar novos membros e mantendo a comunidade ativa. Também apoio ações internas e a rotina de moderação.",
+    discord_servers_communityorg_dev_desc: "Community Leader • Lidero iniciativas e ajudo a estruturar a comunidade, alinhando comunicação, organização e metas. Também facilito o trabalho da equipe e acompanho a saúde da comunidade no dia a dia.",
+    discord_servers_gou_desc: "Moderador (2021) • Atuei na moderação e suporte à comunidade, ajudando na organização e na aplicação de regras. Servidor desativado em 2024.",
+    discord_servers_belugang_desc: "Moderador (2024) • Atuei no suporte aos membros e na aplicação de regras, ajudando a manter um espaço organizado e seguro. Também colaborei com a equipe na resolução de conflitos e dúvidas.",
+    discord_servers_celestrial_desc: "Moderador (2025) • Apoiei a comunidade e a moderação, ajudando na organização, suporte aos membros e manutenção das regras. Também participei de ajustes e alinhamentos internos para melhorar a convivência.",
+    discord_servers_leaguehu3br_desc: "Moderador e Líder de Desenvolvimento (2023–2024) • Atuei na moderação do servidor e liderei iniciativas de desenvolvimento (automação, melhorias e organização técnica). Também dei suporte à equipe e aos membros quando necessário.",
+    discord_servers_admins_desc: "Comunidade oficial • Espaço para admins compartilharem conhecimento, experiências e boas práticas de moderação e gestão. Ótimo para aprender, tirar dúvidas e trocar referências com outros administradores.",
+    discord_servers_friends_desc: "Amigos • Um servidor mais descontraído para conversar, jogar e passar o tempo. Espaço livre para trocar ideias e manter a resenha com a galera.",
     discord_servers_previous_construction: "Em Construção",
     discord_servers_previous_construction_desc: "Esta seção está sendo desenvolvida. Em breve você poderá ver os servidores onde já trabalhei anteriormente.",
     
@@ -251,16 +251,16 @@ const translations = {
     discord_servers_tab_friends: "My Friends Server",
     discord_servers_tab_previous: "Previous Servers",
     discord_servers_join: "Join server",
-    discord_servers_itsatrap_desc: "Developer • I build solutions and contribute to the community’s growth.",
-    discord_servers_viggle_desc: "Moderator • I help keep a healthy and welcoming environment.",
-    discord_servers_chiliz_desc: "Moderator • I help keep the community organized and active.",
-    discord_servers_communityorg_dev_desc: "Community Leader • I help lead and organize the community.",
-    discord_servers_gou_desc: "Moderator (2021) • Server disabled in 2024.",
-    discord_servers_belugang_desc: "Moderator (2024) • Helped keep the community organized and safe.",
-    discord_servers_celestrial_desc: "Moderator (2025) • Supported the community and moderation.",
-    discord_servers_leaguehu3br_desc: "Moderator & Development Lead (2023–2024) • Moderation and dev leadership role.",
-    discord_servers_admins_desc: "Official community • A place for admins to share knowledge and best practices.",
-    discord_servers_friends_desc: "Friends • A relaxed place to chat and hang out.",
+    discord_servers_itsatrap_desc: "Developer • I build improvements and solutions for the community (features, automation, and refinements). I also support growth by helping with technical support and process organization.",
+    discord_servers_viggle_desc: "Moderator • I help keep a healthy and welcoming environment (rule enforcement, member support, and anti-spam). I also work with the team to improve experience and communication.",
+    discord_servers_chiliz_desc: "Moderator • I help keep the server organized and the conversations high-quality, welcoming new members and keeping the community active. I also support internal actions and moderation routines.",
+    discord_servers_communityorg_dev_desc: "Community Leader • I lead initiatives and help structure the community, aligning communication, organization, and goals. I also support the team and monitor community health day to day.",
+    discord_servers_gou_desc: "Moderator (2021) • I worked on moderation and community support, helping with organization and rule enforcement. Server disabled in 2024.",
+    discord_servers_belugang_desc: "Moderator (2024) • I supported members and enforced rules to keep the space organized and safe. I also collaborated with the team on conflict resolution and questions.",
+    discord_servers_celestrial_desc: "Moderator (2025) • I supported the community and moderation, helping with organization, member support, and rule enforcement. I also took part in internal alignment to improve the environment.",
+    discord_servers_leaguehu3br_desc: "Moderator & Development Lead (2023–2024) • I handled moderation and led development initiatives (automation, improvements, and technical organization). I also supported both the team and members as needed.",
+    discord_servers_admins_desc: "Official community • A place for admins to share knowledge, experiences, and best practices for moderation and management. Great for learning, Q&A, and exchanging references with other admins.",
+    discord_servers_friends_desc: "Friends • A relaxed server to chat, play, and hang out. A free space to share ideas and have fun with friends.",
     discord_servers_previous_construction: "Under Construction",
     discord_servers_previous_construction_desc: "This section is being developed. Soon you'll be able to see the servers where I previously worked.",
     
@@ -299,9 +299,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     // Após a hidratação, carregar o idioma do localStorage
     setIsHydrated(true);
     if (typeof window !== "undefined") {
-      const savedLanguage = localStorage.getItem("language") as Language;
-      if (savedLanguage && (savedLanguage === "pt_BR" || savedLanguage === "en_US")) {
-        setLanguageState(savedLanguage);
+    const savedLanguage = localStorage.getItem("language") as Language;
+    if (savedLanguage && (savedLanguage === "pt_BR" || savedLanguage === "en_US")) {
+      setLanguageState(savedLanguage);
       }
     }
   }, []);
@@ -309,7 +309,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
     if (typeof window !== "undefined") {
-      localStorage.setItem("language", lang);
+    localStorage.setItem("language", lang);
     }
   };
 
