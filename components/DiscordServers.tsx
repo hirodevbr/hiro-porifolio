@@ -397,7 +397,9 @@ function DiscordServers() {
                           ? t("discord_servers_tab_community")
                           : activeTab === "ecosystem"
                             ? t("discord_servers_tab_ecosystem")
-                            : t("discord_servers_tab_friends")}
+                            : activeTab === "friends"
+                              ? t("discord_servers_tab_friends")
+                              : t("discord_servers_tab_previous")}
                       </p>
                     </div>
                   </div>
