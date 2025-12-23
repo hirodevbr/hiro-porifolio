@@ -90,6 +90,18 @@ function DiscordServers() {
     ];
   }, [t, language]);
 
+  const previousServers = useMemo(() => {
+    return [
+      {
+        name: "Servidor do Goularte",
+        invite: "https://discord.gg/gou",
+        icon: "https://cdn.discordapp.com/icons/311627659828527104/a_ef951d646f2f5c3112de4f8c7102a9c3.png?size=600",
+        description: t("discord_servers_gou_desc"),
+        verified: true,
+      },
+    ];
+  }, [t, language]);
+
   const verifiedIcon = "https://cdn.discordapp.com/emojis/960580118827389028.webp?size=96";
 
   const containerVariants = {
@@ -125,7 +137,7 @@ function DiscordServers() {
       case "friends":
         return friendsServers;
       case "previous":
-        return [];
+        return previousServers;
       default:
         return communityServers;
     }
@@ -146,14 +158,6 @@ function DiscordServers() {
     const intervalMs = 6500;
 
     const id = setInterval(() => {
-      // Aba "previous" não tem servidores, então só avança para a próxima aba
-      if (activeTab === "previous") {
-        const nextTab =
-          tabOrder[(tabOrder.indexOf(activeTab) + 1) % tabOrder.length] ?? "community";
-        setActiveTab(nextTab);
-        return;
-      }
-
       if (currentServers.length <= 1) {
         // Sem itens suficientes para carrossel, avança a aba mesmo assim
         const nextTab =
@@ -258,7 +262,7 @@ function DiscordServers() {
         </div>
 
         {/* Server Cards or Construction Message */}
-        {activeTab === "previous" ? (
+        {activeTab === "previous" && previousServers.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
