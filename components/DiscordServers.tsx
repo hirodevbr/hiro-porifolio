@@ -104,7 +104,7 @@ function DiscordServers() {
         invite: "https://discord.gg/beluga",
         icon: "https://cdn.discordapp.com/avatars/846497753009356800/42a9670cd905cd4c9ebc248f0cdffb1d.webp?size=600",
         description: t("discord_servers_belugang_desc"),
-        verified: false,
+        verified: true,
       },
       {
         name: "Celestrial Boundaries",
