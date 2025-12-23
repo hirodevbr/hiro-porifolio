@@ -99,6 +99,27 @@ function DiscordServers() {
         description: t("discord_servers_gou_desc"),
         verified: true,
       },
+      {
+        name: "Belugang",
+        invite: "https://discord.gg/beluga",
+        icon: "https://cdn.discordapp.com/avatars/846497753009356800/42a9670cd905cd4c9ebc248f0cdffb1d.webp?size=600",
+        description: t("discord_servers_belugang_desc"),
+        verified: false,
+      },
+      {
+        name: "Celestrial Boundaries",
+        invite: "https://discord.gg/celestrials",
+        icon: "https://cdn.discordapp.com/icons/786437953299021844/6e85c41ef8e2ed9e2b7f3e740b11e59c.webp?size=600",
+        description: t("discord_servers_celestrial_desc"),
+        verified: false,
+      },
+      {
+        name: "LEAGUE of Hu3BR",
+        invite: "https://discord.gg/",
+        icon: "https://cdn.discordapp.com/icons/524951730534744076/a_2a9733ff86865b29568f6b67c4fbc6e6.webp?size=600",
+        description: t("discord_servers_leaguehu3br_desc"),
+        verified: false,
+      },
     ];
   }, [t, language]);
 
