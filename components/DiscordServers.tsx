@@ -49,6 +49,13 @@ function DiscordServers() {
         description: t("discord_servers_viggle_desc"),
         verified: true,
       },
+      {
+        name: "Chiliz",
+        invite: "https://discord.gg/chiliz",
+        icon: "https://cdn.discordapp.com/icons/841972703651954688/f09113c6b772b01698cb9b82aae588e0.png?size=4096",
+        description: t("discord_servers_chiliz_desc"),
+        verified: false,
+      },
     ];
   }, [t, language]);
 
