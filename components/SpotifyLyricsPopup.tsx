@@ -509,23 +509,7 @@ export default function SpotifyLyricsPopup() {
 
               <div className="min-w-0 flex-1">
                 <>
-                  <p className="truncate text-sm font-semibold text-white">{title}</p>
-                  <p className="truncate text-xs text-white/60">{subtitle}</p>
-                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-                    <div
-                      className="h-full rounded-full bg-green-500"
-                      style={{
-                        width: `${clamp((tSeconds / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
-                      }}
-                    />
-                  </div>
-                  <div className="mt-1 flex items-center justify-between text-[11px] tabular-nums text-white/50">
-                    <span aria-label={`Tempo atual ${formatTime(tSeconds)}`}>{formatTime(tSeconds)}</span>
-                    <span aria-label={`Tempo restante ${formatTime(remainingSeconds)}`}>
-                      -{formatTime(remainingSeconds)}
-                    </span>
-                  </div>
-                  <div className="mt-2 flex items-center gap-2 flex-wrap">
+                  <div className="mb-2 flex items-center gap-2 flex-wrap">
                     {spotifyEmbedUrl && (
                       <button
                         type="button"
@@ -566,6 +550,22 @@ export default function SpotifyLyricsPopup() {
                     >
                       <ChevronDown className={collapsed ? "h-4 w-4 rotate-180" : "h-4 w-4"} />
                     </button>
+                  </div>
+                  <p className="truncate text-sm font-semibold text-white">{title}</p>
+                  <p className="truncate text-xs text-white/60">{subtitle}</p>
+                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-green-500"
+                      style={{
+                        width: `${clamp((tSeconds / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
+                      }}
+                    />
+                  </div>
+                  <div className="mt-1 flex items-center justify-between text-[11px] tabular-nums text-white/50">
+                    <span aria-label={`Tempo atual ${formatTime(tSeconds)}`}>{formatTime(tSeconds)}</span>
+                    <span aria-label={`Tempo restante ${formatTime(remainingSeconds)}`}>
+                      -{formatTime(remainingSeconds)}
+                    </span>
                   </div>
                 </>
               </div>
