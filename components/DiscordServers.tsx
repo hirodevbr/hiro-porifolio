@@ -117,7 +117,7 @@ function DiscordServers() {
       {
         name: "LEAGUE of Hu3BR",
         invite: "https://discord.gg/",
-        icon: "https://cdn.discordapp.com/icons/524951730534744076/a_2a9733ff86865b29568f6b67c4fbc6e6.gif?size=600",
+        icon: "https://cdn.discordapp.com/icons/524951730534744076/a_2a9733ff86865b29568f6b67c4fbc6e6.png?size=600",
         description: t("discord_servers_leaguehu3br_desc"),
         verified: false,
       },
