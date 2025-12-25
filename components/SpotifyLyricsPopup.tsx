@@ -630,6 +630,17 @@ export default function SpotifyLyricsPopup() {
                             <p className="text-xl font-semibold text-white truncate">{title}</p>
                             <p className="text-sm text-white/70 truncate">{subtitle}</p>
                             <div className="flex items-center justify-center gap-2 flex-wrap">
+                              {spotifyEmbedUrl && (
+                                <button
+                                  type="button"
+                                  onClick={() => setPlayerOpen((v) => !v)}
+                                  className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
+                                  aria-label={playerOpen ? "Fechar player" : "Abrir player"}
+                                  title={playerOpen ? "Fechar player" : "Abrir player"}
+                                >
+                                  <Play className={playerOpen ? "h-4 w-4 opacity-100" : "h-4 w-4"} />
+                                </button>
+                              )}
                               {spotifyOpenUrl && (
                                 <a
                                   href={spotifyOpenUrl}
