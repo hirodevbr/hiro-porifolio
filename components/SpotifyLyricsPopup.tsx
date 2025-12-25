@@ -626,6 +626,11 @@ export default function SpotifyLyricsPopup() {
 
                 {/* Erro só é exibido no fallback fullscreen; aqui omitimos */}
 
+                {/* Aviso de erro (apenas no modo compacto) */}
+                {!isFullscreen && lyricsError && !loadingLyrics && (
+                  <p className="text-sm text-amber-200">{strings.errorNoLyrics}</p>
+                )}
+
                 {/* Fallback: sem letra em fullscreen, mostrar apenas capa/título/controles */}
                 {isFullscreen && !loadingLyrics && (!lyricsRaw || lyricsError) && (
                   <div className="px-2 py-4 flex-1 flex flex-col items-center justify-center gap-6">
