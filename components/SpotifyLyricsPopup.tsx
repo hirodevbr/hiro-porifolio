@@ -455,7 +455,13 @@ export default function SpotifyLyricsPopup() {
   const remainingSeconds = Math.max(0, totalSeconds - tSeconds);
   const sp = spotify;
   const hasSpotify = Boolean(sp);
-  const loadingLabel = language?.startsWith("en") ? "Fetching lyrics..." : "Buscando letra…";
+  const loadingLabel = useMemo(() => {
+    const lang = (language ?? "").toLowerCase();
+    if (lang.startsWith("en")) return "Fetching lyrics...";
+    if (lang.startsWith("pt")) return "Buscando letra…";
+    if (lang.startsWith("es")) return "Buscando letra...";
+    return "Fetching lyrics...";
+  }, [language]);
 
   return (
     <div className="pointer-events-none fixed bottom-4 right-4 z-[9998]">
