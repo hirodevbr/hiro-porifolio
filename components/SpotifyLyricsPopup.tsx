@@ -488,91 +488,88 @@ export default function SpotifyLyricsPopup() {
             role="dialog"
             aria-label="Letra sincronizada do Spotify"
           >
-            {/* Header (position moves into left column when fullscreen) */}
-            {!isFullscreen && (
-              <div className="flex items-start gap-3 border-b border-white/10 px-4 py-3">
-                <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl border border-white/10 bg-black/20">
-                  {sp.album_art_url ? (
-                    <Image
-                      src={sp.album_art_url}
-                      alt={sp.album}
-                      fill
-                      className="object-cover"
-                      unoptimized
-                      sizes="48px"
+            {/* Header */}
+            <div className="flex items-start gap-3 border-b border-white/10 px-4 py-3">
+              <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl border border-white/10 bg-black/20">
+                {sp.album_art_url ? (
+                  <Image
+                    src={sp.album_art_url}
+                    alt={sp.album}
+                    fill
+                    className="object-cover"
+                    unoptimized
+                    sizes="48px"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-white/60">
+                    <Music2 className="h-5 w-5" />
+                  </div>
+                )}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <>
+                  <p className="truncate text-sm font-semibold text-white">{title}</p>
+                  <p className="truncate text-xs text-white/60">{subtitle}</p>
+                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-green-500"
+                      style={{
+                        width: `${clamp((tSeconds / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
+                      }}
                     />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-white/60">
-                      <Music2 className="h-5 w-5" />
-                    </div>
-                  )}
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <>
-                    <p className="truncate text-sm font-semibold text-white">{title}</p>
-                    <p className="truncate text-xs text-white/60">{subtitle}</p>
-                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-                      <div
-                        className="h-full rounded-full bg-green-500"
-                        style={{
-                          width: `${clamp((tSeconds / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
-                        }}
-                      />
-                    </div>
-                    <div className="mt-1 flex items-center justify-between text-[11px] tabular-nums text-white/50">
-                      <span aria-label={`Tempo atual ${formatTime(tSeconds)}`}>{formatTime(tSeconds)}</span>
-                      <span aria-label={`Tempo restante ${formatTime(remainingSeconds)}`}>
-                        -{formatTime(remainingSeconds)}
-                      </span>
-                    </div>
-                  </>
-                </div>
-
-                <div className="flex items-center gap-1">
-                  {spotifyEmbedUrl && (
+                  </div>
+                  <div className="mt-1 flex items-center justify-between text-[11px] tabular-nums text-white/50">
+                    <span aria-label={`Tempo atual ${formatTime(tSeconds)}`}>{formatTime(tSeconds)}</span>
+                    <span aria-label={`Tempo restante ${formatTime(remainingSeconds)}`}>
+                      -{formatTime(remainingSeconds)}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2 flex-wrap">
+                    {spotifyEmbedUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setPlayerOpen((v) => !v)}
+                        className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
+                        aria-label={playerOpen ? "Fechar player" : "Abrir player"}
+                        title={playerOpen ? "Fechar player" : "Abrir player"}
+                      >
+                        <Play className={playerOpen ? "h-4 w-4 opacity-100" : "h-4 w-4"} />
+                      </button>
+                    )}
+                    {spotifyOpenUrl && (
+                      <a
+                        href={spotifyOpenUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
+                        aria-label="Abrir no Spotify (nova aba)"
+                        title="Abrir no Spotify"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    )}
                     <button
                       type="button"
-                      onClick={() => setPlayerOpen((v) => !v)}
+                      onClick={() => setIsFullscreen((v) => !v)}
                       className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
-                      aria-label={playerOpen ? "Fechar player" : "Abrir player"}
-                      title={playerOpen ? "Fechar player" : "Abrir player"}
+                      aria-label={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
+                      title={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
                     >
-                      <Play className={playerOpen ? "h-4 w-4 opacity-100" : "h-4 w-4"} />
+                      {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                     </button>
-                  )}
-                  {spotifyOpenUrl && (
-                    <a
-                      href={spotifyOpenUrl}
-                      target="_blank"
-                      rel="noreferrer"
+                    <button
+                      type="button"
+                      onClick={() => setCollapsed((v) => !v)}
                       className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
-                      aria-label="Abrir no Spotify (nova aba)"
-                      title="Abrir no Spotify"
+                      aria-label={collapsed ? "Expandir" : "Recolher"}
                     >
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setIsFullscreen((v) => !v)}
-                    className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
-                    aria-label={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
-                    title={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
-                  >
-                    {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCollapsed((v) => !v)}
-                    className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
-                    aria-label={collapsed ? "Expandir" : "Recolher"}
-                  >
-                    <ChevronDown className={collapsed ? "h-4 w-4 rotate-180" : "h-4 w-4"} />
-                  </button>
-                </div>
+                      <ChevronDown className={collapsed ? "h-4 w-4 rotate-180" : "h-4 w-4"} />
+                    </button>
+                  </div>
+                </>
               </div>
-            )}
+            </div>
 
             {/* Body */}
             {hasSpotify && !collapsed && (
