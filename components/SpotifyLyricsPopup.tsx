@@ -463,6 +463,24 @@ export default function SpotifyLyricsPopup() {
     if (lang.startsWith("es")) return "Buscando letra...";
     return "Fetching lyrics...";
   }, [language]);
+  const strings = useMemo(() => {
+    const lang = (language ?? "").toLowerCase();
+    const isEn = lang.startsWith("en");
+    const isEs = lang.startsWith("es");
+    return {
+      errorNoLyrics: isEn
+        ? "Couldn't fetch lyrics or none available for this track."
+        : isEs
+          ? "No se pudo obtener la letra o no hay letra disponible para esta canción."
+          : "Não consegui buscar a letra ou não há letra disponível para esta música.",
+      openSpotify: isEn ? "Open on Spotify (new tab)" : isEs ? "Abrir en Spotify (nueva pestaña)" : "Abrir no Spotify (nova aba)",
+      fullscreen: isEn ? "Fullscreen" : isEs ? "Pantalla completa" : "Tela cheia",
+      exitFullscreen: isEn ? "Exit fullscreen" : isEs ? "Salir de pantalla completa" : "Sair da tela cheia",
+      expand: isEn ? "Expand" : isEs ? "Expandir" : "Expandir",
+      collapse: isEn ? "Collapse" : isEs ? "Recolher" : "Recolher",
+      openPlayer: isEn ? "Open player" : isEs ? "Abrir reproductor" : "Abrir player",
+    };
+  }, [language]);
 
   const containerClass = isFullscreen
     ? "pointer-events-none fixed inset-0 z-[9998] flex items-center justify-center p-4"
@@ -534,8 +552,8 @@ export default function SpotifyLyricsPopup() {
                       type="button"
                       onClick={() => setPlayerOpen((v) => !v)}
                       className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
-                      aria-label={playerOpen ? "Fechar player" : "Abrir player"}
-                      title={playerOpen ? "Fechar player" : "Abrir player"}
+                      aria-label={playerOpen ? strings.exitFullscreen : strings.openPlayer}
+                      title={playerOpen ? strings.exitFullscreen : strings.openPlayer}
                     >
                       <Play className={playerOpen ? "h-4 w-4 opacity-100" : "h-4 w-4"} />
                     </button>
@@ -546,8 +564,8 @@ export default function SpotifyLyricsPopup() {
                       target="_blank"
                       rel="noreferrer"
                       className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
-                      aria-label="Abrir no Spotify (nova aba)"
-                      title="Abrir no Spotify"
+                      aria-label={strings.openSpotify}
+                      title={strings.openSpotify}
                     >
                       <ExternalLink className="h-4 w-4" />
                     </a>
@@ -556,8 +574,8 @@ export default function SpotifyLyricsPopup() {
                     type="button"
                     onClick={() => setIsFullscreen((v) => !v)}
                     className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
-                    aria-label={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
-                    title={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
+                    aria-label={isFullscreen ? strings.exitFullscreen : strings.fullscreen}
+                    title={isFullscreen ? strings.exitFullscreen : strings.fullscreen}
                   >
                     {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                   </button>
@@ -565,7 +583,7 @@ export default function SpotifyLyricsPopup() {
                     type="button"
                     onClick={() => setCollapsed((v) => !v)}
                     className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
-                    aria-label={collapsed ? "Expandir" : "Recolher"}
+                    aria-label={collapsed ? strings.expand : strings.collapse}
                   >
                     <ChevronDown className={collapsed ? "h-4 w-4 rotate-180" : "h-4 w-4"} />
                   </button>
@@ -622,13 +640,17 @@ export default function SpotifyLyricsPopup() {
                           unoptimized
                         />
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-2xl font-semibold text-white truncate">{title}</p>
-                        <p className="text-sm text-white/70 truncate">{subtitle}</p>
-                        {lyricsError && <p className="text-sm text-amber-200">{lyricsError}</p>}
-                        {!lyricsError && !lyricsRaw && (
-                          <p className="text-sm text-white/60">Sem letra disponível.</p>
-                        )}
+                          <div className="space-y-1">
+                            <p className="text-2xl font-semibold text-white truncate">{title}</p>
+                            <p className="text-sm text-white/70 truncate">{subtitle}</p>
+                            {lyricsError && (
+                              <p className="text-sm text-amber-200">
+                                {strings.errorNoLyrics}
+                              </p>
+                            )}
+                            {!lyricsError && !lyricsRaw && (
+                              <p className="text-sm text-white/60">{strings.errorNoLyrics}</p>
+                            )}
                       </div>
                       <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
                         <div
