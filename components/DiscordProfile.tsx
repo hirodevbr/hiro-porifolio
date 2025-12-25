@@ -614,7 +614,7 @@ export default function DiscordProfile() {
         badges.push({
           name: "Orb",
           iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/orb.svg",
-          icon: <Circle className="w-4 h-4" />,
+          icon: <Circle className="w-3 h-3" />,
           color: "text-cyan-400",
           bgColor: "bg-cyan-500/20 border-cyan-500/50"
         });
@@ -642,7 +642,7 @@ export default function DiscordProfile() {
       badges.push({
         name: "Orb",
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/orb.svg",
-        icon: <Circle className="w-4 h-4" />,
+        icon: <Circle className="w-3 h-3" />,
         color: "text-cyan-400",
         bgColor: "bg-cyan-500/20 border-cyan-500/50"
       });
@@ -742,7 +742,7 @@ export default function DiscordProfile() {
       calculatedBadges.push({
         name: "Orb",
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/orb.svg",
-        icon: <Circle className="w-4 h-4" />,
+        icon: <Circle className="w-3 h-3" />,
         color: "text-cyan-400",
         bgColor: "bg-cyan-500/20 border-cyan-500/50"
       });
