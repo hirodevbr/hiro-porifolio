@@ -98,6 +98,14 @@ No arquivo `components/Contact.tsx`, altere o email:
 href="mailto:hiro.communitydev@exemplo.com"
 ```
 
+## 🎵 Pop-up de letra sincronizada (Spotify via Discord + LRCLIB)
+
+O site usa a presença do Discord (Lanyard) para detectar o que está tocando no Spotify e mostra um pop-up com:
+- Capa da música
+- Letra sincronizada (LRCLIB)
+
+Configuração: basta manter seu Discord com o Spotify conectado e o `DISCORD_USER_ID` configurado em `components/DiscordProfile.tsx`.
+
 ### Configurar Discord Profile
 
 Para exibir seu perfil do Discord e rich presence:

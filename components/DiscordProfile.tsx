@@ -5,6 +5,8 @@ import { useInView } from "react-intersection-observer";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Image from "next/image";
+import { DISCORD_USER_ID } from "@/lib/config";
+import { useLanyardUser } from "@/lib/lanyardClient";
 import { 
   Music, 
   Gamepad2, 
@@ -97,17 +99,9 @@ export default function DiscordProfile() {
     threshold: 0.1,
   });
 
-  const [discordData, setDiscordData] = useState<DiscordData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const hasDataRef = useRef(false);
-
-  // ID do Discord - você precisa substituir pelo seu ID
-  // Para encontrar seu ID: 
-  // 1. Ative o Modo Desenvolvedor no Discord: Configurações > Avançado > Modo Desenvolvedor
-  // 2. Clique com botão direito no seu perfil > Copiar ID
-  // Ou use: https://discord.id/ para encontrar seu ID
-  const DISCORD_USER_ID = "380475076174282753";
+  const { data: discordDataRaw, loading, error: lanyardError } = useLanyardUser(DISCORD_USER_ID);
+  const discordData = (discordDataRaw as DiscordData | null) ?? null;
+  const error = lanyardError;
   
   // Badges adicionais que não são detectadas pela API pública
   // Defina como true se você possui essas badges
@@ -119,85 +113,7 @@ export default function DiscordProfile() {
     missao: true           // Se você completou uma missão
   };
 
-  useEffect(() => {
-    const fetchDiscordData = async () => {
-      try {
-        // Adicionar timestamp para evitar cache
-        const timestamp = Date.now();
-        const response = await fetch(
-          `https://api.lanyard.rest/v1/users/${DISCORD_USER_ID}?_=${timestamp}`,
-          {
-            cache: 'no-store',
-            headers: {
-              'Cache-Control': 'no-cache, no-store, must-revalidate',
-              'Pragma': 'no-cache',
-              'Expires': '0',
-            },
-          }
-        );
-        
-        if (!response.ok) {
-          throw new Error("Failed to fetch Discord data");
-        }
-
-        const data = await response.json();
-        
-        // Aceitar dados mesmo quando success é false (usuário pode estar offline)
-        // A API ainda retorna dados básicos quando o usuário está offline
-        if (data.data && data.data.discord_user) {
-          // Garantir que discord_status existe, padrão para "offline" se não estiver presente
-          if (!data.data.discord_status) {
-            data.data.discord_status = "offline";
-          }
-          
-          // Só atualizar se os dados realmente mudaram
-          setDiscordData((prevData) => {
-            if (!prevData) {
-              return data.data;
-            }
-            
-            // Comparar se houve mudanças significativas
-            const prevActivities = JSON.stringify(prevData.activities || []);
-            const newActivities = JSON.stringify(data.data.activities || []);
-            const prevStatus = prevData.discord_status;
-            const newStatus = data.data.discord_status;
-            
-            // Só atualizar se status ou atividades mudaram
-            if (prevStatus !== newStatus || prevActivities !== newActivities) {
-              return data.data;
-            }
-            
-            // Retornar dados anteriores se não houve mudanças
-            return prevData;
-          });
-          hasDataRef.current = true;
-          setError(null);
-        } else {
-          // Se não temos dados e não temos dados anteriores, mostrar erro
-          if (!hasDataRef.current) {
-            throw new Error("Invalid Discord data");
-          }
-          // Se já temos dados anteriores, manter eles (usuário pode estar temporariamente indisponível)
-        }
-      } catch (err) {
-        console.error("Error fetching Discord data:", err);
-        // Só definir erro se ainda não tivermos dados carregados
-        if (!hasDataRef.current) {
-          setError("Não foi possível carregar o perfil do Discord");
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    // Buscar imediatamente
-    fetchDiscordData();
-    
-    // Atualizar a cada 10 segundos (reduzido de 5 para evitar muitos re-renders)
-    const interval = setInterval(fetchDiscordData, 10000);
-    
-    return () => clearInterval(interval);
-  }, []); // Array vazio para executar apenas uma vez na montagem
+  // Removido: polling próprio. Agora usamos `useLanyardUser` (um único poller compartilhado e pausável).
 
   const getStatusColor = (status: string) => {
     switch (status) {

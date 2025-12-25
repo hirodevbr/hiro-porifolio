@@ -7,11 +7,23 @@ export default function RegisterSW() {
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
+    // Em desenvolvimento, service worker costuma quebrar HMR/cache do Next.
+    // Então a gente desregistra e não registra novamente.
+    if (process.env.NODE_ENV !== "production") {
+      if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+        navigator.serviceWorker
+          .getRegistrations()
+          .then((regs) => Promise.all(regs.map((r) => r.unregister())))
+          .catch(() => {});
+      }
+      return;
+    }
+
     if (
       typeof window !== "undefined" &&
       "serviceWorker" in navigator
     ) {
-      // Registrar service worker em produção e desenvolvimento
+      // Registrar service worker (somente em produção)
       navigator.serviceWorker
         .register("/sw.js", {
           scope: "/",
