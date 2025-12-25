@@ -389,7 +389,7 @@ export default function SpotifyLyricsPopup() {
           }
         }
       } catch {
-        if (!cancelled) setLyricsError("Não consegui buscar a letra agora.");
+        if (!cancelled) setLyricsError("Não consegui buscar a letra ou não há letra disponível para esta música.");
       } finally {
         window.clearTimeout(safety);
         if (!cancelled && inflightKeyRef.current === cacheKey) {
