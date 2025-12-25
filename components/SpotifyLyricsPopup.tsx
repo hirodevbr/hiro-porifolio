@@ -552,16 +552,6 @@ export default function SpotifyLyricsPopup() {
                     <ExternalLink className="h-4 w-4" />
                   </a>
                 )}
-                {hasSpotify && (
-                  <button
-                    type="button"
-                    onClick={() => setCollapsed((v) => !v)}
-                    className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
-                    aria-label={collapsed ? "Expandir" : "Recolher"}
-                  >
-                    <ChevronDown className={collapsed ? "h-4 w-4 rotate-180" : "h-4 w-4"} />
-                  </button>
-                )}
               </div>
             </div>
 
