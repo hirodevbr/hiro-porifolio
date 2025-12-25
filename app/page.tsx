@@ -8,7 +8,6 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import DiscordProfile from "@/components/DiscordProfile";
 import DiscordServers from "@/components/DiscordServers";
-import ScrollToTop from "@/components/ScrollToTop";
 import SpotifyLyricsPopup from "@/components/SpotifyLyricsPopup";
 
 export default function Home() {
@@ -27,7 +26,6 @@ export default function Home() {
         <Contact />
       </div>
       <Footer />
-      <ScrollToTop />
     </main>
   );
 }
