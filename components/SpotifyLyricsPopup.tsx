@@ -582,7 +582,7 @@ export default function SpotifyLyricsPopup() {
 
                 {loadingLyrics && (
                   <div className="flex items-center gap-2 text-white/70 text-sm">
-                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    <Loader2 className="h-4 w-4 animate-spin text-primary-400" aria-hidden="true" />
                     <span>{loadingLabel}</span>
                   </div>
                 )}
