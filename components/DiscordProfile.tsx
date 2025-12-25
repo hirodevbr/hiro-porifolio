@@ -1084,7 +1084,7 @@ export default function DiscordProfile() {
               initial={{ opacity: 0, x: -20 }}
               animate={inView ? { opacity: 1, x: 0 } : {}}
               transition={{ duration: 0.3 }}
-            className="mb-6 p-4 bg-gray-800/70 rounded-lg border border-green-500/20 mx-6"
+            className="mb-6 p-4 bg-gradient-to-r from-green-500/10 to-green-600/10 rounded-lg border border-green-500/20 mx-6"
             >
               {/* Componente Spotify Timer */}
               {(() => {
