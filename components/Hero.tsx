@@ -218,13 +218,14 @@ export default function Hero() {
               transition={{ type: "spring", stiffness: 300 }}
               className="w-36 h-36 md:w-44 md:h-44 rounded-full bg-gradient-to-br from-primary-500/20 to-purple-500/20 border-4 border-primary-500/50 flex items-center justify-center shadow-2xl shadow-primary-500/30 backdrop-blur-sm"
             >
-              {/* Coloque sua foto/ícone em: public/profile/avatar.svg (ou substitua por .png/.jpg mantendo o nome) */}
+              {/* Foto de perfil em: public/profile/profile.avif */}
               <Image
-                src="/profile/image.jpg"
+                src="/profile/profile.avif"
                 alt="Foto de perfil"
                 width={160}
                 height={160}
                 priority
+                unoptimized
                 className="rounded-full w-full h-full object-cover object-[50%_25%]"
               />
             </motion.div>
