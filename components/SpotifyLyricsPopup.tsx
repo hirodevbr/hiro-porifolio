@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
-import { ChevronDown, ExternalLink, Music2, Play } from "lucide-react";
+import { ChevronDown, ExternalLink, Loader2, Music2, Play } from "lucide-react";
 import { findActiveIndex, parseLrc, type LrcLine } from "@/lib/lrc";
 import { getCachedLyrics, setCachedLyrics } from "@/lib/lyricsCache";
 import { DISCORD_USER_ID } from "@/lib/config";
@@ -575,7 +575,10 @@ export default function SpotifyLyricsPopup() {
                 </AnimatePresence>
 
                 {loadingLyrics && (
-                  <p className="text-sm text-white/60">{loadingLabel}</p>
+                  <div className="flex items-center gap-2 text-white/70 text-sm">
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    <span>{loadingLabel}</span>
+                  </div>
                 )}
 
                 {lyricsError && !loadingLyrics && (
