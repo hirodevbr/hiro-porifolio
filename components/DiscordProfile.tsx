@@ -1119,7 +1119,7 @@ export default function DiscordProfile() {
                   const remaining = Math.max(0, totalDuration - currentTime);
 
                   return (
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-center gap-3">
                       {spotify.album_art_url && (
                         <Image
                           src={spotify.album_art_url}
@@ -1132,11 +1132,11 @@ export default function DiscordProfile() {
                         />
                       )}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-start gap-2 mb-2">
                           <Music className="w-4 h-4 text-green-400" aria-hidden="true" />
-                        <span className="text-xs text-green-400 font-semibold">
-                          {t("discord_listening_spotify")}
-                        </span>
+                          <span className="text-xs text-green-400 font-semibold -mt-0.5">
+                            {t("discord_listening_spotify")}
+                          </span>
                         </div>
                         <p className="text-white font-semibold truncate mb-1">
                           {spotify.song}
