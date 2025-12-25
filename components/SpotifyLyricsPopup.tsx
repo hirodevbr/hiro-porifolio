@@ -20,7 +20,7 @@ function clamp(n: number, min: number, max: number) {
 }
 
 // Ajuste fino de sincronização wave/lyrics. Valor positivo adianta a letra em relação ao áudio.
-const WAVE_OFFSET_MS = 120;
+const WAVE_OFFSET_MS = 0;
 
 function formatTime(seconds: number) {
   const s = Math.max(0, Math.floor(seconds));
@@ -243,8 +243,8 @@ export default function SpotifyLyricsPopup() {
     let interval: number | null = null;
     // Emitir estado em frequência limitada para evitar re-render 60fps (o que pode quebrar/jitter a barra e a UI)
     // Mantém boa sensação de sync, mas reduz custo e “briga” com transições CSS.
-    // Frequência de emissão: 60fps para máxima suavidade (custo leve adicional).
-    const EMIT_HZ = 60;
+    // Frequência de emissão: 45fps para suavidade suficiente sem jitter excessivo.
+    const EMIT_HZ = 45;
     const EMIT_STEP = 1 / EMIT_HZ;
     let lastEmitted = -Infinity;
 
