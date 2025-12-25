@@ -751,26 +751,6 @@ export default function SpotifyLyricsPopup() {
                                 <ChevronDown className={collapsed ? "h-4 w-4 rotate-180" : "h-4 w-4"} />
                               </button>
                             </div>
-                            {/* Player embutido mesmo com letras ocultas */}
-                            {playerOpen && spotifyEmbedUrl && (
-                              <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: "auto", opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.25, ease: "easeOut" }}
-                                className="mt-4 overflow-hidden rounded-xl border border-white/10 bg-black/20"
-                              >
-                                <iframe
-                                  src={spotifyEmbedUrl}
-                                  width="100%"
-                                  height="152"
-                                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                                  loading="lazy"
-                                  className="block w-full"
-                                  title="Spotify player"
-                                />
-                              </motion.div>
-                            )}
                           </div>
                           <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
                             <div
@@ -1126,7 +1106,7 @@ export default function SpotifyLyricsPopup() {
                     <span>-{formatTime(remainingSeconds)}</span>
                   </div>
                             <div className="flex items-center justify-center gap-2 flex-wrap">
-                              {spotifyEmbedUrl && (
+                              {/* {spotifyEmbedUrl && (
                                 <button
                                   type="button"
                                   onClick={() => setPlayerOpen((v) => !v)}
@@ -1136,7 +1116,7 @@ export default function SpotifyLyricsPopup() {
                                 >
                                   <Play className={playerOpen ? "h-4 w-4 opacity-100" : "h-4 w-4"} />
                                 </button>
-                              )}
+                              )} */}
                     {spotifyOpenUrl && (
                       <a
                         href={spotifyOpenUrl}
