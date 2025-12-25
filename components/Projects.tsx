@@ -274,7 +274,8 @@ export default function Projects() {
               <motion.div
                 key={repo.id}
                 variants={itemVariants}
-                whileHover={{ y: -12, scale: 1.03 }}
+                whileHover={{ y: -6, scale: 1.01 }}
+                transition={{ type: "spring", stiffness: 220, damping: 18 }}
                 className={`relative bg-gray-800/50 backdrop-blur-sm p-6 rounded-xl border transition-all group card-hover ${
                   isRecent
                     ? "border-primary-500/50 shadow-lg shadow-primary-500/20 hover:shadow-xl hover:shadow-primary-500/40"
