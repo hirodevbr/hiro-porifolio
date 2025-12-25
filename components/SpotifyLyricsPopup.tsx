@@ -469,7 +469,7 @@ export default function SpotifyLyricsPopup() {
     : "pointer-events-none fixed bottom-4 right-4 z-[9998]";
 
   const popupClass = isFullscreen
-    ? "pointer-events-auto w-full max-w-5xl h-[80vh] overflow-hidden rounded-2xl border border-white/10 bg-gray-900/80 shadow-2xl backdrop-blur-2xl"
+    ? "pointer-events-auto w-full max-w-5xl min-h-[70vh] max-h-[90vh] overflow-hidden rounded-2xl border border-white/10 bg-gray-900/80 shadow-2xl backdrop-blur-2xl flex flex-col"
     : "pointer-events-auto w-[360px] overflow-hidden rounded-2xl border border-white/10 bg-gray-900/70 shadow-2xl backdrop-blur-xl";
 
   const listHeightClass = isFullscreen ? "max-h-[60vh]" : "max-h-[260px]";
