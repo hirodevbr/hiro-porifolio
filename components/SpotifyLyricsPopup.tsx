@@ -143,6 +143,7 @@ export default function SpotifyLyricsPopup() {
   const spotify = (data?.spotify ?? null) as LanyardSpotify | null;
   const [collapsed, setCollapsed] = useState(false);
   const [playerOpen, setPlayerOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const [lyricsRaw, setLyricsRaw] = useState<string | null>(null);
   const [lyricsError, setLyricsError] = useState<string | null>(null);
@@ -317,13 +318,21 @@ export default function SpotifyLyricsPopup() {
 
     if (prevTrackKeyRef.current !== trackKey) {
       prevTrackKeyRef.current = trackKey;
-      setCollapsed(false);
+      setCollapsed(isMobile ? true : false);
       setLyricsRaw(null);
       setLyricsError(null);
       setFromCache(false);
       setPlayerOpen(false);
     }
-  }, [spotify, trackKey]);
+  }, [spotify, trackKey, isMobile]);
+
+  // Detectar mobile para colapsar por padrão em telas menores
+  useEffect(() => {
+    const update = () => setIsMobile(window.innerWidth <= 768);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
 
   // Carregar instantaneamente do cache/histórico (se existir)
   useEffect(() => {
