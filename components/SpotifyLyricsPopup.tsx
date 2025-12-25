@@ -668,9 +668,51 @@ export default function SpotifyLyricsPopup() {
                               unoptimized
                             />
                           </div>
-                          <div className="text-center">
+                          <div className="text-center space-y-2">
                             <p className="text-xl font-semibold text-white truncate">{title}</p>
                             <p className="text-sm text-white/70 truncate">{subtitle}</p>
+                            <div className="flex items-center justify-center gap-2 flex-wrap">
+                              {spotifyEmbedUrl && (
+                                <button
+                                  type="button"
+                                  onClick={() => setPlayerOpen((v) => !v)}
+                                  className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
+                                  aria-label={playerOpen ? "Fechar player" : "Abrir player"}
+                                  title={playerOpen ? "Fechar player" : "Abrir player"}
+                                >
+                                  <Play className={playerOpen ? "h-4 w-4 opacity-100" : "h-4 w-4"} />
+                                </button>
+                              )}
+                              {spotifyOpenUrl && (
+                                <a
+                                  href={spotifyOpenUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
+                                  aria-label="Abrir no Spotify (nova aba)"
+                                  title="Abrir no Spotify"
+                                >
+                                  <ExternalLink className="h-4 w-4" />
+                                </a>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => setIsFullscreen((v) => !v)}
+                                className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
+                                aria-label={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
+                                title={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
+                              >
+                                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setCollapsed((v) => !v)}
+                                className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
+                                aria-label={collapsed ? "Expandir" : "Recolher"}
+                              >
+                                <ChevronDown className={collapsed ? "h-4 w-4 rotate-180" : "h-4 w-4"} />
+                              </button>
+                            </div>
                           </div>
                           <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
                             <div
