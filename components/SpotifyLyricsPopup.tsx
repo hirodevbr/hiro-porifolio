@@ -668,9 +668,9 @@ export default function SpotifyLyricsPopup() {
                               unoptimized
                             />
                           </div>
-                          <div>
-                            <p className="text-lg font-semibold text-white truncate">{title}</p>
-                            <p className="text-sm text-white/60 truncate">{subtitle}</p>
+                          <div className="text-center">
+                            <p className="text-xl font-semibold text-white truncate">{title}</p>
+                            <p className="text-sm text-white/70 truncate">{subtitle}</p>
                           </div>
                           <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
                             <div
