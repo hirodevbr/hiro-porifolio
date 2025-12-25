@@ -8,6 +8,7 @@ import { findActiveIndex, parseLrc, type LrcLine } from "@/lib/lrc";
 import { getCachedLyrics, setCachedLyrics } from "@/lib/lyricsCache";
 import { DISCORD_USER_ID } from "@/lib/config";
 import { useLanyardUser, type LanyardSpotify } from "@/lib/lanyardClient";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type LrclibResponse = {
   syncedLyrics?: string | null;
@@ -139,6 +140,7 @@ function safeKey(s: string) {
 }
 
 export default function SpotifyLyricsPopup() {
+  const { language } = useLanguage();
   const { data } = useLanyardUser(DISCORD_USER_ID);
   const spotify = (data?.spotify ?? null) as LanyardSpotify | null;
   const [collapsed, setCollapsed] = useState(false);
@@ -453,6 +455,7 @@ export default function SpotifyLyricsPopup() {
   const remainingSeconds = Math.max(0, totalSeconds - tSeconds);
   const sp = spotify;
   const hasSpotify = Boolean(sp);
+  const loadingLabel = language?.startsWith("en") ? "Fetching lyrics..." : "Buscando letra…";
 
   return (
     <div className="pointer-events-none fixed bottom-4 right-4 z-[9998]">
@@ -572,7 +575,7 @@ export default function SpotifyLyricsPopup() {
                 </AnimatePresence>
 
                 {loadingLyrics && (
-                  <p className="text-sm text-white/60">Buscando letra…</p>
+                  <p className="text-sm text-white/60">{loadingLabel}</p>
                 )}
 
                 {lyricsError && !loadingLyrics && (
