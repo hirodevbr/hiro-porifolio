@@ -1119,27 +1119,27 @@ export default function DiscordProfile() {
                   const remaining = Math.max(0, totalDuration - currentTime);
 
                   return (
-                    <div className="flex items-center gap-3">
-                      {spotify.album_art_url && (
-                        <Image
-                          src={spotify.album_art_url}
-                          alt={spotify.album}
-                          width={64}
-                          height={64}
-                          className="rounded-lg flex-shrink-0"
-                          loading="lazy"
-                          unoptimized
-                        />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-col gap-1 mb-2">
-                          <div className="flex items-center gap-2">
-                            <Music className="w-4 h-4 text-green-400" aria-hidden="true" />
-                            <span className="text-xs text-green-400 font-semibold">
-                              {t("discord_listening_spotify")}
-                            </span>
-                          </div>
+                    <div className="flex items-start gap-3">
+                      <div className="flex flex-col items-start gap-2">
+                        <div className="flex items-center gap-2">
+                          <Music className="w-4 h-4 text-green-400" aria-hidden="true" />
+                          <span className="text-xs text-green-400 font-semibold">
+                            {t("discord_listening_spotify")}
+                          </span>
                         </div>
+                        {spotify.album_art_url && (
+                          <Image
+                            src={spotify.album_art_url}
+                            alt={spotify.album}
+                            width={64}
+                            height={64}
+                            className="rounded-lg flex-shrink-0"
+                            loading="lazy"
+                            unoptimized
+                          />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
                         <p className="text-white font-semibold truncate mb-1">
                           {spotify.song}
                         </p>
