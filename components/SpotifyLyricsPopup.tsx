@@ -581,10 +581,10 @@ export default function SpotifyLyricsPopup() {
                 </AnimatePresence>
 
                 {loadingLyrics && (
-                  <div className="flex items-center gap-2 text-white/70 text-sm">
+                  <p className="flex items-center gap-2 text-sm text-white/70">
                     <Loader2 className="h-4 w-4 animate-spin text-primary-400" aria-hidden="true" />
                     <span>{loadingLabel}</span>
-                  </div>
+                  </p>
                 )}
 
                 {lyricsError && !loadingLyrics && (
