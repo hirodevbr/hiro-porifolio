@@ -103,17 +103,17 @@ export default function DiscordProfile() {
   const discordData = (discordDataRaw as DiscordData | null) ?? null;
   const error = lanyardError;
   
-  // Badges adicionais que não são detectadas pela API pública
-  // Defina como true se você possui essas badges
+  // Badges adicionais que nï¿½o sï¿½o detectadas pela API pï¿½blica
+  // Defina como true se vocï¿½ possui essas badges
   const ADDITIONAL_BADGES = {
-    nitro: true,           // Se você tem Nitro
-    pomelo: true,          // Se você tem badge Pomelo
-    orb: true,             // Se você tem badge Orb
-    impulso: true,         // Se você está impulsionando um servidor
-    missao: true           // Se você completou uma missão
+    nitro: true,           // Se vocï¿½ tem Nitro
+    pomelo: true,          // Se vocï¿½ tem badge Pomelo
+    orb: true,             // Se vocï¿½ tem badge Orb
+    impulso: true,         // Se vocï¿½ estï¿½ impulsionando um servidor
+    missao: true           // Se vocï¿½ completou uma missï¿½o
   };
 
-  // Removido: polling próprio. Agora usamos `useLanyardUser` (um único poller compartilhado e pausável).
+  // Removido: polling prï¿½prio. Agora usamos `useLanyardUser` (um ï¿½nico poller compartilhado e pausï¿½vel).
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -160,19 +160,19 @@ export default function DiscordProfile() {
     }
   };
 
-  // Função para obter todas as URLs possíveis da imagem da atividade
+  // Funï¿½ï¿½o para obter todas as URLs possï¿½veis da imagem da atividade
   const getActivityImageUrls = (activity: DiscordActivity): string[] => {
     const urls: string[] = [];
     
     const largeImage = activity.assets?.large_image;
     const applicationId = activity.application_id;
 
-    // CASO ESPECIAL: Se não tem large_image mas tem application_id (ex: Valorant)
-    // Para jogos como Valorant que não enviam large_image, tentar buscar o ícone do app
-    // Infelizmente, o Discord não expõe o hash do ícone diretamente na API pública
-    // Vamos tentar alguns formatos conhecidos e usar um serviço de terceiros como fallback
+    // CASO ESPECIAL: Se nï¿½o tem large_image mas tem application_id (ex: Valorant)
+    // Para jogos como Valorant que nï¿½o enviam large_image, tentar buscar o ï¿½cone do app
+    // Infelizmente, o Discord nï¿½o expï¿½e o hash do ï¿½cone diretamente na API pï¿½blica
+    // Vamos tentar alguns formatos conhecidos e usar um serviï¿½o de terceiros como fallback
     if (!largeImage && applicationId) {
-      // Tentar formatos conhecidos do Discord (podem não funcionar sem o hash correto)
+      // Tentar formatos conhecidos do Discord (podem nï¿½o funcionar sem o hash correto)
       urls.push(
         `https://cdn.discordapp.com/app-icons/${applicationId}/${applicationId}.png`,
         `https://cdn.discordapp.com/app-icons/${applicationId}/${applicationId}.png?size=512`,
@@ -186,12 +186,12 @@ export default function DiscordProfile() {
         // Tentar formato com a_ prefix (animated)
         `https://cdn.discordapp.com/app-icons/${applicationId}/a_${applicationId}.png`,
         `https://cdn.discordapp.com/app-icons/${applicationId}/a_${applicationId}.gif`,
-        // Tentar serviço de terceiros que mapeia application_id para ícones
+        // Tentar serviï¿½o de terceiros que mapeia application_id para ï¿½cones
         `https://discord.com/api/v9/applications/${applicationId}/icon`,
         `https://discord.com/api/v9/applications/${applicationId}/icon.png`
       );
       
-      // Se nenhuma URL funcionar, o componente mostrará o fallback (ícone genérico)
+      // Se nenhuma URL funcionar, o componente mostrarï¿½ o fallback (ï¿½cone genï¿½rico)
       return urls;
     }
 
@@ -199,17 +199,17 @@ export default function DiscordProfile() {
       return urls;
     }
 
-    // PRIORIDADE 1: Se a imagem começa com "mp:", é uma URL externa (PreMiD, etc.)
-    // IMPORTANTE: URLs mp: não devem ser usadas no Discord CDN, precisam ser decodificadas primeiro
+    // PRIORIDADE 1: Se a imagem comeï¿½a com "mp:", ï¿½ uma URL externa (PreMiD, etc.)
+    // IMPORTANTE: URLs mp: nï¿½o devem ser usadas no Discord CDN, precisam ser decodificadas primeiro
     if (largeImage && largeImage.startsWith("mp:")) {
       const match = largeImage.match(/mp:external\/(.+)/);
       if (match) {
         const urlPart = match[1];
         
-        // Se contém "https/" ou "http/", extrair a parte após isso
+        // Se contï¿½m "https/" ou "http/", extrair a parte apï¿½s isso
         const httpsMatch = urlPart.match(/(?:https|http)\/(.+)/);
         if (httpsMatch) {
-          // Decodificar a URL que está após "https/"
+          // Decodificar a URL que estï¿½ apï¿½s "https/"
           try {
             const decodedUrl = decodeURIComponent(httpsMatch[1]);
             const finalUrl = decodedUrl.startsWith("http://") || decodedUrl.startsWith("https://")
@@ -217,7 +217,7 @@ export default function DiscordProfile() {
               : `https://${decodedUrl}`;
             urls.push(finalUrl);
           } catch {
-            // Se falhar na decodificação, usar diretamente
+            // Se falhar na decodificaï¿½ï¿½o, usar diretamente
             urls.push(`https://${httpsMatch[1]}`);
           }
         } else {
@@ -240,22 +240,22 @@ export default function DiscordProfile() {
           }
         }
       }
-      // Retornar apenas URLs externas decodificadas, não tentar Discord CDN para mp:
+      // Retornar apenas URLs externas decodificadas, nï¿½o tentar Discord CDN para mp:
       return urls;
     }
 
     // PRIORIDADE 2: Se tem application_id, priorizar URLs do CDN do Discord (Rich Presence de jogos)
-    // Esta é a forma mais confiável para jogos como Valorant, League of Legends, etc.
-    // IMPORTANTE: Só fazer isso se largeImage NÃO começar com "mp:" (já tratado acima)
+    // Esta ï¿½ a forma mais confiï¿½vel para jogos como Valorant, League of Legends, etc.
+    // IMPORTANTE: Sï¿½ fazer isso se largeImage Nï¿½O comeï¿½ar com "mp:" (jï¿½ tratado acima)
     if (applicationId && largeImage && !largeImage.startsWith("mp:")) {
-      // PRIORIDADE MÁXIMA: app-icons primeiro (usado por Valorant e outros jogos para o ícone do app)
+      // PRIORIDADE Mï¿½XIMA: app-icons primeiro (usado por Valorant e outros jogos para o ï¿½cone do app)
       urls.push(
         `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.png`,
         `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.png?size=512`,
         `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.png?size=1024`,
         `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.jpg`,
         `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.webp`,
-        `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}` // Sem extensão
+        `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}` // Sem extensï¿½o
       );
       
       // Tentar com a_ prefix removido em app-icons (para imagens animadas)
@@ -268,7 +268,7 @@ export default function DiscordProfile() {
         );
       }
       
-      // Formato padrão do Discord Rich Presence (app-assets para imagens grandes)
+      // Formato padrï¿½o do Discord Rich Presence (app-assets para imagens grandes)
       urls.push(
         `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.png`,
         `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.png?size=512`,
@@ -280,7 +280,7 @@ export default function DiscordProfile() {
         `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.jpg`,
         `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.webp`,
         `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.gif`,
-        `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}` // Sem extensão
+        `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}` // Sem extensï¿½o
       );
       
       // Tentar com a_ prefix (animated) em app-assets
@@ -296,13 +296,13 @@ export default function DiscordProfile() {
     return urls;
   };
 
-  // Função para obter URL da imagem da atividade (mantida para compatibilidade)
+  // Funï¿½ï¿½o para obter URL da imagem da atividade (mantida para compatibilidade)
   const getActivityImageUrl = (activity: DiscordActivity): string | null => {
     const urls = getActivityImageUrls(activity);
     return urls.length > 0 ? urls[0] : null;
   };
 
-  // Função para obter URL da imagem pequena da atividade
+  // Funï¿½ï¿½o para obter URL da imagem pequena da atividade
   const getActivitySmallImageUrl = (activity: DiscordActivity): string | null => {
     if (!activity.assets?.small_image) {
       return null;
@@ -311,8 +311,8 @@ export default function DiscordProfile() {
     const smallImage = activity.assets.small_image;
     const applicationId = activity.application_id;
 
-    // PRIORIDADE 1: Se a imagem começa com "mp:", é uma URL externa (PreMiD, etc.)
-    // IMPORTANTE: URLs mp: não devem ser usadas no Discord CDN
+    // PRIORIDADE 1: Se a imagem comeï¿½a com "mp:", ï¿½ uma URL externa (PreMiD, etc.)
+    // IMPORTANTE: URLs mp: nï¿½o devem ser usadas no Discord CDN
     if (smallImage && smallImage.startsWith("mp:")) {
       const match = smallImage.match(/mp:external\/(.+)/);
       if (match) {
@@ -320,7 +320,7 @@ export default function DiscordProfile() {
         
         const httpsMatch = urlPart.match(/(?:https|http)\/(.+)/);
         if (httpsMatch) {
-          // Decodificar a URL que está após "https/"
+          // Decodificar a URL que estï¿½ apï¿½s "https/"
           try {
             const decodedUrl = decodeURIComponent(httpsMatch[1]);
             return decodedUrl.startsWith("http://") || decodedUrl.startsWith("https://")
@@ -349,11 +349,11 @@ export default function DiscordProfile() {
           }
         }
       }
-      // Retornar null se não conseguir decodificar
+      // Retornar null se nï¿½o conseguir decodificar
       return null;
     }
 
-    // PRIORIDADE 2: Se tem application_id e smallImage NÃO começa com "mp:", usar CDN do Discord
+    // PRIORIDADE 2: Se tem application_id e smallImage Nï¿½O comeï¿½a com "mp:", usar CDN do Discord
     if (applicationId && smallImage && !smallImage.startsWith("mp:")) {
       return `https://cdn.discordapp.com/app-assets/${applicationId}/${smallImage}.png`;
     }
@@ -374,14 +374,14 @@ export default function DiscordProfile() {
         return <Code className="w-5 h-5" />; // Code para streaming
       case 2: // Listening
         return <Music className="w-5 h-5" />;
-      case 3: // Watching - não mostrar ícone
+      case 3: // Watching - nï¿½o mostrar ï¿½cone
         return null;
       default:
         return <Code className="w-5 h-5" />;
     }
   };
 
-  // Função para formatar tempo decorrido em horas, minutos e segundos
+  // Funï¿½ï¿½o para formatar tempo decorrido em horas, minutos e segundos
   const formatElapsedTime = (startTimestamp: number): string => {
     const now = Date.now();
     const elapsedMs = now - startTimestamp;
@@ -400,24 +400,24 @@ export default function DiscordProfile() {
     }
   };
 
-  // Função para formatar tempo em minutos e segundos (para música)
+  // Funï¿½ï¿½o para formatar tempo em minutos e segundos (para mï¿½sica)
   const formatMusicTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Função para calcular a data de criação da conta Discord a partir do ID (snowflake)
+  // Funï¿½ï¿½o para calcular a data de criaï¿½ï¿½o da conta Discord a partir do ID (snowflake)
   const getAccountCreationDate = (userId: string): Date => {
     // Discord epoch: 2015-01-01 00:00:00 UTC
     const DISCORD_EPOCH = 1420070400000;
-    // Snowflake contém timestamp: (id >> 22) + epoch
+    // Snowflake contï¿½m timestamp: (id >> 22) + epoch
     const id = BigInt(userId);
     const timestamp = Number(id >> BigInt(22)) + DISCORD_EPOCH;
     return new Date(timestamp);
   };
 
-  // Função para formatar a data de criação
+  // Funï¿½ï¿½o para formatar a data de criaï¿½ï¿½o
   const formatCreationDate = (date: Date): string => {
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
@@ -448,7 +448,7 @@ export default function DiscordProfile() {
     // Discord Staff (1)
     if (flags && flags & 1) {
       badges.push({
-        name: "Funcionário do Discord",
+        name: "Funcionï¿½rio do Discord",
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/discordstaff.svg",
         icon: <Shield className="w-4 h-4" />,
         color: "text-red-400",
@@ -481,7 +481,7 @@ export default function DiscordProfile() {
     // Bug Hunter Level 1 (8)
     if (flags && flags & 8) {
       badges.push({
-        name: "Bug Hunter Nível 1",
+        name: "Bug Hunter Nï¿½vel 1",
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/discordbughunter1.svg",
         icon: <Bug className="w-4 h-4" />,
         color: "text-green-400",
@@ -536,7 +536,7 @@ export default function DiscordProfile() {
     // Bug Hunter Level 2 (16384)
     if (flags && flags & 16384) {
       badges.push({
-        name: "Bug Hunter Nível 2",
+        name: "Bug Hunter Nï¿½vel 2",
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/discordbughunter2.svg",
         icon: <Bug className="w-4 h-4" />,
         color: "text-emerald-400",
@@ -626,9 +626,9 @@ export default function DiscordProfile() {
           color: "text-purple-400",
           bgColor: "bg-purple-500/20 border-purple-500/50"
         });
-      } else if (badgeName.includes("mission") || badgeName.includes("Missão")) {
+      } else if (badgeName.includes("mission") || badgeName.includes("Missï¿½o")) {
         badges.push({
-          name: "Missão Completa",
+          name: "Missï¿½o Completa",
           iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/quest.png",
           icon: <Target className="w-4 h-4" />,
           color: "text-yellow-400",
@@ -659,10 +659,10 @@ export default function DiscordProfile() {
       });
     }
     
-    // Missão Completa - verificar em kv
+    // Missï¿½o Completa - verificar em kv
     if (kv && (kv.mission_complete || kv.mission || kv.completed_mission)) {
       badges.push({
-        name: "Missão Completa",
+        name: "Missï¿½o Completa",
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/quest.png",
         icon: <Target className="w-4 h-4" />,
         color: "text-yellow-400",
@@ -670,9 +670,9 @@ export default function DiscordProfile() {
       });
     }
     
-    // Ordenar badges por importância
+    // Ordenar badges por importï¿½ncia
     const badgeOrder = [
-      "Funcionário do Discord",
+      "Funcionï¿½rio do Discord",
       "Parceiro do Discord",
       "Moderador Certificado",
       "Desenvolvedor de Bot Verificado",
@@ -685,10 +685,10 @@ export default function DiscordProfile() {
       "Desenvolvedor Ativo",
       "Impulso de Servidor",
       "Pomelo",
-      "Missão Completa",
+      "Missï¿½o Completa",
       "Orb",
-      "Bug Hunter Nível 2",
-      "Bug Hunter Nível 1",
+      "Bug Hunter Nï¿½vel 2",
+      "Bug Hunter Nï¿½vel 1",
       "Early Supporter"
     ];
     
@@ -702,7 +702,7 @@ export default function DiscordProfile() {
   };
 
   // Memoizar badges ANTES de qualquer return condicional para evitar erro de hooks React #310
-  // Isso garante que o hook seja sempre chamado na mesma ordem em todas as renderizações
+  // Isso garante que o hook seja sempre chamado na mesma ordem em todas as renderizaï¿½ï¿½es
   const badges = useMemo(() => {
     if (!discordData?.discord_user) {
       return [];
@@ -758,9 +758,9 @@ export default function DiscordProfile() {
       });
     }
     
-    if (ADDITIONAL_BADGES.missao && !calculatedBadges.find(b => b.name === "Missão Completa")) {
+    if (ADDITIONAL_BADGES.missao && !calculatedBadges.find(b => b.name === "Missï¿½o Completa")) {
       calculatedBadges.push({
-        name: "Missão Completa",
+        name: "Missï¿½o Completa",
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/quest.png",
         icon: <Target className="w-4 h-4" />,
         color: "text-yellow-400",
@@ -770,7 +770,7 @@ export default function DiscordProfile() {
     
     // Reordenar badges
     const badgeOrder = [
-      "Funcionário do Discord",
+      "Funcionï¿½rio do Discord",
       "Parceiro do Discord",
       "Moderador Certificado",
       "Desenvolvedor de Bot Verificado",
@@ -783,10 +783,10 @@ export default function DiscordProfile() {
       "Desenvolvedor Ativo",
       "Impulso de Servidor",
       "Pomelo",
-      "Missão Completa",
+      "Missï¿½o Completa",
       "Orb",
-      "Bug Hunter Nível 2",
-      "Bug Hunter Nível 1",
+      "Bug Hunter Nï¿½vel 2",
+      "Bug Hunter Nï¿½vel 1",
       "Early Supporter"
     ];
     
@@ -840,14 +840,12 @@ export default function DiscordProfile() {
             className="text-center mb-8"
           >
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-primary-400 to-purple-500 bg-clip-text text-transparent">
-                {t("discord_title")}
-              </span>
+              <span className="text-primary-400">{t("discord_title")}</span>
             </h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-primary-500 to-purple-500 mx-auto rounded-full" />
+            <div className="w-24 h-1 bg-primary-500 mx-auto rounded-full" />
           </motion.div>
           <div className="bg-gray-800/50 backdrop-blur-sm p-8 rounded-xl border border-gray-700 text-center">
-            <p className="text-gray-400">{error || "Perfil não disponível"}</p>
+            <p className="text-gray-400">{error || "Perfil nï¿½o disponï¿½vel"}</p>
             <p className="text-sm text-gray-500 mt-2">
               Configure seu Discord User ID no componente DiscordProfile.tsx
             </p>
@@ -868,7 +866,7 @@ export default function DiscordProfile() {
   
   const isAnimatedAvatar = discord_user.avatar?.startsWith("a_") || false;
   
-  // Calcular data de criação da conta
+  // Calcular data de criaï¿½ï¿½o da conta
   let accountCreationInfo: { formattedDate: string; accountAge: string } | null = null;
   try {
     if (discord_user.id) {
@@ -883,7 +881,7 @@ export default function DiscordProfile() {
       accountCreationInfo = { formattedDate, accountAge };
     }
   } catch (error) {
-    console.error('Erro ao calcular data de criação:', error);
+    console.error('Erro ao calcular data de criaï¿½ï¿½o:', error);
   }
   
   // Componente para avatar GIF animado
@@ -895,7 +893,7 @@ export default function DiscordProfile() {
       const img = imgRef.current;
       if (!img) return;
       
-      // Recarregar o GIF para forçar animação
+      // Recarregar o GIF para forï¿½ar animaï¿½ï¿½o
       const reloadGif = () => {
         if (img && img.src.includes('.gif')) {
           const baseSrc = img.src.split('?')[0];
@@ -947,12 +945,10 @@ export default function DiscordProfile() {
           transition={{ duration: 0.5 }}
           className="text-center mb-8"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            <span className="bg-gradient-to-r from-primary-400 to-purple-500 bg-clip-text text-transparent">
-              {t("discord_title")}
-            </span>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary-400">
+            {t("discord_title")}
           </h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-primary-500 to-purple-500 mx-auto rounded-full" />
+          <div className="w-24 h-1 bg-primary-500 mx-auto rounded-full" />
           <p className="text-gray-400 mt-4">
             {t("discord_subtitle")}
           </p>
@@ -1010,7 +1006,7 @@ export default function DiscordProfile() {
                     <span className="text-sm text-gray-500">#{discord_user.discriminator}</span>
                   )}
                 </div>
-                {/* Data de criação da conta */}
+                {/* Data de criaï¿½ï¿½o da conta */}
                 {accountCreationInfo && (
                   <div className="flex items-center gap-1 mt-1">
                     <span className="text-xs text-gray-500">
@@ -1088,7 +1084,7 @@ export default function DiscordProfile() {
               initial={{ opacity: 0, x: -20 }}
               animate={inView ? { opacity: 1, x: 0 } : {}}
               transition={{ duration: 0.3 }}
-              className="mb-6 p-4 bg-gradient-to-r from-green-500/10 to-green-600/10 rounded-lg border border-green-500/20 mx-6"
+            className="mb-6 p-4 bg-gray-800/70 rounded-lg border border-green-500/20 mx-6"
             >
               {/* Componente Spotify Timer */}
               {(() => {
@@ -1182,7 +1178,7 @@ export default function DiscordProfile() {
               {activities
                 .filter((activity) => activity.type !== 4) // Filtrar atividades customizadas
                 .filter((activity) => {
-                  // Remover Spotify da lista de atividades (já tem card dedicado)
+                  // Remover Spotify da lista de atividades (jï¿½ tem card dedicado)
                   const activityName = activity.name?.toLowerCase() || '';
                   return !activityName.includes('spotify');
                 })
@@ -1223,9 +1219,9 @@ export default function DiscordProfile() {
 
                     useEffect(() => {
                       const urls = getActivityImageUrls(activity);
-                      // Filtrar URLs inválidas que contêm "mp:" no meio (não devem estar no Discord CDN)
+                      // Filtrar URLs invï¿½lidas que contï¿½m "mp:" no meio (nï¿½o devem estar no Discord CDN)
                       const validUrls = urls.filter(url => {
-                        // Se a URL contém "mp:external" e também contém "discordapp.com", é inválida
+                        // Se a URL contï¿½m "mp:external" e tambï¿½m contï¿½m "discordapp.com", ï¿½ invï¿½lida
                         if (url.includes('mp:external') && url.includes('discordapp.com')) {
                           return false;
                         }
@@ -1234,7 +1230,7 @@ export default function DiscordProfile() {
                       
                       const currentImageKey = `${activity.assets?.large_image || 'no-image'}-${activity.application_id || 'no-app-id'}`;
                       
-                      // Só resetar se a imagem realmente mudou
+                      // Sï¿½ resetar se a imagem realmente mudou
                       if (prevImageKeyRef.current !== currentImageKey) {
                         setImageUrls(validUrls);
                         setCurrentUrlIndex(0);
@@ -1248,12 +1244,12 @@ export default function DiscordProfile() {
                     }, [activity.assets?.large_image, activity.application_id]);
 
                     const handleImageError = () => {
-                      // Se já temos uma imagem carregada, não tentar outras URLs para evitar piscar
+                      // Se jï¿½ temos uma imagem carregada, nï¿½o tentar outras URLs para evitar piscar
                       if (loadedImageUrl) {
                         return;
                       }
 
-                      // Tentar próxima URL imediatamente
+                      // Tentar prï¿½xima URL imediatamente
                       setCurrentUrlIndex((prev) => {
                         if (prev < imageUrls.length - 1) {
                           return prev + 1;
@@ -1278,10 +1274,10 @@ export default function DiscordProfile() {
                       setImageError(false);
                     };
 
-                    // Se todas as URLs falharam ou não há URLs, mostrar fallback com ícone apropriado
+                    // Se todas as URLs falharam ou nï¿½o hï¿½ URLs, mostrar fallback com ï¿½cone apropriado
                     if (showFallback || imageUrls.length === 0) {
                       const activityIcon = getActivityIcon(activity);
-                      // Se não há ícone (ex: watching), não mostrar fallback
+                      // Se nï¿½o hï¿½ ï¿½cone (ex: watching), nï¿½o mostrar fallback
                       if (!activityIcon) {
                         return null;
                       }
@@ -1294,15 +1290,15 @@ export default function DiscordProfile() {
                       );
                     }
 
-                    // Se já temos uma imagem carregada e a URL atual é diferente, usar a carregada
+                    // Se jï¿½ temos uma imagem carregada e a URL atual ï¿½ diferente, usar a carregada
                     const imageUrlToUse = loadedImageUrl && loadedImageUrl === imageUrls[currentUrlIndex] 
                       ? loadedImageUrl 
                       : imageUrls[currentUrlIndex];
 
-                    // Se não há URL válida, mostrar fallback
+                    // Se nï¿½o hï¿½ URL vï¿½lida, mostrar fallback
                     if (!imageUrlToUse) {
                       const activityIcon = getActivityIcon(activity);
-                      // Se não há ícone (ex: watching), não mostrar fallback
+                      // Se nï¿½o hï¿½ ï¿½cone (ex: watching), nï¿½o mostrar fallback
                       if (!activityIcon) {
                         return null;
                       }
@@ -1321,7 +1317,7 @@ export default function DiscordProfile() {
                           <div className="absolute inset-0 bg-gray-700 rounded-lg animate-pulse z-10" />
                         )}
                         <Image
-                          key={imageUrlToUse} // Key para forçar re-render quando URL muda
+                          key={imageUrlToUse} // Key para forï¿½ar re-render quando URL muda
                           src={imageUrlToUse}
                           alt={activity.name || activity.details || 'Activity'}
                           fill
@@ -1349,7 +1345,7 @@ export default function DiscordProfile() {
                         {/* Imagem grande da atividade */}
                         <ActivityImage />
                         
-                        {/* Conteúdo da atividade */}
+                        {/* Conteï¿½do da atividade */}
                         <div className="flex-1 min-w-0">
                           <div className="mb-1.5">
                             <span className="text-xs text-gray-400 uppercase tracking-wide">

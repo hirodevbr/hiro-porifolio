@@ -168,12 +168,10 @@ export default function Contact() {
           transition={{ duration: 0.5 }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            <span className="bg-gradient-to-r from-primary-400 to-purple-500 bg-clip-text text-transparent">
-              {t("contact_title")}
-            </span>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary-400">
+            {t("contact_title")}
           </h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-primary-500 to-purple-500 mx-auto rounded-full" />
+          <div className="w-24 h-1 bg-primary-500 mx-auto rounded-full" />
           <p className="text-gray-400 mt-4 max-w-2xl mx-auto">
             {t("contact_subtitle")}
           </p>
@@ -202,7 +200,7 @@ export default function Contact() {
                 className="flex items-center gap-4 p-4 bg-gray-800/50 backdrop-blur-sm rounded-lg border border-gray-700 hover:border-primary-500/50 hover:shadow-lg hover:shadow-primary-500/20 card-hover transition-all group focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900"
                 aria-label={`Enviar email para hiro.communitydev@gmail.com`}
               >
-                <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
+                <div className="w-12 h-12 bg-primary-600 rounded-lg flex items-center justify-center">
                   <Mail className="w-6 h-6 text-white" aria-hidden="true" />
                 </div>
                 <div>
@@ -377,7 +375,7 @@ export default function Contact() {
               whileHover={!isSubmitting ? { scale: 1.05, y: -4 } : {}}
               whileTap={!isSubmitting ? { scale: 0.95 } : {}}
               disabled={isSubmitting}
-              className={`w-full px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 rounded-lg font-semibold text-white shadow-lg shadow-primary-500/50 hover:shadow-xl hover:shadow-primary-500/70 glow-on-hover hover-lift transition-all flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900 ${
+              className={`w-full px-6 py-3 bg-primary-600 rounded-lg font-semibold text-white shadow-lg shadow-primary-500/50 hover:shadow-xl hover:shadow-primary-500/70 hover-lift transition-all flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900 ${
                 isSubmitting
                   ? "opacity-70 cursor-not-allowed"
                   : "cursor-pointer"

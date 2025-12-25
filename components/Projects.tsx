@@ -194,12 +194,8 @@ export default function Projects() {
       >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-primary-400 to-purple-500 bg-clip-text text-transparent">
-                {t("projects_title")}
-              </span>
-            </h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-primary-500 to-purple-500 mx-auto rounded-full" />
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary-400">{t("projects_title")}</h2>
+            <div className="w-24 h-1 bg-primary-500 mx-auto rounded-full" />
             <p className="text-gray-400 mt-4 max-w-2xl mx-auto">
               {t("projects_subtitle")}
             </p>
@@ -223,12 +219,8 @@ export default function Projects() {
           transition={{ duration: 0.5 }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            <span className="bg-gradient-to-r from-primary-400 to-purple-500 bg-clip-text text-transparent">
-              {t("projects_title")}
-            </span>
-          </h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-primary-500 to-purple-500 mx-auto rounded-full" />
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary-400">{t("projects_title")}</h2>
+          <div className="w-24 h-1 bg-primary-500 mx-auto rounded-full" />
           <p className="text-gray-400 mt-4 max-w-2xl mx-auto">
             {t("projects_subtitle")}
           </p>
@@ -256,7 +248,7 @@ export default function Projects() {
                 onClick={handleRetry}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 rounded-lg font-semibold text-white shadow-lg shadow-primary-500/50 hover:shadow-xl hover:shadow-primary-500/50 transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 rounded-lg font-semibold text-white shadow-lg shadow-primary-500/50 hover:shadow-xl hover:shadow-primary-500/50 transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900"
               >
                 <RefreshCw className="w-5 h-5" />
                 {t("projects_error_retry")}
@@ -295,7 +287,7 @@ export default function Projects() {
                     initial={{ scale: 0, rotate: -180 }}
                     animate={{ scale: 1, rotate: 0 }}
                     transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                    className="absolute -top-3 -right-3 flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-primary-500 to-purple-500 rounded-full text-xs font-semibold text-white shadow-lg"
+                    className="absolute -top-3 -right-3 flex items-center gap-1 px-3 py-1 bg-primary-600 rounded-full text-xs font-semibold text-white shadow-lg"
                   >
                     <Sparkles className="w-3 h-3" />
                     <span>{t("projects_new")}</span>
@@ -408,7 +400,7 @@ export default function Projects() {
             whileHover={{ scale: 1.05, y: -4 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => trackSocialClick("GitHub", "https://github.com/hirodevbr")}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 rounded-lg font-semibold text-white shadow-lg shadow-primary-500/50 hover:shadow-xl hover:shadow-primary-500/70 glow-on-hover hover-lift transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 rounded-lg font-semibold text-white shadow-lg shadow-primary-500/50 hover:shadow-xl hover:shadow-primary-500/70 hover-lift transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900"
             aria-label={`${t("projects_view_all")} no GitHub (abre em nova aba)`}
           >
             <Github className="w-5 h-5" aria-hidden="true" />

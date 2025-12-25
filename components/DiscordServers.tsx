@@ -216,12 +216,10 @@ function DiscordServers() {
           transition={{ duration: 0.5 }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            <span className="bg-gradient-to-r from-primary-400 to-purple-500 bg-clip-text text-transparent">
-              {t("discord_servers_title")}
-            </span>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary-400">
+            {t("discord_servers_title")}
           </h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-primary-500 to-purple-500 mx-auto rounded-full" />
+          <div className="w-24 h-1 bg-primary-500 mx-auto rounded-full" />
           <p className="text-gray-400 mt-4">
             {t("discord_servers_subtitle")}
           </p>
@@ -291,9 +289,9 @@ function DiscordServers() {
             transition={{ duration: 0.5 }}
             className="max-w-2xl mx-auto"
           >
-            <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm p-12 rounded-2xl border border-gray-700/50 shadow-2xl relative overflow-hidden">
+            <div className="bg-gray-900/80 backdrop-blur-sm p-12 rounded-2xl border border-gray-700/50 shadow-2xl relative overflow-hidden">
               {/* Background decoration */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-purple-500/5 to-transparent" />
+              <div className="absolute inset-0 bg-gray-900/40" />
               <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full blur-3xl" />
               <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
               
@@ -314,9 +312,7 @@ function DiscordServers() {
                   <Wrench className="w-20 h-20 text-primary-400 mx-auto" />
                 </motion.div>
                 
-                <h3 className="text-3xl font-bold mb-4 bg-gradient-to-r from-primary-400 to-purple-500 bg-clip-text text-transparent">
-                  {t("discord_servers_previous_construction")}
-                </h3>
+                <h3 className="text-3xl font-bold mb-4 text-primary-400">{t("discord_servers_previous_construction")}</h3>
                 
                 <p className="text-gray-300 text-lg leading-relaxed">
                   {t("discord_servers_previous_construction_desc")}

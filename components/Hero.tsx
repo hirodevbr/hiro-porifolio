@@ -216,7 +216,7 @@ export default function Hero() {
             <motion.div
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 300 }}
-              className="w-36 h-36 md:w-44 md:h-44 rounded-full bg-gradient-to-br from-primary-500/20 to-purple-500/20 border-4 border-primary-500/50 flex items-center justify-center shadow-2xl shadow-primary-500/30 backdrop-blur-sm"
+              className="w-36 h-36 md:w-44 md:h-44 rounded-full bg-primary-500/15 border-4 border-primary-500/50 flex items-center justify-center shadow-2xl shadow-primary-500/30 backdrop-blur-sm"
             >
               {/* Foto de perfil em: public/profile/profile.avif */}
               <Image
@@ -253,11 +253,9 @@ export default function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-5xl md:text-7xl font-bold mb-6"
+            className="text-5xl md:text-7xl font-bold mb-6 text-primary-400"
           >
-            <span className="bg-gradient-to-r from-primary-400 via-primary-500 to-purple-500 bg-clip-text text-transparent animate-gradient">
-              {t("hero_name")}
-            </span>
+            {t("hero_name")}
           </motion.h1>
 
           <motion.div
@@ -296,7 +294,7 @@ export default function Hero() {
                   handleSmoothScroll(e as any, "#projects");
                 }
               }}
-              className="px-8 py-4 bg-gradient-to-r from-primary-500 to-primary-600 rounded-lg font-semibold text-white shadow-lg shadow-primary-500/50 hover:shadow-xl hover:shadow-primary-500/70 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900 glow-on-hover hover-lift"
+              className="px-8 py-4 bg-primary-600 rounded-lg font-semibold text-white shadow-lg shadow-primary-500/50 hover:shadow-xl hover:shadow-primary-500/70 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900 hover-lift"
               whileHover={{ scale: 1.05, y: -4 }}
               whileTap={{ scale: 0.95 }}
               aria-label={`Navegar para ${t("hero_projects")}`}

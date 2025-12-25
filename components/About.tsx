@@ -47,18 +47,10 @@ export default function About() {
           animate={inView ? "visible" : "hidden"}
           className="text-center mb-16"
         >
-          <motion.h2
-            variants={itemVariants}
-            className="text-4xl md:text-5xl font-bold mb-4"
-          >
-            <span className="bg-gradient-to-r from-primary-400 to-purple-500 bg-clip-text text-transparent">
-              {t("about_title")}
-            </span>
+          <motion.h2 variants={itemVariants} className="text-4xl md:text-5xl font-bold mb-4 text-primary-400">
+            {t("about_title")}
           </motion.h2>
-          <motion.div
-            variants={itemVariants}
-            className="w-24 h-1 bg-gradient-to-r from-primary-500 to-purple-500 mx-auto rounded-full"
-          />
+          <motion.div variants={itemVariants} className="w-24 h-1 bg-primary-500 mx-auto rounded-full" />
         </motion.div>
 
         <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -117,7 +109,7 @@ export default function About() {
               variants={itemVariants}
               initial="hidden"
               animate={inView ? "visible" : "hidden"}
-              className="bg-gradient-to-br from-primary-500/20 to-purple-500/20 rounded-2xl p-6 backdrop-blur-sm border border-gray-700 hover:border-primary-500/50 hover:shadow-xl hover:shadow-primary-500/20 card-hover mt-6"
+              className="bg-gray-800/70 rounded-2xl p-6 backdrop-blur-sm border border-gray-700 hover:border-primary-500/50 hover:shadow-xl hover:shadow-primary-500/20 card-hover mt-6"
             >
               <div className="space-y-4">
                 <div>

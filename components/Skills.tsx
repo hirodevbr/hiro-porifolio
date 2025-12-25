@@ -127,12 +127,10 @@ export default function Skills() {
           transition={{ duration: 0.5 }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            <span className="bg-gradient-to-r from-primary-400 to-purple-500 bg-clip-text text-transparent">
-              {t("skills_title")}
-            </span>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary-400">
+            {t("skills_title")}
           </h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-primary-500 to-purple-500 mx-auto rounded-full" />
+          <div className="w-24 h-1 bg-primary-500 mx-auto rounded-full" />
           <p className="text-gray-400 mt-4">
             {t("skills_subtitle")}
           </p>
@@ -153,10 +151,7 @@ export default function Skills() {
                 whileHover={{ y: -10, scale: 1.03 }}
                 className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-xl border border-gray-700 hover:border-primary-500/50 hover:shadow-xl hover:shadow-primary-500/20 card-hover transition-all group"
               >
-                <div
-                  className={`w-12 h-12 rounded-lg bg-gradient-to-br ${skill.color} p-3 mb-4 flex items-center justify-center`}
-                  aria-hidden="true"
-                >
+                <div className="w-12 h-12 rounded-lg bg-gray-700 p-3 mb-4 flex items-center justify-center" aria-hidden="true">
                   <Icon className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-4">

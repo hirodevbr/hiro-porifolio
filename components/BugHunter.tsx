@@ -162,12 +162,10 @@ export default function BugHunter() {
           transition={{ duration: 0.5 }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            <span className="bg-gradient-to-r from-primary-400 to-purple-500 bg-clip-text text-transparent">
-              {t("bughunter_title")}
-            </span>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary-400">
+            {t("bughunter_title")}
           </h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-primary-500 to-purple-500 mx-auto rounded-full" />
+          <div className="w-24 h-1 bg-primary-500 mx-auto rounded-full" />
           <p className="text-gray-400 mt-4 max-w-2xl mx-auto">
             {t("bughunter_subtitle")}
           </p>
@@ -374,7 +372,7 @@ export default function BugHunter() {
               {/* linha de scan descendo */}
               <motion.div
                 aria-hidden="true"
-                className="absolute left-0 right-0 h-10 bg-gradient-to-b from-primary-500/40 via-transparent to-transparent mix-blend-screen"
+                className="absolute left-0 right-0 h-10 bg-primary-500/20 mix-blend-screen"
                 style={{ top: 0 }}
                 animate={
                   inView

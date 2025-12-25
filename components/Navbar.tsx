@@ -88,7 +88,7 @@ export default function Navbar() {
           <motion.a
             href="#home"
             onClick={(e) => handleSmoothScroll(e, "#home")}
-            className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900 rounded"
+            className="text-2xl font-bold text-primary-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900 rounded"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             aria-label="Ir para o início"

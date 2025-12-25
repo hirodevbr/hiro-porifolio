@@ -652,7 +652,7 @@ export default function SpotifyLyricsPopup() {
                                 />
                                 <motion.div
                                   layoutId="lyricGlow"
-                                  className="absolute -inset-6 rounded-2xl bg-gradient-to-r from-green-500/0 via-green-400/10 to-green-500/0 blur-xl"
+                                  className="absolute -inset-6 rounded-2xl bg-green-500/10 blur-xl"
                                   transition={{ type: "spring", stiffness: 380, damping: 34 }}
                                 />
                                 <motion.span
@@ -708,7 +708,7 @@ export default function SpotifyLyricsPopup() {
                                   {active && (
                                     <motion.div
                                       layoutId="lyricGlow"
-                                      className="absolute -inset-6 rounded-2xl bg-gradient-to-r from-green-500/0 via-green-400/10 to-green-500/0 blur-xl"
+                                      className="absolute -inset-6 rounded-2xl bg-green-500/10 blur-xl"
                                       transition={{ type: "spring", stiffness: 380, damping: 34 }}
                                     />
                                   )}
