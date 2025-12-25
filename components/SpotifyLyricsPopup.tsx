@@ -1132,7 +1132,7 @@ export default function SpotifyLyricsPopup() {
                     <span>-{formatTime(remainingSeconds)}</span>
                   </div>
                             <div className="flex items-center justify-center gap-2 flex-wrap">
-                              {spotifyEmbedUrl && (
+                              {/* {spotifyEmbedUrl && (
                                 <button
                                   type="button"
                                   onClick={() => setPlayerOpen((v) => !v)}
@@ -1142,7 +1142,7 @@ export default function SpotifyLyricsPopup() {
                                 >
                                   <Play className={playerOpen ? "h-4 w-4 opacity-100" : "h-4 w-4"} />
                                 </button>
-                              )}
+                              )} */}
                               {spotifyOpenUrl && (
                                 <a
                                   href={spotifyOpenUrl}
