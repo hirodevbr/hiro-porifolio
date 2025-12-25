@@ -957,7 +957,8 @@ export default function DiscordProfile() {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5 }}
+          whileHover={{ y: -6, scale: 1.01 }}
+          transition={{ duration: 0.5, type: "spring", stiffness: 220, damping: 18 }}
           className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 hover:border-primary-500/50 transition-all overflow-hidden"
         >
           {/* Perfil do Discord */}
