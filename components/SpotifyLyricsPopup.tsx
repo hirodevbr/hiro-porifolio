@@ -464,7 +464,7 @@ export default function SpotifyLyricsPopup() {
   return (
     <div className="pointer-events-none fixed bottom-4 right-4 z-[9998]">
       <AnimatePresence>
-        {(hasSpotify || true) && (
+        {hasSpotify && sp && (
           <motion.div
             className="pointer-events-auto w-[360px] overflow-hidden rounded-2xl border border-white/10 bg-gray-900/70 shadow-2xl backdrop-blur-xl"
             initial={{ opacity: 0, y: 18, scale: 0.98 }}
@@ -473,12 +473,12 @@ export default function SpotifyLyricsPopup() {
             transition={{ type: "spring", stiffness: 260, damping: 28 }}
             data-spotify-lyrics-popup="1"
             role="dialog"
-            aria-label={hasSpotify ? "Letra sincronizada do Spotify" : "Spotify offline"}
+            aria-label="Letra sincronizada do Spotify"
           >
             {/* Header */}
             <div className="flex items-start gap-3 border-b border-white/10 px-4 py-3">
               <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl border border-white/10 bg-black/20">
-                {sp?.album_art_url ? (
+                {sp.album_art_url ? (
                   <Image
                     src={sp.album_art_url}
                     alt={sp.album}
@@ -495,41 +495,28 @@ export default function SpotifyLyricsPopup() {
               </div>
 
               <div className="min-w-0 flex-1">
-                {hasSpotify ? (
-                  <>
-                    <p className="truncate text-sm font-semibold text-white">{title}</p>
-                    <p className="truncate text-xs text-white/60">{subtitle}</p>
-                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-                      <div
-                        className="h-full rounded-full bg-green-500"
-                        style={{
-                          width: `${clamp(
-                            (tSeconds / Math.max(1, totalSeconds)) * 100,
-                            0,
-                            100,
-                          )}%`,
-                        }}
-                      />
-                    </div>
-                    <div className="mt-1 flex items-center justify-between text-[11px] tabular-nums text-white/50">
-                      <span aria-label={`Tempo atual ${formatTime(tSeconds)}`}>{formatTime(tSeconds)}</span>
-                      <span aria-label={`Tempo restante ${formatTime(remainingSeconds)}`}>
-                        -{formatTime(remainingSeconds)}
-                      </span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <p className="truncate text-sm font-semibold text-white">Spotify offline</p>
-                    <p className="truncate text-xs text-white/60">
-                      Ative o Spotify no Discord para exibir a letra.
-                    </p>
-                  </>
-                )}
+                <>
+                  <p className="truncate text-sm font-semibold text-white">{title}</p>
+                  <p className="truncate text-xs text-white/60">{subtitle}</p>
+                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-green-500"
+                      style={{
+                        width: `${clamp((tSeconds / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
+                      }}
+                    />
+                  </div>
+                  <div className="mt-1 flex items-center justify-between text-[11px] tabular-nums text-white/50">
+                    <span aria-label={`Tempo atual ${formatTime(tSeconds)}`}>{formatTime(tSeconds)}</span>
+                    <span aria-label={`Tempo restante ${formatTime(remainingSeconds)}`}>
+                      -{formatTime(remainingSeconds)}
+                    </span>
+                  </div>
+                </>
               </div>
 
               <div className="flex items-center gap-1">
-                {hasSpotify && spotifyEmbedUrl && (
+                {spotifyEmbedUrl && (
                   <button
                     type="button"
                     onClick={() => setPlayerOpen((v) => !v)}
@@ -540,7 +527,7 @@ export default function SpotifyLyricsPopup() {
                     <Play className={playerOpen ? "h-4 w-4 opacity-100" : "h-4 w-4"} />
                   </button>
                 )}
-                {hasSpotify && spotifyOpenUrl && (
+                {spotifyOpenUrl && (
                   <a
                     href={spotifyOpenUrl}
                     target="_blank"
