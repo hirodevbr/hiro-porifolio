@@ -236,6 +236,7 @@ export default function SpotifyLyricsPopup() {
     const start = spotify.timestamps.start;
     const end = spotify.timestamps.end;
     const total = Math.max(1, (end - start) / 1000);
+    const lastProgressRef = { current: 0 };
 
     // Base: pegamos o tempo decorrido no "wall clock" agora, e depois avançamos usando um clock monotônico
     // (`performance.now`) para evitar drift/jumps do `Date.now()` e deixar a UI mais fluida (wave/progress).
@@ -256,10 +257,13 @@ export default function SpotifyLyricsPopup() {
       const elapsed = base + (nowPerf - basePerf) / 1000;
       const clamped = clamp(elapsed, 0, total);
       if (!Number.isFinite(clamped)) return;
+      // Evita “voltar” no tempo em caso de drift ou data inconsistência do Lanyard.
+      const monotonic = Math.min(total, Math.max(lastProgressRef.current, clamped));
+      lastProgressRef.current = monotonic;
       // throttle: só seta state quando avançou o suficiente (ou quando resync fizer “pulo”)
-      if (Math.abs(clamped - lastEmitted) >= EMIT_STEP) {
-        lastEmitted = clamped;
-        setTSeconds(clamped);
+      if (Math.abs(monotonic - lastEmitted) >= EMIT_STEP) {
+        lastEmitted = monotonic;
+        setTSeconds(monotonic);
       }
     };
 
