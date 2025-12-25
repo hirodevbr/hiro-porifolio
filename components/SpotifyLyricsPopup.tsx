@@ -488,28 +488,28 @@ export default function SpotifyLyricsPopup() {
             role="dialog"
             aria-label="Letra sincronizada do Spotify"
           >
-            {/* Header */}
-            <div className="flex items-start gap-3 border-b border-white/10 px-4 py-3">
-              <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl border border-white/10 bg-black/20">
-                {sp.album_art_url ? (
-                  <Image
-                    src={sp.album_art_url}
-                    alt={sp.album}
-                    fill
-                    className="object-cover"
-                    unoptimized
-                    sizes="48px"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-white/60">
-                    <Music2 className="h-5 w-5" />
-                  </div>
-                )}
-              </div>
+            {/* Header (apenas compacto) */}
+            {!isFullscreen && (
+              <div className="flex items-start gap-3 border-b border-white/10 px-4 py-3">
+                <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl border border-white/10 bg-black/20">
+                  {sp.album_art_url ? (
+                    <Image
+                      src={sp.album_art_url}
+                      alt={sp.album}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                      sizes="48px"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-white/60">
+                      <Music2 className="h-5 w-5" />
+                    </div>
+                  )}
+                </div>
 
-              <div className="min-w-0 flex-1">
-                <>
-                  {!isFullscreen && (
+                <div className="min-w-0 flex-1">
+                  <>
                     <div className="mb-2 flex items-center gap-2 flex-wrap">
                       {spotifyEmbedUrl && (
                         <button
@@ -552,26 +552,26 @@ export default function SpotifyLyricsPopup() {
                         <ChevronDown className={collapsed ? "h-4 w-4 rotate-180" : "h-4 w-4"} />
                       </button>
                     </div>
-                  )}
-                  <p className="truncate text-sm font-semibold text-white">{title}</p>
-                  <p className="truncate text-xs text-white/60">{subtitle}</p>
-                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-                    <div
-                      className="h-full rounded-full bg-green-500"
-                      style={{
-                        width: `${clamp((tSeconds / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
-                      }}
-                    />
-                  </div>
-                  <div className="mt-1 flex items-center justify-between text-[11px] tabular-nums text-white/50">
-                    <span aria-label={`Tempo atual ${formatTime(tSeconds)}`}>{formatTime(tSeconds)}</span>
-                    <span aria-label={`Tempo restante ${formatTime(remainingSeconds)}`}>
-                      -{formatTime(remainingSeconds)}
-                    </span>
-                  </div>
-                </>
+                    <p className="truncate text-sm font-semibold text-white">{title}</p>
+                    <p className="truncate text-xs text-white/60">{subtitle}</p>
+                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                      <div
+                        className="h-full rounded-full bg-green-500"
+                        style={{
+                          width: `${clamp((tSeconds / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
+                        }}
+                      />
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-[11px] tabular-nums text-white/50">
+                      <span aria-label={`Tempo atual ${formatTime(tSeconds)}`}>{formatTime(tSeconds)}</span>
+                      <span aria-label={`Tempo restante ${formatTime(remainingSeconds)}`}>
+                        -{formatTime(remainingSeconds)}
+                      </span>
+                    </div>
+                  </>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Body */}
             {hasSpotify && !collapsed && (
