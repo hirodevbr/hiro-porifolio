@@ -12,8 +12,8 @@ interface DiscordServer {
   invite: string;
   icon: string;
   description: string;
-  roleLabel?: string;
   verified?: boolean;
+  roleLabel?: string;
 }
 
 function DiscordServers() {
@@ -39,7 +39,7 @@ function DiscordServers() {
       {
         name: "It's a Trap",
         invite: "https://discord.gg/itsatrap",
-        icon: "https://cdn.discordapp.com/icons/801894798641332254/cc0d783d32a81c548e26c8b3049c7ac3.png?size=2048",
+        icon: "https://cdn.discordapp.com/icons/801894798641332254/37178bd94f9e910c67bd6be6e5d177de.png?size=2048",
         description: t("discord_servers_itsatrap_desc"),
         verified: true,
       },
@@ -62,7 +62,6 @@ function DiscordServers() {
         invite: "https://discord.gg/y2HQcNT3Bv",
         icon: "https://cdn.discordapp.com/icons/1422325011359858813/3c7cda9bd47113f8fe821d6b28d7e2c4.png?size=2048",
         description: t("discord_servers_communityorg_dev_desc"),
-        roleLabel: t("discord_servers_role_communityorg_dev"),
         verified: false,
       },
     ];
@@ -85,7 +84,7 @@ function DiscordServers() {
       {
         name: "VoiD",
         invite: "https://discord.gg/AESBEcNSrV",
-        icon: "https://cdn.discordapp.com/icons/1369237478682267690/bdd3e9e3ed0f66491a2b64cb9b5b280d.png?size=2048",
+        icon: "https://cdn.discordapp.com/icons/1369237478682267690/71e98a7dec116445fa6550129d136d3f.png?size=600",
         description: t("discord_servers_friends_desc"),
         verified: false,
       },
@@ -395,14 +394,13 @@ function DiscordServers() {
                         {activeServer.name}
                       </h3>
                       <p className="text-sm text-gray-500 mt-1">
-                        {activeServer.roleLabel ??
-                          (activeTab === "community"
-                            ? t("discord_servers_tab_community")
-                            : activeTab === "ecosystem"
-                              ? t("discord_servers_tab_ecosystem")
-                              : activeTab === "friends"
-                                ? t("discord_servers_tab_friends")
-                                : t("discord_servers_tab_previous"))}
+                        {activeTab === "community"
+                          ? t("discord_servers_tab_community")
+                          : activeTab === "ecosystem"
+                            ? t("discord_servers_tab_ecosystem")
+                            : activeTab === "friends"
+                              ? t("discord_servers_tab_friends")
+                              : t("discord_servers_tab_previous")}
                       </p>
                     </div>
                   </div>
