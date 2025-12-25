@@ -490,7 +490,7 @@ export default function SpotifyLyricsPopup() {
           >
             {/* Header (apenas compacto) */}
             {!isFullscreen && (
-              <div className="flex items-start gap-3 border-b border-white/10 px-4 py-3">
+              <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3">
                 <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl border border-white/10 bg-black/20">
                   {sp.album_art_url ? (
                     <Image
