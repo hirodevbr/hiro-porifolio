@@ -606,9 +606,7 @@ export default function SpotifyLyricsPopup() {
                   </p>
                 )}
 
-                {lyricsError && !loadingLyrics && (
-                  <p className="text-sm text-amber-200">{lyricsError}</p>
-                )}
+                {/* Erro só é exibido no fallback fullscreen; aqui omitimos */}
 
                 {/* Fallback: sem letra em fullscreen, mostrar apenas capa/título/controles */}
                 {isFullscreen && !loadingLyrics && (!lyricsRaw || lyricsError) && (
