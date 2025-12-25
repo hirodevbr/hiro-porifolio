@@ -994,6 +994,82 @@ export default function SpotifyLyricsPopup() {
                 )}
               </div>
             )}
+
+            {/* Estado colapsado em fullscreen: centralizar capa, título e controles; esconder letras */}
+            {hasSpotify && isFullscreen && collapsed && (
+              <div className="px-4 py-6 flex-1 flex flex-col items-center justify-center gap-6">
+                <div className="w-full max-w-md space-y-4 text-center">
+                  <div className="relative w-full aspect-square rounded-2xl overflow-hidden border border-white/10 mx-auto">
+                    <Image
+                      src={sp.album_art_url ?? "/profile/profile.avif"}
+                      alt={sp.album}
+                      fill
+                      className="object-cover"
+                      sizes="360px"
+                      unoptimized
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-2xl font-semibold text-white truncate">{title}</p>
+                    <p className="text-sm text-white/70 truncate">{subtitle}</p>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-green-500"
+                      style={{
+                        width: `${clamp((tSeconds / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-white/60 tabular-nums">
+                    <span>{formatTime(tSeconds)}</span>
+                    <span>-{formatTime(remainingSeconds)}</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2 flex-wrap">
+                    {spotifyEmbedUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setPlayerOpen((v) => !v)}
+                        className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
+                        aria-label={playerOpen ? "Fechar player" : "Abrir player"}
+                        title={playerOpen ? "Fechar player" : "Abrir player"}
+                      >
+                        <Play className={playerOpen ? "h-4 w-4 opacity-100" : "h-4 w-4"} />
+                      </button>
+                    )}
+                    {spotifyOpenUrl && (
+                      <a
+                        href={spotifyOpenUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
+                        aria-label="Abrir no Spotify (nova aba)"
+                        title="Abrir no Spotify"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setIsFullscreen((v) => !v)}
+                      className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
+                      aria-label={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
+                      title={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
+                    >
+                      {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCollapsed((v) => !v)}
+                      className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
+                      aria-label={collapsed ? "Expandir" : "Recolher"}
+                    >
+                      <ChevronDown className={collapsed ? "h-4 w-4 rotate-180" : "h-4 w-4"} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
