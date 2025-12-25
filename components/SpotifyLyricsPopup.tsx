@@ -458,7 +458,8 @@ export default function SpotifyLyricsPopup() {
     return Math.max(1, (spotify.timestamps.end - spotify.timestamps.start) / 1000);
   }, [spotify]);
   const remainingSeconds = Math.max(0, totalSeconds - tSeconds);
-  const hasSpotify = Boolean(spotify);
+  const sp = spotify;
+  const hasSpotify = Boolean(sp);
 
   return (
     <div className="pointer-events-none fixed bottom-4 right-4 z-[9998]">
@@ -477,10 +478,10 @@ export default function SpotifyLyricsPopup() {
             {/* Header */}
             <div className="flex items-start gap-3 border-b border-white/10 px-4 py-3">
               <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl border border-white/10 bg-black/20">
-                {hasSpotify && spotify.album_art_url ? (
+                {sp?.album_art_url ? (
                   <Image
-                    src={spotify.album_art_url}
-                    alt={spotify.album}
+                    src={sp.album_art_url}
+                    alt={sp.album}
                     fill
                     className="object-cover"
                     unoptimized
