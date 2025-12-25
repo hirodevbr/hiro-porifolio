@@ -615,158 +615,341 @@ export default function SpotifyLyricsPopup() {
 
                 {!loadingLyrics && !lyricsError && lyricsRaw && (
                   <>
-                    {hasSynced ? (
-                      <LayoutGroup>
-                        <motion.div
-                          ref={listRef}
-                          className={`${listHeightClass} overflow-y-auto pr-1`}
-                          data-lyrics-scroll="synced"
-                          onPointerDown={() => {
-                            lastUserScrollAtRef.current = Date.now();
-                          }}
-                          onTouchStart={() => {
-                            lastUserScrollAtRef.current = Date.now();
-                          }}
-                          onWheel={() => {
-                            lastUserScrollAtRef.current = Date.now();
-                          }}
-                          initial="hidden"
-                          animate="show"
-                          variants={{
-                            hidden: { opacity: 0 },
-                            show: {
-                              opacity: 1,
-                              transition: { staggerChildren: 0.012, delayChildren: 0.02 },
-                            },
-                          }}
-                        >
-                          <div className="space-y-1">
-                            {showInstrumental && (
-                              <motion.button
-                                key="__instrumental__"
-                                type="button"
-                                layout
-                                variants={{
-                                  hidden: { opacity: 0, y: 6, filter: "blur(2px)" },
-                                  show: { opacity: 1, y: 0, filter: "blur(0px)" },
-                                }}
-                                transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.7 }}
-                                className={[
-                                  "relative block w-full overflow-hidden rounded-lg px-2 py-1.5 text-left",
-                                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/40",
-                                  "text-white",
-                                ].join(" ")}
-                                aria-current="true"
-                                onClick={() => {}}
-                              >
-                                <motion.div
-                                  layoutId="lyricHighlight"
-                                  className="absolute inset-0 rounded-lg bg-white/10"
-                                  transition={{ type: "spring", stiffness: 520, damping: 40 }}
-                                />
-                                <motion.div
-                                  layoutId="lyricGlow"
-                                  className="absolute -inset-6 rounded-2xl"
-                                  transition={{ type: "spring", stiffness: 380, damping: 34 }}
-                                />
-                                <motion.span
-                                  className="relative text-base font-semibold"
-                                  animate={{ opacity: 1, scale: 1.02 }}
-                                  transition={{ type: "spring", stiffness: 420, damping: 28 }}
-                                >
-                                  <AnimatedEllipsis />
-                                </motion.span>
-                              </motion.button>
-                            )}
-                            {lines.map((l, idx) => {
-                              const active = !showInstrumental && idx === activeIndex;
-                              const progress = (() => {
-                                if (!active) return 0;
-                                const tMs = Math.max(0, tSeconds * 1000 + WAVE_OFFSET_MS);
-                                const startMs = l.timeMs;
-                                const endMs =
-                                  lines[idx + 1]?.timeMs ??
-                                  (spotify ? (spotify.timestamps.end - spotify.timestamps.start) : startMs + 4000);
-                                const denom = Math.max(400, endMs - startMs);
-                                return clamp((tMs - startMs) / denom, 0, 1);
-                              })();
-                              return (
-                                <motion.button
-                                  key={`${l.timeMs}-${idx}`}
-                                  type="button"
-                                  ref={active ? activeLineRef : null}
-                                  layout
-                                  variants={{
-                                    hidden: { opacity: 0, y: 6, filter: "blur(2px)" },
-                                    show: { opacity: 1, y: 0, filter: "blur(0px)" },
-                                  }}
-                                  transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.7 }}
-                                  className={[
-                                    "relative block w-full overflow-hidden rounded-lg px-2 py-1.5 text-left",
-                                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/40",
-                                    active ? "text-white" : "text-white/55 hover:text-white/80",
-                                  ].join(" ")}
-                                  aria-current={active ? "true" : "false"}
-                                  // Sem seek: não controlamos o Spotify. Clique só “foca”.
-                                  onClick={() => {}}
-                                >
-                                  {active && (
+                    {isFullscreen ? (
+                      <div className="flex flex-col lg:flex-row gap-6">
+                        {/* Cover + info */}
+                        <div className="w-full lg:w-2/5 space-y-4">
+                          <div className="relative w-full max-w-[360px] aspect-square rounded-2xl overflow-hidden border border-white/10">
+                            <Image
+                              src={sp.album_art_url ?? "/profile/profile.avif"}
+                              alt={sp.album}
+                              fill
+                              className="object-cover"
+                              sizes="360px"
+                              unoptimized
+                            />
+                          </div>
+                          <div>
+                            <p className="text-lg font-semibold text-white truncate">{title}</p>
+                            <p className="text-sm text-white/60 truncate">{subtitle}</p>
+                          </div>
+                          <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                            <div
+                              className="h-full rounded-full bg-green-500"
+                              style={{
+                                width: `${clamp((tSeconds / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
+                              }}
+                            />
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-white/60 tabular-nums">
+                            <span>{formatTime(tSeconds)}</span>
+                            <span>-{formatTime(remainingSeconds)}</span>
+                          </div>
+                        </div>
+
+                        {/* Lyrics */}
+                        {hasSynced ? (
+                          <LayoutGroup>
+                            <motion.div
+                              ref={listRef}
+                              className={`${listHeightClass} flex-1 overflow-y-auto pr-1`}
+                              data-lyrics-scroll="synced"
+                              onPointerDown={() => {
+                                lastUserScrollAtRef.current = Date.now();
+                              }}
+                              onTouchStart={() => {
+                                lastUserScrollAtRef.current = Date.now();
+                              }}
+                              onWheel={() => {
+                                lastUserScrollAtRef.current = Date.now();
+                              }}
+                              initial="hidden"
+                              animate="show"
+                              variants={{
+                                hidden: { opacity: 0 },
+                                show: {
+                                  opacity: 1,
+                                  transition: { staggerChildren: 0.012, delayChildren: 0.02 },
+                                },
+                              }}
+                            >
+                              <div className="space-y-1">
+                                {showInstrumental && (
+                                  <motion.button
+                                    key="__instrumental__"
+                                    type="button"
+                                    layout
+                                    variants={{
+                                      hidden: { opacity: 0, y: 6, filter: "blur(2px)" },
+                                      show: { opacity: 1, y: 0, filter: "blur(0px)" },
+                                    }}
+                                    transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.7 }}
+                                    className={[
+                                      "relative block w-full overflow-hidden rounded-lg px-2 py-1.5 text-left",
+                                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/40",
+                                      "text-white",
+                                    ].join(" ")}
+                                    aria-current="true"
+                                    onClick={() => {}}
+                                  >
                                     <motion.div
                                       layoutId="lyricHighlight"
                                       className="absolute inset-0 rounded-lg bg-white/10"
                                       transition={{ type: "spring", stiffness: 520, damping: 40 }}
                                     />
-                                  )}
-
-                                  {/* Glow suave */}
-                                  {active && (
                                     <motion.div
                                       layoutId="lyricGlow"
                                       className="absolute -inset-6 rounded-2xl"
                                       transition={{ type: "spring", stiffness: 380, damping: 34 }}
                                     />
-                                  )}
-
-                                  <motion.span
-                                    className={active ? "relative text-base font-semibold" : "relative text-sm"}
-                                    animate={{
-                                      opacity: active ? 1 : 0.78,
-                                      scale: active ? 1.02 : 1,
-                                    }}
-                                    transition={{ type: "spring", stiffness: 420, damping: 28 }}
-                                  >
-                                    {active ? (
-                                      <ProgressWaveText text={l.text || "…"} progress={progress} />
-                                    ) : (
-                                      l.text || "…"
-                                    )}
-                                  </motion.span>
-                                </motion.button>
-                              );
-                            })}
-                          </div>
-                        </motion.div>
-                      </LayoutGroup>
+                                    <motion.span
+                                      className="relative text-base font-semibold"
+                                      animate={{ opacity: 1, scale: 1.02 }}
+                                      transition={{ type: "spring", stiffness: 420, damping: 28 }}
+                                    >
+                                      <AnimatedEllipsis />
+                                    </motion.span>
+                                  </motion.button>
+                                )}
+                                {lines.map((l, idx) => {
+                                  const active = !showInstrumental && idx === activeIndex;
+                                  const progress = (() => {
+                                    if (!active) return 0;
+                                    const tMs = Math.max(0, tSeconds * 1000 + WAVE_OFFSET_MS);
+                                    const startMs = l.timeMs;
+                                    const endMs =
+                                      lines[idx + 1]?.timeMs ??
+                                      (spotify ? (spotify.timestamps.end - spotify.timestamps.start) : startMs + 4000);
+                                    const denom = Math.max(400, endMs - startMs);
+                                    return clamp((tMs - startMs) / denom, 0, 1);
+                                  })();
+                                  return (
+                                    <motion.button
+                                      key={`${l.timeMs}-${idx}`}
+                                      type="button"
+                                      ref={active ? activeLineRef : null}
+                                      layout
+                                      variants={{
+                                        hidden: { opacity: 0, y: 6, filter: "blur(2px)" },
+                                        show: { opacity: 1, y: 0, filter: "blur(0px)" },
+                                      }}
+                                      transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.7 }}
+                                      className={[
+                                        "relative block w-full overflow-hidden rounded-lg px-2 py-1.5 text-left",
+                                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/40",
+                                        active ? "text-white" : "text-white/55 hover:text-white/80",
+                                      ].join(" ")}
+                                      aria-current={active ? "true" : "false"}
+                                      onClick={() => {}}
+                                    >
+                                      {active && (
+                                        <motion.div
+                                          layoutId="lyricHighlight"
+                                          className="absolute inset-0 rounded-lg bg-white/10"
+                                          transition={{ type: "spring", stiffness: 520, damping: 40 }}
+                                        />
+                                      )}
+                                      {active && (
+                                        <motion.div
+                                          layoutId="lyricGlow"
+                                          className="absolute -inset-6 rounded-2xl"
+                                          transition={{ type: "spring", stiffness: 380, damping: 34 }}
+                                        />
+                                      )}
+                                      <motion.span
+                                        className={active ? "relative text-lg font-semibold" : "relative text-base"}
+                                        animate={{
+                                          opacity: active ? 1 : 0.78,
+                                          scale: active ? 1.02 : 1,
+                                        }}
+                                        transition={{ type: "spring", stiffness: 420, damping: 28 }}
+                                      >
+                                        {active ? (
+                                          <ProgressWaveText text={l.text || "…"} progress={progress} />
+                                        ) : (
+                                          l.text || "…"
+                                        )}
+                                      </motion.span>
+                                    </motion.button>
+                                  );
+                                })}
+                              </div>
+                            </motion.div>
+                          </LayoutGroup>
+                        ) : (
+                          <motion.div
+                            ref={plainRef}
+                            className={`${listHeightClass} flex-1 overflow-y-auto whitespace-pre-wrap text-base text-white/70`}
+                            data-lyrics-scroll="plain"
+                            onPointerDown={() => {
+                              lastUserScrollAtRef.current = Date.now();
+                            }}
+                            onTouchStart={() => {
+                              lastUserScrollAtRef.current = Date.now();
+                            }}
+                            onWheel={() => {
+                              lastUserScrollAtRef.current = Date.now();
+                            }}
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.25, ease: "easeOut" }}
+                          >
+                            {lyricsRaw}
+                          </motion.div>
+                        )}
+                      </div>
                     ) : (
-                      <motion.div
-                        ref={plainRef}
-                        className="max-h-[260px] overflow-y-auto whitespace-pre-wrap text-sm text-white/70"
-                        data-lyrics-scroll="plain"
-                        onPointerDown={() => {
-                          lastUserScrollAtRef.current = Date.now();
-                        }}
-                        onTouchStart={() => {
-                          lastUserScrollAtRef.current = Date.now();
-                        }}
-                        onWheel={() => {
-                          lastUserScrollAtRef.current = Date.now();
-                        }}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.25, ease: "easeOut" }}
-                      >
-                        {lyricsRaw}
-                      </motion.div>
+                      <>
+                        {hasSynced ? (
+                          <LayoutGroup>
+                            <motion.div
+                              ref={listRef}
+                              className={`${listHeightClass} overflow-y-auto pr-1`}
+                              data-lyrics-scroll="synced"
+                              onPointerDown={() => {
+                                lastUserScrollAtRef.current = Date.now();
+                              }}
+                              onTouchStart={() => {
+                                lastUserScrollAtRef.current = Date.now();
+                              }}
+                              onWheel={() => {
+                                lastUserScrollAtRef.current = Date.now();
+                              }}
+                              initial="hidden"
+                              animate="show"
+                              variants={{
+                                hidden: { opacity: 0 },
+                                show: {
+                                  opacity: 1,
+                                  transition: { staggerChildren: 0.012, delayChildren: 0.02 },
+                                },
+                              }}
+                            >
+                              <div className="space-y-1">
+                                {showInstrumental && (
+                                  <motion.button
+                                    key="__instrumental__"
+                                    type="button"
+                                    layout
+                                    variants={{
+                                      hidden: { opacity: 0, y: 6, filter: "blur(2px)" },
+                                      show: { opacity: 1, y: 0, filter: "blur(0px)" },
+                                    }}
+                                    transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.7 }}
+                                    className={[
+                                      "relative block w-full overflow-hidden rounded-lg px-2 py-1.5 text-left",
+                                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/40",
+                                      "text-white",
+                                    ].join(" ")}
+                                    aria-current="true"
+                                    onClick={() => {}}
+                                  >
+                                    <motion.div
+                                      layoutId="lyricHighlight"
+                                      className="absolute inset-0 rounded-lg bg-white/10"
+                                      transition={{ type: "spring", stiffness: 520, damping: 40 }}
+                                    />
+                                    <motion.div
+                                      layoutId="lyricGlow"
+                                      className="absolute -inset-6 rounded-2xl"
+                                      transition={{ type: "spring", stiffness: 380, damping: 34 }}
+                                    />
+                                    <motion.span
+                                      className="relative text-base font-semibold"
+                                      animate={{ opacity: 1, scale: 1.02 }}
+                                      transition={{ type: "spring", stiffness: 420, damping: 28 }}
+                                    >
+                                      <AnimatedEllipsis />
+                                    </motion.span>
+                                  </motion.button>
+                                )}
+                                {lines.map((l, idx) => {
+                                  const active = !showInstrumental && idx === activeIndex;
+                                  const progress = (() => {
+                                    if (!active) return 0;
+                                    const tMs = Math.max(0, tSeconds * 1000 + WAVE_OFFSET_MS);
+                                    const startMs = l.timeMs;
+                                    const endMs =
+                                      lines[idx + 1]?.timeMs ??
+                                      (spotify ? (spotify.timestamps.end - spotify.timestamps.start) : startMs + 4000);
+                                    const denom = Math.max(400, endMs - startMs);
+                                    return clamp((tMs - startMs) / denom, 0, 1);
+                                  })();
+                                  return (
+                                    <motion.button
+                                      key={`${l.timeMs}-${idx}`}
+                                      type="button"
+                                      ref={active ? activeLineRef : null}
+                                      layout
+                                      variants={{
+                                        hidden: { opacity: 0, y: 6, filter: "blur(2px)" },
+                                        show: { opacity: 1, y: 0, filter: "blur(0px)" },
+                                      }}
+                                      transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.7 }}
+                                      className={[
+                                        "relative block w-full overflow-hidden rounded-lg px-2 py-1.5 text-left",
+                                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/40",
+                                        active ? "text-white" : "text-white/55 hover:text-white/80",
+                                      ].join(" ")}
+                                      aria-current={active ? "true" : "false"}
+                                      onClick={() => {}}
+                                    >
+                                      {active && (
+                                        <motion.div
+                                          layoutId="lyricHighlight"
+                                          className="absolute inset-0 rounded-lg bg-white/10"
+                                          transition={{ type: "spring", stiffness: 520, damping: 40 }}
+                                        />
+                                      )}
+                                      {active && (
+                                        <motion.div
+                                          layoutId="lyricGlow"
+                                          className="absolute -inset-6 rounded-2xl"
+                                          transition={{ type: "spring", stiffness: 380, damping: 34 }}
+                                        />
+                                      )}
+                                      <motion.span
+                                        className={active ? "relative text-base font-semibold" : "relative text-sm"}
+                                        animate={{
+                                          opacity: active ? 1 : 0.78,
+                                          scale: active ? 1.02 : 1,
+                                        }}
+                                        transition={{ type: "spring", stiffness: 420, damping: 28 }}
+                                      >
+                                        {active ? (
+                                          <ProgressWaveText text={l.text || "…"} progress={progress} />
+                                        ) : (
+                                          l.text || "…"
+                                        )}
+                                      </motion.span>
+                                    </motion.button>
+                                  );
+                                })}
+                              </div>
+                            </motion.div>
+                          </LayoutGroup>
+                        ) : (
+                          <motion.div
+                            ref={plainRef}
+                            className={`${listHeightClass} overflow-y-auto whitespace-pre-wrap text-sm text-white/70`}
+                            data-lyrics-scroll="plain"
+                            onPointerDown={() => {
+                              lastUserScrollAtRef.current = Date.now();
+                            }}
+                            onTouchStart={() => {
+                              lastUserScrollAtRef.current = Date.now();
+                            }}
+                            onWheel={() => {
+                              lastUserScrollAtRef.current = Date.now();
+                            }}
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.25, ease: "easeOut" }}
+                          >
+                            {lyricsRaw}
+                          </motion.div>
+                        )}
+                      </>
                     )}
                   </>
                 )}
