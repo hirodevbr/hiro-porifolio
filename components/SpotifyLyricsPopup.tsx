@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
-import { ChevronDown, ExternalLink, Loader2, Music2, Play } from "lucide-react";
+import { ChevronDown, ExternalLink, Loader2, Maximize2, Minimize2, Music2, Play } from "lucide-react";
 import { findActiveIndex, parseLrc, type LrcLine } from "@/lib/lrc";
 import { getCachedLyrics, setCachedLyrics } from "@/lib/lyricsCache";
 import { DISCORD_USER_ID } from "@/lib/config";
@@ -145,6 +145,7 @@ export default function SpotifyLyricsPopup() {
   const spotify = (data?.spotify ?? null) as LanyardSpotify | null;
   const [collapsed, setCollapsed] = useState(false);
   const [playerOpen, setPlayerOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   const [lyricsRaw, setLyricsRaw] = useState<string | null>(null);
@@ -463,12 +464,22 @@ export default function SpotifyLyricsPopup() {
     return "Fetching lyrics...";
   }, [language]);
 
+  const containerClass = isFullscreen
+    ? "pointer-events-none fixed inset-0 z-[9998] flex items-center justify-center p-4"
+    : "pointer-events-none fixed bottom-4 right-4 z-[9998]";
+
+  const popupClass = isFullscreen
+    ? "pointer-events-auto w-full max-w-5xl h-[80vh] overflow-hidden rounded-2xl border border-white/10 bg-gray-900/80 shadow-2xl backdrop-blur-2xl"
+    : "pointer-events-auto w-[360px] overflow-hidden rounded-2xl border border-white/10 bg-gray-900/70 shadow-2xl backdrop-blur-xl";
+
+  const listHeightClass = isFullscreen ? "max-h-[60vh]" : "max-h-[260px]";
+
   return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-[9998]">
+    <div className={containerClass}>
       <AnimatePresence>
         {hasSpotify && sp && (
           <motion.div
-            className="pointer-events-auto w-[360px] overflow-hidden rounded-2xl border border-white/10 bg-gray-900/70 shadow-2xl backdrop-blur-xl"
+            className={popupClass}
             initial={{ opacity: 0, y: 18, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 18, scale: 0.98 }}
@@ -544,6 +555,17 @@ export default function SpotifyLyricsPopup() {
                 {hasSpotify && (
                   <button
                     type="button"
+                    onClick={() => setIsFullscreen((v) => !v)}
+                    className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
+                    aria-label={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
+                    title={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
+                  >
+                    {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                  </button>
+                )}
+                {hasSpotify && (
+                  <button
+                    type="button"
                     onClick={() => setCollapsed((v) => !v)}
                     className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
                     aria-label={collapsed ? "Expandir" : "Recolher"}
@@ -597,7 +619,7 @@ export default function SpotifyLyricsPopup() {
                       <LayoutGroup>
                         <motion.div
                           ref={listRef}
-                          className="max-h-[260px] overflow-y-auto pr-1"
+                          className={`${listHeightClass} overflow-y-auto pr-1`}
                           data-lyrics-scroll="synced"
                           onPointerDown={() => {
                             lastUserScrollAtRef.current = Date.now();
