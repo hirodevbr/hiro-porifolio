@@ -21,7 +21,7 @@ function clamp(n: number, min: number, max: number) {
 }
 
 // Ajuste fino de sincronização wave/lyrics. Valor positivo adianta a letra em relação ao áudio.
-const WAVE_OFFSET_MS = -80; // iOS: pequeno atraso para compensar adiantamento percebido
+const WAVE_OFFSET_MS = -150; // iOS: mais atraso para compensar adiantamento percebido
 
 function formatTime(seconds: number) {
   const s = Math.max(0, Math.floor(seconds));
