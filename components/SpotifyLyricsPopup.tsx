@@ -182,28 +182,8 @@ export default function SpotifyLyricsPopup() {
     () => findActiveIndex(lines, Math.max(0, tSeconds * 1000 + WAVE_OFFSET_MS)),
     [lines, tSeconds],
   );
-  const showInstrumental = useMemo(() => {
-    if (!hasSynced) return false;
-    const tMs = Math.max(0, tSeconds * 1000 + WAVE_OFFSET_MS);
-    if (!Number.isFinite(tMs)) return false;
-
-    const GAP_MS = 6000; // só mostrar "solo" quando o buraco é grande (evita flicker)
-    const EDGE_MS = 1200; // margem pra não ficar piscando perto do verso
-
-    // Antes do primeiro verso (intro)
-    const first = lines[0];
-    if (first && tMs + EDGE_MS < first.timeMs) return true;
-
-    // Entre versos com gap grande (solo/instrumental)
-    const cur = lines[activeIndex];
-    const next = lines[activeIndex + 1];
-    if (cur && next) {
-      const gap = next.timeMs - cur.timeMs;
-      if (gap >= GAP_MS && tMs > cur.timeMs + EDGE_MS && tMs < next.timeMs - EDGE_MS) return true;
-    }
-
-    return false;
-  }, [activeIndex, hasSynced, lines, tSeconds]);
+  // Desabilitado: placeholder de "solo/instrumental" com "..." estava causando bugs.
+  const showInstrumental = false;
 
   const autoCenterActiveLine = () => {
     // Evita depender de refs do Framer Motion; usa query DOM no popup (mais confiável)
