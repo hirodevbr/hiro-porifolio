@@ -479,6 +479,7 @@ export default function SpotifyLyricsPopup() {
       expand: isEn ? "Expand" : isEs ? "Expandir" : "Expandir",
       collapse: isEn ? "Collapse" : isEs ? "Recolher" : "Recolher",
       openPlayer: isEn ? "Open player" : isEs ? "Abrir reproductor" : "Abrir player",
+      closePlayer: isEn ? "Close player" : isEs ? "Cerrar reproductor" : "Fechar player",
     };
   }, [language]);
 
@@ -740,8 +741,8 @@ export default function SpotifyLyricsPopup() {
                                   type="button"
                                   onClick={() => setPlayerOpen((v) => !v)}
                                   className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
-                                  aria-label={playerOpen ? "Fechar player" : "Abrir player"}
-                                  title={playerOpen ? "Fechar player" : "Abrir player"}
+                                  aria-label={playerOpen ? strings.closePlayer : strings.openPlayer}
+                                  title={playerOpen ? strings.closePlayer : strings.openPlayer}
                                 >
                                   <Play className={playerOpen ? "h-4 w-4 opacity-100" : "h-4 w-4"} />
                                 </button>
