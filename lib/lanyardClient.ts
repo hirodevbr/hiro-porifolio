@@ -23,165 +23,227 @@ type State = {
   loading: boolean;
   error: string | null;
   data: LanyardData | null;
-  signature: string;
 };
 
 type Subscriber = (s: State) => void;
 
-function makeSignature(d: LanyardData | null) {
+// Gera uma assinatura simples para detectar mudanças relevantes
+function makeSignature(d: LanyardData | null): string {
   if (!d) return "";
   const sp = d.spotify;
-  const spSig = sp
-    ? `${sp.track_id}|${sp.timestamps?.start ?? ""}|${sp.timestamps?.end ?? ""}|${sp.song}|${sp.artist}`
-    : "no-spotify";
-  const status = d.discord_status ?? "offline";
-  const activities = Array.isArray(d.activities)
-    ? d.activities
-        .map((a) => `${a?.type}|${a?.name}|${a?.details}|${a?.state}|${a?.timestamps?.start ?? ""}|${a?.timestamps?.end ?? ""}`)
-        .join("~")
-    : "";
-  return `${status}::${spSig}::${activities.length}:${activities.slice(0, 800)}`;
+  if (!sp) return `status:${d.discord_status ?? "offline"}`;
+  
+  // Assinatura baseada em dados críticos do Spotify
+  return `spotify:${sp.track_id}:${sp.timestamps?.start ?? 0}:${sp.timestamps?.end ?? 0}:${sp.song}:${sp.artist}`;
 }
 
 class LanyardStore {
   private userId: string;
   private subscribers = new Set<Subscriber>();
-  private state: State = { loading: true, error: null, data: null, signature: "" };
-  private timer: number | null = null;
-  private abort: AbortController | null = null;
-  private refCount = 0;
+  private state: State = { loading: true, error: null, data: null };
+  private lastSignature = "";
+  
+  // Controle de conexão
   private ws: WebSocket | null = null;
-  private wsHeartbeatTimer: number | null = null;
-  private wsReconnectTimer: number | null = null;
-  private wsBackoffMs = 1000;
+  private wsHeartbeatInterval: number | null = null;
+  private reconnectTimeout: number | null = null;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 10;
+  private reconnectDelay = 1000; // Começa com 1s
+  
+  // Controle de polling (fallback)
+  private pollingInterval: number | null = null;
+  private pollingDelay = 5000; // 5 segundos quando Spotify ativo
+  private pollingDelaySlow = 15000; // 15 segundos quando inativo
+  
+  // Controle de refs
+  private refCount = 0;
+  private abortController: AbortController | null = null;
 
   constructor(userId: string) {
-    this.userId = userId;
+    this.userId = userId.trim();
   }
 
-  getSnapshot() {
+  getSnapshot(): State {
     return this.state;
   }
 
   subscribe(cb: Subscriber) {
     this.subscribers.add(cb);
     this.refCount++;
-    if (this.refCount === 1) this.start();
+    
+    if (this.refCount === 1) {
+      this.start();
+    }
+    
+    // Notifica imediatamente com o estado atual
     cb(this.state);
+    
     return () => {
       this.subscribers.delete(cb);
       this.refCount = Math.max(0, this.refCount - 1);
-      if (this.refCount === 0) this.stop();
+      
+      if (this.refCount === 0) {
+        this.stop();
+      }
     };
   }
 
   private emit(next: State) {
-    this.state = next;
-    for (const cb of this.subscribers) cb(this.state);
+    const signature = makeSignature(next.data);
+    
+    // Só emite se realmente mudou algo relevante
+    if (signature !== this.lastSignature || next.loading !== this.state.loading || next.error !== this.state.error) {
+      this.state = next;
+      this.lastSignature = signature;
+      
+      for (const cb of this.subscribers) {
+        cb(this.state);
+      }
+    }
   }
 
   private stop() {
-    if (this.timer) window.clearTimeout(this.timer);
-    this.timer = null;
-    if (this.abort) this.abort.abort();
-    this.abort = null;
+    // Limpa WebSocket
     this.stopWebSocket();
+    
+    // Limpa polling
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+    }
+    
+    // Limpa reconexão
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
+    
+    // Cancela requisições pendentes
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
+    }
   }
 
   private start() {
-    const onVis = () => {
-      // ao voltar pro foreground, busca imediatamente
+    // Listener para visibilidade da página
+    const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        this.fetchNow(true);
+        // Quando volta ao foreground, busca imediatamente
+        this.fetchData(true);
         this.startWebSocket();
       } else {
-        // Em background, fecha WS (iOS agradece) e volta pro polling lento
+        // Em background, fecha WebSocket e reduz polling
         this.stopWebSocket();
       }
     };
-    window.addEventListener("visibilitychange", onVis);
-
+    
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    
+    // Override do stop para remover listener
     const originalStop = this.stop.bind(this);
     this.stop = () => {
-      window.removeEventListener("visibilitychange", onVis);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       originalStop();
     };
-
-    this.fetchNow(true);
+    
+    // Inicia conexões
+    this.fetchData(true);
     this.startWebSocket();
+    this.startPolling();
   }
 
-  private schedule(ms: number) {
-    if (this.timer) window.clearTimeout(this.timer);
-    this.timer = window.setTimeout(() => this.fetchNow(false), ms);
+  private startPolling() {
+    // Polling como fallback caso WebSocket falhe
+    if (this.pollingInterval) return;
+    
+    const poll = async () => {
+      if (this.refCount === 0) return;
+      if (document.visibilityState !== "visible") return;
+      
+      await this.fetchData(false);
+      
+      // Ajusta intervalo baseado em se tem Spotify ativo
+      const hasSpotify = Boolean(this.state.data?.spotify?.track_id);
+      const delay = hasSpotify ? this.pollingDelay : this.pollingDelaySlow;
+      
+      this.pollingInterval = window.setTimeout(poll, delay);
+    };
+    
+    poll();
   }
 
-  private async fetchNow(force: boolean) {
+  private async fetchData(forceLoading: boolean) {
     if (this.refCount === 0) return;
-
-    const visible = document.visibilityState === "visible";
-    // Visível: queremos reagir rápido quando a música muda.
-    // 5s costuma ser um bom equilíbrio (e é bem melhor que 10–15s).
-    const baseMsVisibleFast = 5000; // 5s (quando Spotify está ativo)
-    const baseMsVisible = 15000; // 15s (quando Spotify não está ativo)
-    const baseMsHidden = 60000; // 60s (bem mais leve no iOS)
-
-    // evita ficar gastando bateria/memória quando a aba está em background
-    const targetMs = visible ? baseMsVisible : baseMsHidden;
-
-    // aborta request anterior (evita acumular em iOS)
-    if (this.abort) this.abort.abort();
-    this.abort = new AbortController();
-
-    if (force && !this.state.loading) {
+    
+    // Cancela requisição anterior
+    if (this.abortController) {
+      this.abortController.abort();
+    }
+    
+    this.abortController = new AbortController();
+    
+    if (forceLoading && !this.state.loading) {
       this.emit({ ...this.state, loading: true, error: null });
     }
-
+    
     try {
-      const ts = Date.now();
-      const res = await fetch(`https://api.lanyard.rest/v1/users/${this.userId}?_=${ts}`, {
-        cache: "no-store",
-        headers: { "Cache-Control": "no-cache" },
-        signal: this.abort.signal,
-      });
-      const json = (await res.json()) as { data?: LanyardData };
-      const data = json?.data ?? null;
-      this.upsertData(data, null);
-
-      // se não tem spotify tocando, dá pra ser ainda mais leve
-      const hasSpotify = Boolean(data?.spotify?.track_id);
-      if (visible) {
-        this.schedule(hasSpotify ? baseMsVisibleFast : baseMsVisible);
-      } else {
-        this.schedule(hasSpotify ? baseMsHidden : baseMsHidden * 2);
+      const timestamp = Date.now();
+      const response = await fetch(
+        `https://api.lanyard.rest/v1/users/${this.userId}?_=${timestamp}`,
+        {
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+          },
+          signal: this.abortController.signal,
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
       }
-    } catch (e) {
-      if ((e as any)?.name === "AbortError") return;
-      this.emit({ ...this.state, loading: false, error: "Falha ao carregar presença do Discord." });
-      this.schedule(targetMs * 2);
-    }
-  }
-
-  private upsertData(data: LanyardData | null, error: string | null) {
-    const signature = makeSignature(data);
-    const next: State = {
-      loading: false,
-      error,
-      data,
-      signature,
-    };
-
-    // Só notifica se mudou algo relevante (reduz re-render e pressão de memória)
-    if (signature !== this.state.signature || this.state.loading || this.state.error !== error) {
-      this.emit(next);
+      
+      const json = await response.json();
+      const data = json?.data ?? null;
+      
+      this.emit({
+        loading: false,
+        error: null,
+        data: data as LanyardData,
+      });
+      
+      this.reconnectAttempts = 0; // Reset em caso de sucesso
+    } catch (error: any) {
+      if (error.name === "AbortError") return;
+      
+      this.emit({
+        ...this.state,
+        loading: false,
+        error: "Falha ao carregar presença do Discord.",
+      });
+      
+      // Incrementa tentativas de reconexão
+      this.reconnectAttempts++;
     }
   }
 
   private stopWebSocket() {
-    if (this.wsHeartbeatTimer) window.clearInterval(this.wsHeartbeatTimer);
-    this.wsHeartbeatTimer = null;
-    if (this.wsReconnectTimer) window.clearTimeout(this.wsReconnectTimer);
-    this.wsReconnectTimer = null;
+    // Limpa heartbeat
+    if (this.wsHeartbeatInterval) {
+      clearInterval(this.wsHeartbeatInterval);
+      this.wsHeartbeatInterval = null;
+    }
+    
+    // Limpa timeout de reconexão
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
+    
+    // Fecha WebSocket
     if (this.ws) {
       try {
         this.ws.onopen = null;
@@ -190,21 +252,26 @@ class LanyardStore {
         this.ws.onclose = null;
         this.ws.close();
       } catch {
-        // ignore
+        // Ignora erros ao fechar
       }
+      this.ws = null;
     }
-    this.ws = null;
   }
 
-  private scheduleWsReconnect() {
+  private scheduleReconnect() {
     if (this.refCount === 0) return;
     if (document.visibilityState !== "visible") return;
-    if (this.wsReconnectTimer) return;
-
-    const delay = this.wsBackoffMs;
-    this.wsBackoffMs = Math.min(this.wsBackoffMs * 2, 30000);
-    this.wsReconnectTimer = window.setTimeout(() => {
-      this.wsReconnectTimer = null;
+    if (this.reconnectTimeout) return;
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      // Para de tentar reconectar após muitas tentativas
+      return;
+    }
+    
+    // Backoff exponencial com limite
+    const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts), 30000);
+    
+    this.reconnectTimeout = window.setTimeout(() => {
+      this.reconnectTimeout = null;
       this.startWebSocket();
     }, delay);
   }
@@ -214,60 +281,92 @@ class LanyardStore {
     if (document.visibilityState !== "visible") return;
     if (this.ws) return;
     if (typeof WebSocket === "undefined") return;
-
+    
     try {
       const ws = new WebSocket("wss://api.lanyard.rest/socket");
       this.ws = ws;
-
+      
       ws.onopen = () => {
-        // reset backoff quando conecta
-        this.wsBackoffMs = 1000;
-        // subscribe
-        ws.send(
-          JSON.stringify({
-            op: 2,
-            d: { subscribe_to_id: this.userId },
-          }),
-        );
-      };
-
-      ws.onmessage = (ev) => {
+        // Reset de tentativas e delay em caso de sucesso
+        this.reconnectAttempts = 0;
+        this.reconnectDelay = 1000;
+        
+        // Subscribe para o usuário
         try {
-          const msg = JSON.parse(String(ev.data));
-          const op = msg?.op;
-          const d = msg?.d;
-
-          // HELLO => inicia heartbeat
-          if (op === 1 && d?.heartbeat_interval) {
-            if (this.wsHeartbeatTimer) window.clearInterval(this.wsHeartbeatTimer);
-            this.wsHeartbeatTimer = window.setInterval(() => {
-              try {
-                ws.send(JSON.stringify({ op: 3 }));
-              } catch {
-                // ignore
-              }
-            }, Number(d.heartbeat_interval));
-            return;
-          }
-
-          // Evento: INIT_STATE / PRESENCE_UPDATE
-          if (op === 0 && d) {
-            const data = (d as any)?.spotify || (d as any)?.discord_user || (d as any)?.activities ? (d as any) : (d as any)?.data;
-            // A API costuma mandar o payload de presença em d (root). Mantemos fallback.
-            if (data) this.upsertData(data as LanyardData, null);
-          }
+          ws.send(
+            JSON.stringify({
+              op: 2,
+              d: { subscribe_to_id: this.userId },
+            })
+          );
         } catch {
-          // ignore parse errors
+          // Ignora erros ao enviar
         }
       };
-
-      ws.onerror = () => {
-        // WS é best-effort; continua com polling
+      
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(String(event.data));
+          const op = message?.op;
+          const data = message?.d;
+          
+          // OP 1 = HELLO - Configura heartbeat
+          if (op === 1 && data?.heartbeat_interval) {
+            const interval = Number(data.heartbeat_interval);
+            
+            if (this.wsHeartbeatInterval) {
+              clearInterval(this.wsHeartbeatInterval);
+            }
+            
+            this.wsHeartbeatInterval = window.setInterval(() => {
+              if (ws.readyState === WebSocket.OPEN) {
+                try {
+                  ws.send(JSON.stringify({ op: 3 }));
+                } catch {
+                  // Ignora erros no heartbeat
+                }
+              }
+            }, interval);
+            
+            return;
+          }
+          
+          // OP 0 = EVENT - Atualiza dados
+          if (op === 0 && data) {
+            // A API pode retornar dados em diferentes formatos
+            let lanyardData: LanyardData | null = null;
+            
+            if (data.spotify || data.discord_user || data.activities) {
+              lanyardData = data as LanyardData;
+            } else if (data.data) {
+              lanyardData = data.data as LanyardData;
+            }
+            
+            if (lanyardData) {
+              this.emit({
+                loading: false,
+                error: null,
+                data: lanyardData,
+              });
+            }
+          }
+        } catch {
+          // Ignora erros de parsing
+        }
       };
-
+      
+      ws.onerror = () => {
+        // WebSocket é best-effort, continua com polling
+      };
+      
       ws.onclose = () => {
         this.stopWebSocket();
-        this.scheduleWsReconnect();
+        
+        // Agenda reconexão se ainda há subscribers
+        if (this.refCount > 0) {
+          this.reconnectAttempts++;
+          this.scheduleReconnect();
+        }
       };
     } catch {
       this.stopWebSocket();
@@ -275,10 +374,14 @@ class LanyardStore {
   }
 }
 
+// Cache global de stores por userId
 const stores = new Map<string, LanyardStore>();
-function getStore(userId: string) {
+
+function getStore(userId: string): LanyardStore {
   const id = userId.trim();
-  if (!stores.has(id)) stores.set(id, new LanyardStore(id));
+  if (!stores.has(id)) {
+    stores.set(id, new LanyardStore(id));
+  }
   return stores.get(id)!;
 }
 
@@ -286,9 +389,9 @@ export function useLanyardUser(userId: string) {
   const store = useMemo(() => getStore(userId), [userId]);
   const [state, setState] = useState<State>(store.getSnapshot());
 
-  useEffect(() => store.subscribe(setState), [store]);
+  useEffect(() => {
+    return store.subscribe(setState);
+  }, [store]);
 
-  return state; // {loading, error, data}
+  return state;
 }
-
-

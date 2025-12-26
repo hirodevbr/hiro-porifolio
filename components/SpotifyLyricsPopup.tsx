@@ -13,36 +13,10 @@ import { useLanguage } from "@/contexts/LanguageContext";
 type LrclibResponse = {
   syncedLyrics?: string | null;
   plainLyrics?: string | null;
-  // outros campos podem existir; não precisamos tipar todos
 };
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
-}
-
-// Detectar navegador para ajustar offset dinamicamente
-function getBrowserOffset(): number {
-  if (typeof window === "undefined") return -100;
-  
-  const ua = navigator.userAgent.toLowerCase();
-  // iOS Safari: mais atraso para compensar adiantamento percebido
-  if (/iphone|ipad|ipod/.test(ua) && /safari/.test(ua) && !/chrome|crios|fxios/.test(ua)) {
-    return -150;
-  }
-  // Chrome/Edge: offset menor
-  if (/chrome|edg/.test(ua)) {
-    return -100;
-  }
-  // Firefox: offset médio
-  if (/firefox/.test(ua)) {
-    return -120;
-  }
-  // Safari desktop: offset médio-alto
-  if (/safari/.test(ua) && !/chrome|edg|firefox/.test(ua)) {
-    return -130;
-  }
-  // Padrão conservador
-  return -100;
 }
 
 function formatTime(seconds: number) {
@@ -61,11 +35,8 @@ function usePrefersReducedMotion() {
     if (!mq) return;
     const update = () => setReduceMotion(Boolean(mq.matches));
     update();
-    // Safari legacy
-    // eslint-disable-next-line deprecation/deprecation
     mq.addEventListener?.("change", update) ?? mq.addListener?.(update);
     return () => {
-      // eslint-disable-next-line deprecation/deprecation
       mq.removeEventListener?.("change", update) ?? mq.removeListener?.(update);
     };
   }, []);
@@ -74,7 +45,6 @@ function usePrefersReducedMotion() {
 
 function AnimatedEllipsis() {
   const reduceMotion = usePrefersReducedMotion();
-
   if (reduceMotion) return <span>…</span>;
 
   return (
@@ -102,54 +72,38 @@ function ProgressWaveText({ text, progress }: { text: string; progress: number }
   const p = clamp(progress, 0, 1);
   if (reduceMotion) return <>{text}</>;
 
+  // Versão minimalista: apenas gradiente de cor sem animações pesadas
   const chars = Array.from(text);
   const n = Math.max(1, chars.length);
-  const center = p * n; // "fronteira" do preenchimento (em índice de caractere)
-  const waveRange = 18; // quão larga é a onda na borda do preenchimento
-  const maxAmp = 7; // amplitude da wave (mais perceptível)
+  const center = p * n;
+  
+  // Range menor para efeito mais sutil
+  const fadeRange = 12;
 
   return (
     <span className="inline-flex flex-wrap">
       {chars.map((ch, idx) => {
         const isSpace = ch === " ";
-        const fill = clamp(center - idx, 0, 1); // 0..1 (parcial no caractere da borda)
         const dist = Math.abs(idx - center);
-        const waveStrength = clamp(1 - dist / waveRange, 0, 1);
-        const amp = maxAmp * waveStrength;
-
-        const baseAlpha = 0.35; // cinza inicial
-        const alpha = baseAlpha + (1 - baseAlpha) * fill; // vai ficando branco conforme preenche
+        const fill = clamp(1 - dist / fadeRange, 0, 1);
+        
+        // Gradiente simples: de cinza para branco
+        const baseAlpha = 0.4;
+        const alpha = baseAlpha + (1 - baseAlpha) * fill;
         const color = `rgba(255,255,255,${alpha})`;
 
-        // Para não "pesar", só anima perto da borda (onde a wave está passando)
-        const shouldAnimate = waveStrength > 0.05;
-
         return (
-          <motion.span
+          <span
             key={`${idx}-${ch}`}
             className={isSpace ? "whitespace-pre" : "inline-block"}
             aria-hidden="true"
-            style={{ color }}
-            initial={false}
-            animate={
-              shouldAnimate
-                ? { y: [0, -amp, 0], opacity: [alpha, Math.min(1, alpha + 0.25), alpha] }
-                : { y: 0, opacity: alpha }
-            }
-            transition={
-              shouldAnimate
-                ? {
-                    duration: 0.75,
-                    ease: "easeInOut",
-                    repeat: Infinity,
-                    // fase por caractere pra parecer uma onda "andando"
-                    delay: (idx % 24) * 0.02,
-                  }
-                : { duration: 0.12 }
-            }
+            style={{ 
+              color,
+              transition: "color 0.15s ease-out",
+            }}
           >
             {isSpace ? "\u00A0" : ch}
-          </motion.span>
+          </span>
         );
       })}
       <span className="sr-only">{text}</span>
@@ -176,7 +130,7 @@ export default function SpotifyLyricsPopup() {
   const [fromCache, setFromCache] = useState(false);
   const inflightKeyRef = useRef<string>("");
 
-  const [tSeconds, setTSeconds] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
 
   const activeLineRef = useRef<HTMLButtonElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
@@ -184,6 +138,8 @@ export default function SpotifyLyricsPopup() {
   const lastUserScrollAtRef = useRef<number>(0);
   const programmaticScrollRef = useRef(false);
   const prevTrackKeyRef = useRef<string>("");
+  const animationFrameRef = useRef<number | null>(null);
+  const lastSyncTimeRef = useRef<number>(0);
 
   const trackKey = useMemo(() => {
     if (!spotify) return "";
@@ -192,35 +148,128 @@ export default function SpotifyLyricsPopup() {
 
   const cacheKey = useMemo(() => {
     if (!spotify) return "";
-    // preferir track_id (mais estável); fallback para trackKey
     return spotify.track_id?.trim() ? `track:${spotify.track_id}` : `name:${trackKey}`;
   }, [spotify, trackKey]);
 
   const lines: LrcLine[] = useMemo(() => {
     if (!lyricsRaw) return [];
-    // LRCLIB normalmente retorna LRC em syncedLyrics; se vier como texto sem tags, não haverá linhas.
     return parseLrc(lyricsRaw);
   }, [lyricsRaw]);
 
   const hasSynced = lines.length > 0;
-  // Calcular offset dinamicamente baseado no navegador
-  const waveOffsetMs = useMemo(() => getBrowserOffset(), []);
-  const activeIndex = useMemo(
-    () => findActiveIndex(lines, Math.max(0, tSeconds * 1000 + waveOffsetMs)),
-    [lines, tSeconds, waveOffsetMs],
-  );
-  // Desabilitado: placeholder de "solo/instrumental" com "..." estava causando bugs.
-  const showInstrumental = false;
+
+  // Sistema de sincronização simplificado e robusto
+  useEffect(() => {
+    if (!spotify) {
+      setCurrentTime(0);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      return;
+    }
+
+    const start = spotify.timestamps.start;
+    const end = spotify.timestamps.end;
+    const duration = Math.max(1, (end - start) / 1000);
+
+    // Calcula tempo inicial baseado no timestamp do Spotify
+    const calculateElapsed = () => {
+      const now = Date.now();
+      const elapsed = (now - start) / 1000;
+      
+      // Se a música acabou de começar (dentro de 3 segundos), assume 0
+      if (elapsed < 3 && elapsed >= -1) {
+        return 0;
+      }
+      
+      return clamp(elapsed, 0, duration);
+    };
+
+    // Inicializa com o tempo atual
+    let baseElapsed = calculateElapsed();
+    let baseTimestamp = performance.now();
+    let lastUpdateTime = baseElapsed;
+
+    // Função de atualização usando RAF para suavidade
+    const updateTime = () => {
+      if (!spotify) return;
+
+      const now = performance.now();
+      const deltaSeconds = (now - baseTimestamp) / 1000;
+      const calculatedTime = baseElapsed + deltaSeconds;
+
+      // Limita ao tempo total da música
+      const clampedTime = clamp(calculatedTime, 0, duration);
+
+      // Só atualiza se mudou significativamente (reduz re-renders)
+      if (Math.abs(clampedTime - lastUpdateTime) >= 0.05) {
+        setCurrentTime(clampedTime);
+        lastUpdateTime = clampedTime;
+      }
+
+      animationFrameRef.current = requestAnimationFrame(updateTime);
+    };
+
+    // Resync periódico para compensar drift
+    const resync = () => {
+      if (!spotify) return;
+      
+      const actualElapsed = calculateElapsed();
+      const expectedElapsed = baseElapsed + (performance.now() - baseTimestamp) / 1000;
+      const drift = Math.abs(actualElapsed - expectedElapsed);
+
+      // Se o drift for maior que 200ms, resincroniza
+      if (drift > 0.2) {
+        baseElapsed = actualElapsed;
+        baseTimestamp = performance.now();
+        setCurrentTime(clamp(actualElapsed, 0, duration));
+        lastUpdateTime = actualElapsed;
+      }
+    };
+
+    // Inicia loop de atualização
+    updateTime();
+
+    // Resync a cada 2 segundos
+    const resyncInterval = setInterval(resync, 2000);
+
+    // Resync quando a página volta ao foreground
+    const handleVisibilityChange = () => {
+      if (!document.hidden && spotify) {
+        baseElapsed = calculateElapsed();
+        baseTimestamp = performance.now();
+        setCurrentTime(clamp(baseElapsed, 0, duration));
+        lastUpdateTime = baseElapsed;
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      clearInterval(resyncInterval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [spotify]);
+
+  // Calcula índice ativo baseado no tempo atual
+  const activeIndex = useMemo(() => {
+    if (lines.length === 0) return -1;
+    return findActiveIndex(lines, currentTime * 1000);
+  }, [lines, currentTime]);
 
   const autoCenterActiveLine = () => {
-    // Evita depender de refs do Framer Motion; usa query DOM no popup (mais confiável)
     const popup = document.querySelector('[data-spotify-lyrics-popup="1"]');
     const container = popup?.querySelector('[data-lyrics-scroll="synced"]') as HTMLDivElement | null;
     const activeEl = popup?.querySelector('[aria-current="true"]') as HTMLElement | null;
+    
     if (!container || !activeEl) return;
     if (Date.now() - lastUserScrollAtRef.current < 2500) return;
 
-    // Centralizar a linha ativa dentro do container (mais confiável que scrollIntoView com layout animado)
     const containerRect = container.getBoundingClientRect();
     const activeRect = activeEl.getBoundingClientRect();
     const currentTop = container.scrollTop;
@@ -232,144 +281,13 @@ export default function SpotifyLyricsPopup() {
     const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
     programmaticScrollRef.current = true;
     container.scrollTo({ top: clamped, behavior: prefersReducedMotion ? "auto" : "smooth" });
-    window.setTimeout(() => {
+    
+    setTimeout(() => {
       programmaticScrollRef.current = false;
     }, 250);
   };
 
-  // Atualiza tempo atual baseado nos timestamps do Spotify (start/end).
-  useEffect(() => {
-    if (!spotify) return;
-
-    const start = spotify.timestamps.start;
-    const end = spotify.timestamps.end;
-    const total = Math.max(1, (end - start) / 1000);
-    const lastProgressRef = { current: 0 };
-
-    // Base: pegamos o tempo decorrido no "wall clock" agora, e depois avançamos usando um clock monotônico
-    // (`performance.now`) para evitar drift/jumps do `Date.now()` e deixar a UI mais fluida (wave/progress).
-    let raf = 0;
-    let interval: number | null = null;
-    let driftCheckInterval: number | null = null;
-    // Emitir estado em frequência limitada para evitar re-render 60fps (o que pode quebrar/jitter a barra e a UI)
-    // Mantém boa sensação de sync, mas reduz custo e "briga" com transições CSS.
-    // Frequência de emissão: 45fps para suavidade suficiente sem jitter excessivo.
-    const EMIT_HZ = 45;
-    const EMIT_STEP = 1 / EMIT_HZ;
-    let lastEmitted = -Infinity;
-    
-    // Histórico para detectar drift (média móvel simples)
-    const driftHistory: number[] = [];
-    const MAX_DRIFT_HISTORY = 5;
-
-    // Detectar se a música acabou de começar: se o timestamp start está muito próximo do tempo atual
-    // (dentro de 5 segundos), assumimos que a música acabou de começar e definimos como 0
-    // Isso corrige o problema no iOS onde o timestamp pode estar um pouco atrás
-    const now = Date.now();
-    const timeSinceStart = (now - start) / 1000;
-    const isJustStarted = timeSinceStart < 5 && timeSinceStart >= -2; // Entre -2s e 5s = música recém iniciada
-    
-    const baseElapsed = isJustStarted ? 0 : clamp(timeSinceStart, 0, total);
-    let basePerf = performance.now();
-    let base = baseElapsed;
-    let lastResyncTime = Date.now();
-
-    const setFromNow = (nowPerf: number) => {
-      const elapsed = base + (nowPerf - basePerf) / 1000;
-      const clamped = clamp(elapsed, 0, total);
-      if (!Number.isFinite(clamped)) return;
-      // Evita "voltar" no tempo em caso de drift ou data inconsistência do Lanyard.
-      const monotonic = Math.min(total, Math.max(lastProgressRef.current, clamped));
-      lastProgressRef.current = monotonic;
-      // throttle: só seta state quando avançou o suficiente (ou quando resync fizer "pulo")
-      if (Math.abs(monotonic - lastEmitted) >= EMIT_STEP) {
-        lastEmitted = monotonic;
-        setTSeconds(monotonic);
-      }
-    };
-
-    const resync = (force = false) => {
-      const now = Date.now();
-      const timeSinceStart = (now - start) / 1000;
-      // Aplicar mesma lógica: se música acabou de começar, definir como 0
-      const isJustStarted = timeSinceStart < 5 && timeSinceStart >= -2;
-      const newBase = isJustStarted ? 0 : clamp(timeSinceStart, 0, total);
-      
-      // Detectar drift: se a diferença entre o tempo calculado e o esperado for grande, forçar resync
-      if (!force) {
-        const expectedElapsed = base + (performance.now() - basePerf) / 1000;
-        const actualElapsed = isJustStarted ? 0 : timeSinceStart;
-        const drift = Math.abs(expectedElapsed - actualElapsed);
-        
-        driftHistory.push(drift);
-        if (driftHistory.length > MAX_DRIFT_HISTORY) {
-          driftHistory.shift();
-        }
-        
-        // Se o drift médio for maior que 200ms, forçar resync mais frequente
-        const avgDrift = driftHistory.reduce((a, b) => a + b, 0) / driftHistory.length;
-        if (avgDrift < 0.2 && !force) {
-          // Drift pequeno, não precisa resync agressivo
-          return;
-        }
-      }
-      
-      // Reancora de tempos em tempos para acompanhar possíveis correções do Lanyard e evitar drift longo.
-      base = newBase;
-      basePerf = performance.now();
-      lastResyncTime = now;
-      // força emissão após resync (corrige UI imediatamente)
-      lastEmitted = -Infinity;
-    };
-
-    const loop = (nowPerf: number) => {
-      // Se a aba estiver oculta, RAF vira "suspenso"; nessa situação, deixamos o interval assumir.
-      if (!document.hidden) {
-        setFromNow(nowPerf);
-        // Resync automático se passou muito tempo desde o último resync (compensa drift longo)
-        const timeSinceResync = Date.now() - lastResyncTime;
-        if (timeSinceResync > 2000) {
-          resync(true);
-        }
-      }
-      raf = window.requestAnimationFrame(loop);
-    };
-
-    // Primeira atualização imediata
-    setFromNow(performance.now());
-
-    // RAF para suavidade (principalmente na borda do highlight/wave)
-    raf = window.requestAnimationFrame(loop);
-
-    // Resync mais frequente (500ms) para reduzir drift perceptível entre navegadores
-    // Isso ajuda especialmente em navegadores com relógios menos precisos
-    interval = window.setInterval(() => resync(false), 500);
-    
-    // Verificação de drift mais agressiva a cada 2s para detectar problemas maiores
-    driftCheckInterval = window.setInterval(() => {
-      const timeSinceResync = Date.now() - lastResyncTime;
-      if (timeSinceResync > 3000) {
-        resync(true);
-      }
-    }, 2000);
-
-    const onVisibility = () => {
-      // Ao voltar para a aba, ressincroniza na hora pra não "pular" atrasado.
-      if (!document.hidden) {
-        resync(true);
-      }
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-
-    return () => {
-      if (raf) window.cancelAnimationFrame(raf);
-      if (interval) window.clearInterval(interval);
-      if (driftCheckInterval) window.clearInterval(driftCheckInterval);
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
-  }, [spotify]);
-
-  // Quando a música muda, reabrir o popup (se estava escondido) e buscar nova letra.
+  // Quando a música muda, reseta estado
   useEffect(() => {
     if (!spotify) {
       setLyricsRaw(null);
@@ -390,7 +308,7 @@ export default function SpotifyLyricsPopup() {
     }
   }, [spotify, trackKey, isMobile]);
 
-  // Detectar mobile para colapsar por padrão em telas menores
+  // Detecta mobile
   useEffect(() => {
     const update = () => setIsMobile(window.innerWidth <= 768);
     update();
@@ -398,7 +316,7 @@ export default function SpotifyLyricsPopup() {
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  // Carregar instantaneamente do cache/histórico (se existir)
+  // Carrega do cache
   useEffect(() => {
     if (!spotify) return;
     if (!cacheKey) return;
@@ -415,17 +333,14 @@ export default function SpotifyLyricsPopup() {
     }
   }, [spotify, cacheKey, lyricsRaw]);
 
-  // Buscar lyrics via nosso proxy (LRCLIB).
+  // Busca letras
   useEffect(() => {
     if (!spotify) return;
     if (!cacheKey) return;
 
-    const cached = cacheKey ? getCachedLyrics(cacheKey) : { entry: null, stale: false };
-    // Se já temos letra no estado e não está stale, não buscar de novo.
+    const cached = getCachedLyrics(cacheKey);
     if (lyricsRaw && !cached.stale) return;
-    // Se não temos letra mas existe cache e não está stale, não buscar.
     if (!lyricsRaw && cached.entry && !cached.stale) return;
-    // Evitar múltiplas buscas concorrentes para a mesma música
     if (inflightKeyRef.current === cacheKey) return;
 
     let cancelled = false;
@@ -434,22 +349,23 @@ export default function SpotifyLyricsPopup() {
     (async () => {
       inflightKeyRef.current = cacheKey;
       setLoadingLyrics(true);
-      // Fail-safe: nunca ficar preso em loading (iOS é sensível)
+      
       const safety = window.setTimeout(() => {
         if (!cancelled && inflightKeyRef.current === cacheKey) {
           setLoadingLyrics(false);
           inflightKeyRef.current = "";
         }
       }, 12000);
+      
       try {
         const res = await fetch(
           `/api/lyrics?artist_name=${encodeURIComponent(spotify.artist)}&track_name=${encodeURIComponent(spotify.song)}`,
           { signal: controller.signal },
         );
+        
         if (!res.ok) throw new Error(String(res.status));
+        
         const data = (await res.json()) as LrclibResponse;
-
-        // Preferir sincronizada. Se não houver, cair para plain (sem highlight).
         const synced = data.syncedLyrics?.trim() ?? null;
         const plain = data.plainLyrics?.trim() ?? null;
         const chosen = synced || plain || null;
@@ -458,6 +374,7 @@ export default function SpotifyLyricsPopup() {
           setLyricsRaw(chosen);
           if (!chosen) setLyricsError("Sem letra disponível para esta música.");
           setFromCache(false);
+          
           if (cacheKey) {
             setCachedLyrics({
               key: cacheKey,
@@ -470,7 +387,9 @@ export default function SpotifyLyricsPopup() {
           }
         }
       } catch {
-        if (!cancelled) setLyricsError("Não consegui buscar a letra ou não há letra disponível para esta música.");
+        if (!cancelled) {
+          setLyricsError("Não consegui buscar a letra ou não há letra disponível para esta música.");
+        }
       } finally {
         window.clearTimeout(safety);
         if (!cancelled && inflightKeyRef.current === cacheKey) {
@@ -487,44 +406,49 @@ export default function SpotifyLyricsPopup() {
     };
   }, [spotify?.artist, spotify?.song, cacheKey, lyricsRaw]);
 
-  // Scroll suave para manter a linha ativa visível
+  // Scroll automático para linha ativa
   useEffect(() => {
     if (collapsed) return;
+    if (!hasSynced) return;
     autoCenterActiveLine();
-  }, [activeIndex, collapsed]);
+  }, [activeIndex, collapsed, hasSynced]);
 
-  // Reforço: durante a música, re-centraliza periodicamente (tipo Spotify),
-  // mesmo se o índice não mudar por alguns segundos.
+  // Scroll periódico para manter sincronizado
   useEffect(() => {
     if (collapsed) return;
     if (!spotify) return;
     if (!hasSynced) return;
-    autoCenterActiveLine();
-    // roda em baixa frequência para não pesar (especialmente no iOS)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [Math.floor(tSeconds), collapsed, hasSynced, spotify?.track_id]);
+    
+    const interval = setInterval(() => {
+      autoCenterActiveLine();
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [collapsed, hasSynced, spotify?.track_id]);
 
-  // Auto-scroll para letra NÃO sincronizada: faz a letra "subir" pelo progresso da música
+  // Auto-scroll para letra não sincronizada
   useEffect(() => {
     if (collapsed) return;
     if (!spotify) return;
     if (hasSynced) return;
+    
     const container = plainRef.current;
     if (!container) return;
     if (Date.now() - lastUserScrollAtRef.current < 2500) return;
 
     const total = Math.max(1, (spotify.timestamps.end - spotify.timestamps.start) / 1000);
-    const progress = clamp(Math.max(0, tSeconds + waveOffsetMs / 1000) / total, 0, 1);
+    const progress = clamp(currentTime / total, 0, 1);
     const maxTop = Math.max(0, container.scrollHeight - container.clientHeight);
     const targetTop = maxTop * progress;
 
     const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
     programmaticScrollRef.current = true;
     container.scrollTo({ top: targetTop, behavior: prefersReducedMotion ? "auto" : "smooth" });
-    window.setTimeout(() => {
+    
+    setTimeout(() => {
       programmaticScrollRef.current = false;
     }, 250);
-  }, [spotify, tSeconds, hasSynced, collapsed]);
+  }, [spotify, currentTime, hasSynced, collapsed]);
 
   const title = spotify?.song ?? "";
   const subtitle = spotify?.artist ?? "";
@@ -534,9 +458,8 @@ export default function SpotifyLyricsPopup() {
     if (!spotify) return 0;
     return Math.max(1, (spotify.timestamps.end - spotify.timestamps.start) / 1000);
   }, [spotify]);
-  const remainingSeconds = Math.max(0, totalSeconds - tSeconds);
-  const sp = spotify;
-  const hasSpotify = Boolean(sp);
+  const remainingSeconds = Math.max(0, totalSeconds - currentTime);
+
   const loadingLabel = useMemo(() => {
     const lang = (language ?? "").toLowerCase();
     if (lang.startsWith("en")) return "Fetching lyrics...";
@@ -544,6 +467,7 @@ export default function SpotifyLyricsPopup() {
     if (lang.startsWith("es")) return "Buscando letra...";
     return "Fetching lyrics...";
   }, [language]);
+
   const strings = useMemo(() => {
     const lang = (language ?? "").toLowerCase();
     const isEn = lang.startsWith("en");
@@ -574,10 +498,12 @@ export default function SpotifyLyricsPopup() {
 
   const listHeightClass = isFullscreen ? "max-h-[60vh]" : "max-h-[260px]";
 
+  const showInstrumental = false;
+
   return (
     <div className={containerClass}>
       <AnimatePresence>
-        {hasSpotify && sp && (
+        {spotify && (
           <motion.div
             className={popupClass}
             initial={{ opacity: 0, y: 18, scale: 0.98 }}
@@ -588,14 +514,13 @@ export default function SpotifyLyricsPopup() {
             role="dialog"
             aria-label="Letra sincronizada do Spotify"
           >
-            {/* Header (apenas compacto) */}
             {!isFullscreen && (
               <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3">
                 <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl border border-white/10 bg-black/20">
-                  {sp.album_art_url ? (
+                  {spotify.album_art_url ? (
                     <Image
-                      src={sp.album_art_url}
-                      alt={sp.album}
+                      src={spotify.album_art_url}
+                      alt={spotify.album}
                       fill
                       className="object-cover"
                       unoptimized
@@ -609,24 +534,22 @@ export default function SpotifyLyricsPopup() {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <>
-                    <p className="truncate text-sm font-semibold text-white">{title}</p>
-                    <p className="truncate text-xs text-white/60">{subtitle}</p>
-                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-                      <div
-                        className="h-full rounded-full bg-green-500"
-                        style={{
-                          width: `${clamp((tSeconds / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
-                        }}
-                      />
-                    </div>
-                    <div className="mt-1 flex items-center justify-between text-[11px] tabular-nums text-white/50">
-                      <span aria-label={`Tempo atual ${formatTime(tSeconds)}`}>{formatTime(tSeconds)}</span>
-                      <span aria-label={`Tempo restante ${formatTime(remainingSeconds)}`}>
-                        -{formatTime(remainingSeconds)}
-                      </span>
-                    </div>
-                  </>
+                  <p className="truncate text-sm font-semibold text-white">{title}</p>
+                  <p className="truncate text-xs text-white/60">{subtitle}</p>
+                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-green-500"
+                      style={{
+                        width: `${clamp((currentTime / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
+                      }}
+                    />
+                  </div>
+                  <div className="mt-1 flex items-center justify-between text-[11px] tabular-nums text-white/50">
+                    <span aria-label={`Tempo atual ${formatTime(currentTime)}`}>{formatTime(currentTime)}</span>
+                    <span aria-label={`Tempo restante ${formatTime(remainingSeconds)}`}>
+                      -{formatTime(remainingSeconds)}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-1">
                   {spotifyEmbedUrl && (
@@ -673,10 +596,8 @@ export default function SpotifyLyricsPopup() {
               </div>
             )}
 
-            {/* Body */}
-            {hasSpotify && !collapsed && (
+            {spotify && !collapsed && (
               <div className="px-4 py-3">
-                {/* Player (lazy) */}
                 <AnimatePresence initial={false}>
                   {playerOpen && spotifyEmbedUrl && (
                     <motion.div
@@ -706,49 +627,43 @@ export default function SpotifyLyricsPopup() {
                   </p>
                 )}
 
-                {/* Erro só é exibido no fallback fullscreen; aqui omitimos */}
-
-                {/* Aviso de erro (apenas no modo compacto) */}
                 {!isFullscreen && lyricsError && !loadingLyrics && (
                   <p className="text-sm text-amber-200">{strings.errorNoLyrics}</p>
                 )}
 
-                {/* Fallback: sem letra em fullscreen, mostrar apenas capa/título/controles */}
                 {isFullscreen && !loadingLyrics && (!lyricsRaw || lyricsError) && (
                   <div className="px-2 py-4 flex-1 flex flex-col items-center justify-center gap-6">
                     <div className="w-full max-w-md space-y-4 text-center">
                       <div className="relative w-full aspect-square rounded-2xl overflow-hidden border border-white/10 mx-auto">
                         <Image
-                          src={sp.album_art_url ?? "/profile/profile.avif"}
-                          alt={sp.album}
+                          src={spotify.album_art_url ?? "/profile/profile.avif"}
+                          alt={spotify.album}
                           fill
                           className="object-cover"
                           sizes="360px"
                           unoptimized
                         />
                       </div>
-                          <div className="space-y-1">
-                            <p className="text-2xl font-semibold text-white truncate">{title}</p>
-                            <p className="text-sm text-white/70 truncate">{subtitle}</p>
-                            {lyricsError && (
-                              <p className="text-sm text-amber-200">
-                                {strings.errorNoLyrics}
-                              </p>
-                            )}
-                            {!lyricsError && !lyricsRaw && (
-                              <p className="text-sm text-white/60">{strings.errorNoLyrics}</p>
-                            )}
+                      <div className="space-y-1">
+                        <p className="text-2xl font-semibold text-white truncate">{title}</p>
+                        <p className="text-sm text-white/70 truncate">{subtitle}</p>
+                        {lyricsError && (
+                          <p className="text-sm text-amber-200">{strings.errorNoLyrics}</p>
+                        )}
+                        {!lyricsError && !lyricsRaw && (
+                          <p className="text-sm text-white/60">{strings.errorNoLyrics}</p>
+                        )}
                       </div>
                       <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
                         <div
                           className="h-full rounded-full bg-green-500"
                           style={{
-                            width: `${clamp((tSeconds / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
+                            width: `${clamp((currentTime / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
                           }}
                         />
                       </div>
                       <div className="flex items-center justify-between text-xs text-white/60 tabular-nums">
-                        <span>{formatTime(tSeconds)}</span>
+                        <span>{formatTime(currentTime)}</span>
                         <span>-{formatTime(remainingSeconds)}</span>
                       </div>
                       <div className="flex items-center justify-center gap-2 flex-wrap">
@@ -801,12 +716,11 @@ export default function SpotifyLyricsPopup() {
                   <>
                     {isFullscreen ? (
                       <div className="flex flex-col lg:flex-row gap-6">
-                        {/* Cover + info */}
                         <div className="w-full lg:w-2/5 space-y-4">
                           <div className="relative w-full max-w-[360px] aspect-square rounded-2xl overflow-hidden border border-white/10">
                             <Image
-                              src={sp.album_art_url ?? "/profile/profile.avif"}
-                              alt={sp.album}
+                              src={spotify.album_art_url ?? "/profile/profile.avif"}
+                              alt={spotify.album}
                               fill
                               className="object-cover"
                               sizes="360px"
@@ -863,17 +777,16 @@ export default function SpotifyLyricsPopup() {
                             <div
                               className="h-full rounded-full bg-green-500"
                               style={{
-                                width: `${clamp((tSeconds / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
+                                width: `${clamp((currentTime / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
                               }}
                             />
                           </div>
                           <div className="flex items-center justify-between text-xs text-white/60 tabular-nums">
-                            <span>{formatTime(tSeconds)}</span>
+                            <span>{formatTime(currentTime)}</span>
                             <span>-{formatTime(remainingSeconds)}</span>
                           </div>
                         </div>
 
-                        {/* Lyrics */}
                         {hasSynced ? (
                           <LayoutGroup>
                             <motion.div
@@ -900,48 +813,11 @@ export default function SpotifyLyricsPopup() {
                               }}
                             >
                               <div className="space-y-1">
-                                {showInstrumental && (
-                                  <motion.button
-                                    key="__instrumental__"
-                                    type="button"
-                                    layout
-                                    variants={{
-                                      hidden: { opacity: 0, y: 6, filter: "blur(2px)" },
-                                      show: { opacity: 1, y: 0, filter: "blur(0px)" },
-                                    }}
-                                    transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.7 }}
-                                    className={[
-                                      "relative block w-full overflow-hidden rounded-lg px-2 py-1.5 text-left",
-                                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/40",
-                                      "text-white",
-                                    ].join(" ")}
-                                    aria-current="true"
-                                    onClick={() => {}}
-                                  >
-                                    <motion.div
-                                      layoutId="lyricHighlight"
-                                      className="absolute inset-0 rounded-lg bg-white/10"
-                                      transition={{ type: "spring", stiffness: 520, damping: 40 }}
-                                    />
-                                    <motion.div
-                                      layoutId="lyricGlow"
-                                      className="absolute -inset-6 rounded-2xl"
-                                      transition={{ type: "spring", stiffness: 380, damping: 34 }}
-                                    />
-                                    <motion.span
-                                      className="relative text-base font-semibold"
-                                      animate={{ opacity: 1, scale: 1.02 }}
-                                      transition={{ type: "spring", stiffness: 420, damping: 28 }}
-                                    >
-                                      <AnimatedEllipsis />
-                                    </motion.span>
-                                  </motion.button>
-                                )}
                                 {lines.map((l, idx) => {
-                                  const active = !showInstrumental && idx === activeIndex;
+                                  const active = idx === activeIndex;
                                   const progress = (() => {
                                     if (!active) return 0;
-                                    const tMs = Math.max(0, tSeconds * 1000 + waveOffsetMs);
+                                    const tMs = currentTime * 1000;
                                     const startMs = l.timeMs;
                                     const endMs =
                                       lines[idx + 1]?.timeMs ??
@@ -1052,48 +928,11 @@ export default function SpotifyLyricsPopup() {
                               }}
                             >
                               <div className="space-y-1">
-                                {showInstrumental && (
-                                  <motion.button
-                                    key="__instrumental__"
-                                    type="button"
-                                    layout
-                                    variants={{
-                                      hidden: { opacity: 0, y: 6, filter: "blur(2px)" },
-                                      show: { opacity: 1, y: 0, filter: "blur(0px)" },
-                                    }}
-                                    transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.7 }}
-                                    className={[
-                                      "relative block w-full overflow-hidden rounded-lg px-2 py-1.5 text-left",
-                                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/40",
-                                      "text-white",
-                                    ].join(" ")}
-                                    aria-current="true"
-                                    onClick={() => {}}
-                                  >
-                                    <motion.div
-                                      layoutId="lyricHighlight"
-                                      className="absolute inset-0 rounded-lg bg-white/10"
-                                      transition={{ type: "spring", stiffness: 520, damping: 40 }}
-                                    />
-                                    <motion.div
-                                      layoutId="lyricGlow"
-                                      className="absolute -inset-6 rounded-2xl"
-                                      transition={{ type: "spring", stiffness: 380, damping: 34 }}
-                                    />
-                                    <motion.span
-                                      className="relative text-base font-semibold"
-                                      animate={{ opacity: 1, scale: 1.02 }}
-                                      transition={{ type: "spring", stiffness: 420, damping: 28 }}
-                                    >
-                                      <AnimatedEllipsis />
-                                    </motion.span>
-                                  </motion.button>
-                                )}
                                 {lines.map((l, idx) => {
-                                  const active = !showInstrumental && idx === activeIndex;
+                                  const active = idx === activeIndex;
                                   const progress = (() => {
                                     if (!active) return 0;
-                                    const tMs = Math.max(0, tSeconds * 1000 + waveOffsetMs);
+                                    const tMs = currentTime * 1000;
                                     const startMs = l.timeMs;
                                     const endMs =
                                       lines[idx + 1]?.timeMs ??
@@ -1182,14 +1021,13 @@ export default function SpotifyLyricsPopup() {
               </div>
             )}
 
-            {/* Estado colapsado em fullscreen: centralizar capa, título e controles; esconder letras */}
-            {hasSpotify && isFullscreen && collapsed && (
+            {spotify && isFullscreen && collapsed && (
               <div className="px-4 py-6 flex-1 flex flex-col items-center justify-center gap-6">
                 <div className="w-full max-w-md space-y-4 text-center">
                   <div className="relative w-full aspect-square rounded-2xl overflow-hidden border border-white/10 mx-auto">
                     <Image
-                      src={sp.album_art_url ?? "/profile/profile.avif"}
-                      alt={sp.album}
+                      src={spotify.album_art_url ?? "/profile/profile.avif"}
+                      alt={spotify.album}
                       fill
                       className="object-cover"
                       sizes="360px"
@@ -1204,56 +1042,45 @@ export default function SpotifyLyricsPopup() {
                     <div
                       className="h-full rounded-full bg-green-500"
                       style={{
-                        width: `${clamp((tSeconds / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
+                        width: `${clamp((currentTime / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
                       }}
                     />
                   </div>
                   <div className="flex items-center justify-between text-xs text-white/60 tabular-nums">
-                    <span>{formatTime(tSeconds)}</span>
+                    <span>{formatTime(currentTime)}</span>
                     <span>-{formatTime(remainingSeconds)}</span>
                   </div>
-                            <div className="flex items-center justify-center gap-2 flex-wrap">
-                              {/* {spotifyEmbedUrl && (
-                                <button
-                                  type="button"
-                                  onClick={() => setPlayerOpen((v) => !v)}
-                                  className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
-                                  aria-label={playerOpen ? strings.exitFullscreen : strings.openPlayer}
-                                  title={playerOpen ? strings.exitFullscreen : strings.openPlayer}
-                                >
-                                  <Play className={playerOpen ? "h-4 w-4 opacity-100" : "h-4 w-4"} />
-                                </button>
-                              )} */}
-                              {spotifyOpenUrl && (
-                                <a
-                                  href={spotifyOpenUrl}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
-                                  aria-label={strings.openSpotify}
-                                  title={strings.openSpotify}
-                                >
-                                  <ExternalLink className="h-4 w-4" />
-                                </a>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() => setIsFullscreen((v) => !v)}
-                                className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
-                                aria-label={isFullscreen ? strings.exitFullscreen : strings.fullscreen}
-                                title={isFullscreen ? strings.exitFullscreen : strings.fullscreen}
-                              >
-                                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setCollapsed((v) => !v)}
-                                className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
-                                aria-label={collapsed ? strings.expand : strings.collapse}
-                              >
-                                <ChevronDown className={collapsed ? "h-4 w-4 rotate-180" : "h-4 w-4"} />
-                              </button>
-                            </div>
+                  <div className="flex items-center justify-center gap-2 flex-wrap">
+                    {spotifyOpenUrl && (
+                      <a
+                        href={spotifyOpenUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
+                        aria-label={strings.openSpotify}
+                        title={strings.openSpotify}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setIsFullscreen((v) => !v)}
+                      className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
+                      aria-label={isFullscreen ? strings.exitFullscreen : strings.fullscreen}
+                      title={isFullscreen ? strings.exitFullscreen : strings.fullscreen}
+                    >
+                      {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCollapsed((v) => !v)}
+                      className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
+                      aria-label={collapsed ? strings.expand : strings.collapse}
+                    >
+                      <ChevronDown className={collapsed ? "h-4 w-4 rotate-180" : "h-4 w-4"} />
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -1263,5 +1090,3 @@ export default function SpotifyLyricsPopup() {
     </div>
   );
 }
-
-
