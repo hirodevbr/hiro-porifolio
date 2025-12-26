@@ -28,100 +28,6 @@ function formatTime(seconds: number) {
   return `${m}:${String(ss).padStart(2, "0")}`;
 }
 
-function usePrefersReducedMotion() {
-  const [reduceMotion, setReduceMotion] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia?.("(prefers-reduced-motion: reduce)");
-    if (!mq) return;
-    const update = () => setReduceMotion(Boolean(mq.matches));
-    update();
-    mq.addEventListener?.("change", update) ?? mq.addListener?.(update);
-    return () => {
-      mq.removeEventListener?.("change", update) ?? mq.removeListener?.(update);
-    };
-  }, []);
-  return reduceMotion;
-}
-
-function AnimatedEllipsis() {
-  const reduceMotion = usePrefersReducedMotion();
-  if (reduceMotion) return <span>…</span>;
-
-  return (
-    <span className="inline-flex items-center gap-1" aria-label="Instrumental">
-      {[0, 1, 2].map((i) => (
-        <motion.span
-          key={i}
-          className="inline-block h-1.5 w-1.5 rounded-full bg-white/70"
-          initial={{ opacity: 0.25, y: 0 }}
-          animate={{ opacity: [0.25, 1, 0.25], y: [0, -2, 0] }}
-          transition={{
-            duration: 0.9,
-            ease: "easeInOut",
-            repeat: Infinity,
-            delay: i * 0.15,
-          }}
-        />
-      ))}
-    </span>
-  );
-}
-
-function ProgressWaveText({ text, progress }: { text: string; progress: number }) {
-  const reduceMotion = usePrefersReducedMotion();
-  const p = clamp(progress, 0, 1);
-  if (reduceMotion) return <>{text}</>;
-
-  const chars = Array.from(text);
-  const n = Math.max(1, chars.length);
-  const center = p * n;
-  const fadeRange = 14;
-  const glowRange = 8; // Range menor para o efeito de brilho
-
-  return (
-    <span className="inline-flex flex-wrap">
-      {chars.map((ch, idx) => {
-        const isSpace = ch === " ";
-        const dist = Math.abs(idx - center);
-        const fill = clamp(1 - dist / fadeRange, 0, 1);
-        const glowStrength = clamp(1 - dist / glowRange, 0, 1);
-        
-        // Gradiente suave: de cinza para branco conforme o progresso
-        const baseAlpha = 0.35;
-        const alpha = baseAlpha + (1 - baseAlpha) * fill;
-        const color = `rgba(255,255,255,${alpha})`;
-
-        // Efeito de brilho/glow nos caracteres próximos ao centro
-        const glowIntensity = glowStrength * 0.6;
-        const textShadow = glowStrength > 0.1 
-          ? `0 0 ${4 * glowIntensity}px rgba(255,255,255,${0.4 * glowIntensity}), 0 0 ${8 * glowIntensity}px rgba(255,255,255,${0.2 * glowIntensity})`
-          : "none";
-        
-        // Escala muito sutil apenas nos caracteres mais próximos
-        const scale = glowStrength > 0.5 ? 1 + (glowStrength - 0.5) * 0.05 : 1;
-
-        return (
-          <span
-            key={`${idx}-${ch}`}
-            className={isSpace ? "whitespace-pre" : "inline-block"}
-            aria-hidden="true"
-            style={{ 
-              color,
-              textShadow,
-              transform: `scale(${scale})`,
-              transition: "color 0.25s cubic-bezier(0.4, 0, 0.2, 1), text-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-              transformOrigin: "center",
-            }}
-          >
-            {isSpace ? "\u00A0" : ch}
-          </span>
-        );
-      })}
-      <span className="sr-only">{text}</span>
-    </span>
-  );
-}
-
 function safeKey(s: string) {
   return s.trim().toLowerCase();
 }
@@ -856,16 +762,6 @@ export default function SpotifyLyricsPopup() {
                               <div className="space-y-1">
                                 {lines.map((l, idx) => {
                                   const active = idx === activeIndex;
-                                  const progress = (() => {
-                                    if (!active) return 0;
-                                    const tMs = currentTime * 1000;
-                                    const startMs = l.timeMs;
-                                    const endMs =
-                                      lines[idx + 1]?.timeMs ??
-                                      (spotify ? (spotify.timestamps.end - spotify.timestamps.start) : startMs + 4000);
-                                    const denom = Math.max(400, endMs - startMs);
-                                    return clamp((tMs - startMs) / denom, 0, 1);
-                                  })();
                                   return (
                                     <motion.button
                                       key={`${l.timeMs}-${idx}`}
@@ -907,11 +803,7 @@ export default function SpotifyLyricsPopup() {
                                         }}
                                         transition={{ type: "spring", stiffness: 420, damping: 28 }}
                                       >
-                                        {active ? (
-                                          <ProgressWaveText text={l.text || "…"} progress={progress} />
-                                        ) : (
-                                          l.text || "…"
-                                        )}
+                                        {l.text || "…"}
                                       </motion.span>
                                     </motion.button>
                                   );
@@ -971,16 +863,6 @@ export default function SpotifyLyricsPopup() {
                               <div className="space-y-1">
                                 {lines.map((l, idx) => {
                                   const active = idx === activeIndex;
-                                  const progress = (() => {
-                                    if (!active) return 0;
-                                    const tMs = currentTime * 1000;
-                                    const startMs = l.timeMs;
-                                    const endMs =
-                                      lines[idx + 1]?.timeMs ??
-                                      (spotify ? (spotify.timestamps.end - spotify.timestamps.start) : startMs + 4000);
-                                    const denom = Math.max(400, endMs - startMs);
-                                    return clamp((tMs - startMs) / denom, 0, 1);
-                                  })();
                                   return (
                                     <motion.button
                                       key={`${l.timeMs}-${idx}`}
@@ -1022,11 +904,7 @@ export default function SpotifyLyricsPopup() {
                                         }}
                                         transition={{ type: "spring", stiffness: 420, damping: 28 }}
                                       >
-                                        {active ? (
-                                          <ProgressWaveText text={l.text || "…"} progress={progress} />
-                                        ) : (
-                                          l.text || "…"
-                                        )}
+                                        {l.text || "…"}
                                       </motion.span>
                                     </motion.button>
                                   );
