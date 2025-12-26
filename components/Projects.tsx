@@ -93,9 +93,14 @@ export default function Projects() {
       if (Array.isArray(data) && data.length > 0) {
         setRepos(data);
         setCachedRepos(data); // Salva no cache
-      } else if (!cached) {
-        // Só mostra erro se não tiver cache
-        throw new Error("fetch_error");
+      } else {
+        // Se não retornou dados, verifica se tem cache
+        const cached = getCachedRepos();
+        if (!cached || cached.length === 0) {
+          throw new Error("fetch_error");
+        }
+        // Se tem cache, usa ele
+        setRepos(cached);
       }
     } catch (error) {
       console.error("Error fetching GitHub repos:", error);
