@@ -262,7 +262,14 @@ export default function SpotifyLyricsPopup() {
     const driftHistory: number[] = [];
     const MAX_DRIFT_HISTORY = 5;
 
-    const baseElapsed = clamp((Date.now() - start) / 1000, 0, total);
+    // Detectar se a música acabou de começar: se o timestamp start está muito próximo do tempo atual
+    // (dentro de 5 segundos), assumimos que a música acabou de começar e definimos como 0
+    // Isso corrige o problema no iOS onde o timestamp pode estar um pouco atrás
+    const now = Date.now();
+    const timeSinceStart = (now - start) / 1000;
+    const isJustStarted = timeSinceStart < 5 && timeSinceStart >= -2; // Entre -2s e 5s = música recém iniciada
+    
+    const baseElapsed = isJustStarted ? 0 : clamp(timeSinceStart, 0, total);
     let basePerf = performance.now();
     let base = baseElapsed;
     let lastResyncTime = Date.now();
@@ -283,12 +290,15 @@ export default function SpotifyLyricsPopup() {
 
     const resync = (force = false) => {
       const now = Date.now();
-      const newBase = clamp((now - start) / 1000, 0, total);
+      const timeSinceStart = (now - start) / 1000;
+      // Aplicar mesma lógica: se música acabou de começar, definir como 0
+      const isJustStarted = timeSinceStart < 5 && timeSinceStart >= -2;
+      const newBase = isJustStarted ? 0 : clamp(timeSinceStart, 0, total);
       
       // Detectar drift: se a diferença entre o tempo calculado e o esperado for grande, forçar resync
       if (!force) {
         const expectedElapsed = base + (performance.now() - basePerf) / 1000;
-        const actualElapsed = (now - start) / 1000;
+        const actualElapsed = isJustStarted ? 0 : timeSinceStart;
         const drift = Math.abs(expectedElapsed - actualElapsed);
         
         driftHistory.push(drift);
