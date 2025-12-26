@@ -30,40 +30,101 @@ export default function Projects() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Cache no localStorage
+  const CACHE_KEY = "github_repos_cache";
+  const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
+
+  const getCachedRepos = (): GitHubRepo[] | null => {
+    if (typeof window === "undefined") return null;
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (!cached) return null;
+      const { data, timestamp } = JSON.parse(cached);
+      if (Date.now() - timestamp > CACHE_TTL_MS) return null;
+      return data;
+    } catch {
+      return null;
+    }
+  };
+
+  const setCachedRepos = (data: GitHubRepo[]) => {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
+    } catch {
+      // Ignora erros de quota
+    }
+  };
+
   const fetchRepos = useCallback(async () => {
     try {
       setError(null);
       setLoading(true);
-      const response = await fetch(
-        `https://api.github.com/users/hirodevbr/repos?sort=updated&per_page=12`
-      );
+
+      // Busca dados atualizados da API route (com cache no servidor)
+      const response = await fetch(`/api/github/repos`, {
+        cache: "no-store", // Sempre busca dados atualizados (mas a API route tem cache)
+      });
+
       if (!response.ok) {
-        if (response.status === 403) {
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 403 || errorData.error === "rate_limit") {
           throw new Error("rate_limit");
-        } else if (response.status === 404) {
+        } else if (response.status === 404 || errorData.error === "user_not_found") {
           throw new Error("user_not_found");
         } else {
           throw new Error("fetch_error");
         }
       }
+
       const data: GitHubRepo[] = await response.json();
-      const filteredRepos = data
-        .filter((repo) => repo.description || repo.name !== "hirodevbr")
-        .slice(0, 12);
-      setRepos(filteredRepos);
+      
+      // Se a resposta tem erro, lança exceção
+      if (data && typeof data === "object" && "error" in data) {
+        if (data.error === "rate_limit") {
+          throw new Error("rate_limit");
+        } else if (data.error === "user_not_found") {
+          throw new Error("user_not_found");
+        } else {
+          throw new Error("fetch_error");
+        }
+      }
+
+      if (Array.isArray(data) && data.length > 0) {
+        setRepos(data);
+        setCachedRepos(data); // Salva no cache
+      } else if (!cached) {
+        // Só mostra erro se não tiver cache
+        throw new Error("fetch_error");
+      }
     } catch (error) {
       console.error("Error fetching GitHub repos:", error);
-      if (error instanceof Error) {
-        setError(error.message);
+      
+      // Se tiver cache, usa ele mesmo com erro
+      const cached = getCachedRepos();
+      if (cached && cached.length > 0) {
+        setRepos(cached);
+        setError(null); // Não mostra erro se tiver cache
       } else {
-        setError("fetch_error");
+        // Só mostra erro se não tiver cache
+        if (error instanceof Error) {
+          setError(error.message);
+        } else {
+          setError("fetch_error");
+        }
       }
     } finally {
       setLoading(false);
     }
   }, []);
 
+  // Carrega cache imediatamente na inicialização
   useEffect(() => {
+    const cached = getCachedRepos();
+    if (cached && cached.length > 0) {
+      setRepos(cached);
+      setLoading(false);
+    }
     fetchRepos();
   }, [fetchRepos]);
 
