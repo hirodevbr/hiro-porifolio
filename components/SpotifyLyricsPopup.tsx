@@ -72,13 +72,11 @@ function ProgressWaveText({ text, progress }: { text: string; progress: number }
   const p = clamp(progress, 0, 1);
   if (reduceMotion) return <>{text}</>;
 
-  // Versão minimalista: apenas gradiente de cor sem animações pesadas
   const chars = Array.from(text);
   const n = Math.max(1, chars.length);
   const center = p * n;
-  
-  // Range menor para efeito mais sutil
-  const fadeRange = 12;
+  const fadeRange = 14;
+  const glowRange = 8; // Range menor para o efeito de brilho
 
   return (
     <span className="inline-flex flex-wrap">
@@ -86,11 +84,21 @@ function ProgressWaveText({ text, progress }: { text: string; progress: number }
         const isSpace = ch === " ";
         const dist = Math.abs(idx - center);
         const fill = clamp(1 - dist / fadeRange, 0, 1);
+        const glowStrength = clamp(1 - dist / glowRange, 0, 1);
         
-        // Gradiente simples: de cinza para branco
-        const baseAlpha = 0.4;
+        // Gradiente suave: de cinza para branco conforme o progresso
+        const baseAlpha = 0.35;
         const alpha = baseAlpha + (1 - baseAlpha) * fill;
         const color = `rgba(255,255,255,${alpha})`;
+
+        // Efeito de brilho/glow nos caracteres próximos ao centro
+        const glowIntensity = glowStrength * 0.6;
+        const textShadow = glowStrength > 0.1 
+          ? `0 0 ${4 * glowIntensity}px rgba(255,255,255,${0.4 * glowIntensity}), 0 0 ${8 * glowIntensity}px rgba(255,255,255,${0.2 * glowIntensity})`
+          : "none";
+        
+        // Escala muito sutil apenas nos caracteres mais próximos
+        const scale = glowStrength > 0.5 ? 1 + (glowStrength - 0.5) * 0.05 : 1;
 
         return (
           <span
@@ -99,7 +107,10 @@ function ProgressWaveText({ text, progress }: { text: string; progress: number }
             aria-hidden="true"
             style={{ 
               color,
-              transition: "color 0.15s ease-out",
+              textShadow,
+              transform: `scale(${scale})`,
+              transition: "color 0.25s cubic-bezier(0.4, 0, 0.2, 1), text-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              transformOrigin: "center",
             }}
           >
             {isSpace ? "\u00A0" : ch}
@@ -173,14 +184,30 @@ export default function SpotifyLyricsPopup() {
     const end = spotify.timestamps.end;
     const duration = Math.max(1, (end - start) / 1000);
 
+    // Detecta se é mobile para ajustar sincronização
+    const isMobileDevice = typeof window !== "undefined" && (
+      window.innerWidth <= 768 || 
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    );
+    
     // Calcula tempo inicial baseado no timestamp do Spotify
     const calculateElapsed = () => {
       const now = Date.now();
-      const elapsed = (now - start) / 1000;
+      let elapsed = (now - start) / 1000;
       
-      // Se a música acabou de começar (dentro de 3 segundos), assume 0
-      if (elapsed < 3 && elapsed >= -1) {
-        return 0;
+      // Para mobile: janela maior de detecção de início e offset negativo maior
+      if (isMobileDevice) {
+        // Se a música acabou de começar (dentro de 6 segundos), assume 0
+        if (elapsed < 6 && elapsed >= -2) {
+          return 0;
+        }
+        // Offset negativo maior para compensar adiantamento no mobile (0.5s)
+        elapsed = Math.max(0, elapsed - 0.5);
+      } else {
+        // Desktop: janela menor
+        if (elapsed < 3 && elapsed >= -1) {
+          return 0;
+        }
       }
       
       return clamp(elapsed, 0, duration);
@@ -219,8 +246,11 @@ export default function SpotifyLyricsPopup() {
       const expectedElapsed = baseElapsed + (performance.now() - baseTimestamp) / 1000;
       const drift = Math.abs(actualElapsed - expectedElapsed);
 
-      // Se o drift for maior que 200ms, resincroniza
-      if (drift > 0.2) {
+      // Para mobile: threshold menor para resync mais frequente
+      const driftThreshold = isMobileDevice ? 0.15 : 0.2;
+      
+      // Se o drift for maior que o threshold, resincroniza
+      if (drift > driftThreshold) {
         baseElapsed = actualElapsed;
         baseTimestamp = performance.now();
         setCurrentTime(clamp(actualElapsed, 0, duration));
@@ -231,8 +261,19 @@ export default function SpotifyLyricsPopup() {
     // Inicia loop de atualização
     updateTime();
 
-    // Resync a cada 2 segundos
-    const resyncInterval = setInterval(resync, 2000);
+    // Resync mais frequente no mobile para melhor sincronização
+    const resyncInterval = setInterval(resync, isMobileDevice ? 1000 : 2000);
+    
+    // Resync imediato no mobile após um pequeno delay para garantir sincronização inicial
+    if (isMobileDevice) {
+      setTimeout(() => {
+        const actualElapsed = calculateElapsed();
+        baseElapsed = actualElapsed;
+        baseTimestamp = performance.now();
+        setCurrentTime(clamp(actualElapsed, 0, duration));
+        lastUpdateTime = actualElapsed;
+      }, 500);
+    }
 
     // Resync quando a página volta ao foreground
     const handleVisibilityChange = () => {
