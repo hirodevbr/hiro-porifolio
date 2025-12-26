@@ -57,6 +57,50 @@ export default function SpotifyLyricsPopup() {
   const prevTrackKeyRef = useRef<string>("");
   const animationFrameRef = useRef<number | null>(null);
   const lastSyncTimeRef = useRef<number>(0);
+  const [serverOffsetMs, setServerOffsetMs] = useState(0);
+
+  // Mede offset entre relógio local e servidor (evita sync adiantada/atrasada por clock skew)
+  useEffect(() => {
+    if (!spotify) return;
+    let cancelled = false;
+
+    const syncOffset = async () => {
+      try {
+        const t0Perf = performance.now();
+        const t0Epoch = Date.now();
+
+        const res = await fetch("/api/time", { cache: "no-store" });
+        if (!res.ok) return;
+        const json = (await res.json()) as { now: number };
+
+        const t1Perf = performance.now();
+        const rttMs = t1Perf - t0Perf;
+        const clientMidEpoch = t0Epoch + rttMs / 2;
+        const nextOffset = Math.round(json.now - clientMidEpoch);
+
+        if (!cancelled) {
+          setServerOffsetMs(nextOffset);
+          lastSyncTimeRef.current = Date.now();
+        }
+      } catch {
+        // ignora: seguimos com offset 0
+      }
+    };
+
+    syncOffset();
+    const interval = window.setInterval(syncOffset, 60_000);
+
+    const onVis = () => {
+      if (document.visibilityState === "visible") syncOffset();
+    };
+    document.addEventListener("visibilitychange", onVis);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [spotify?.track_id]);
 
   const trackKey = useMemo(() => {
     if (!spotify) return "";
@@ -96,26 +140,14 @@ export default function SpotifyLyricsPopup() {
       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
     );
     
-    // Calcula tempo inicial baseado no timestamp do Spotify
+    // Calcula tempo baseado no timestamp do Spotify (usando tempo do servidor quando disponível)
     const calculateElapsed = () => {
-      const now = Date.now();
-      let elapsed = (now - start) / 1000;
-      
-      // Para mobile: janela maior de detecção de início e offset negativo maior
-      if (isMobileDevice) {
-        // Se a música acabou de começar (dentro de 6 segundos), assume 0
-        if (elapsed < 6 && elapsed >= -2) {
-          return 0;
-        }
-        // Offset negativo maior para compensar adiantamento no mobile (0.5s)
-        elapsed = Math.max(0, elapsed - 0.5);
-      } else {
-        // Desktop: janela menor
-        if (elapsed < 3 && elapsed >= -1) {
-          return 0;
-        }
-      }
-      
+      const nowMs = Date.now() + serverOffsetMs;
+      const elapsed = (nowMs - start) / 1000;
+
+      // janela pequena para evitar flicker quando a presença chega levemente antes/depois
+      if (elapsed < 2 && elapsed >= -1) return 0;
+
       return clamp(elapsed, 0, duration);
     };
 
@@ -201,7 +233,7 @@ export default function SpotifyLyricsPopup() {
       clearInterval(resyncInterval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [spotify]);
+  }, [spotify, serverOffsetMs]);
 
   // Calcula índice ativo baseado no tempo atual
   const activeIndex = useMemo(() => {
