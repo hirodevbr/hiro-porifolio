@@ -133,6 +133,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Não cachear endpoints sensíveis a tempo/sync (evita divergência entre navegadores/dispositivos)
+  if (url.origin === self.location.origin) {
+    if (url.pathname.startsWith('/api/lyrics') || url.pathname.startsWith('/api/time')) {
+      event.respondWith(fetch(request));
+      return;
+    }
+  }
+
   // Cache First para imagens
   if (request.destination === 'image') {
     event.respondWith(cacheFirst(request));

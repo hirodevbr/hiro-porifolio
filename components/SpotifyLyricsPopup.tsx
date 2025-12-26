@@ -337,9 +337,15 @@ export default function SpotifyLyricsPopup() {
       }, 12000);
       
       try {
+        const existing = getCachedLyrics(cacheKey).entry;
+        const existingSynced = existing?.syncedLyrics?.trim() || null;
+        const existingPlain = existing?.plainLyrics?.trim() || null;
+
         const res = await fetch(
-          `/api/lyrics?artist_name=${encodeURIComponent(spotify.artist)}&track_name=${encodeURIComponent(spotify.song)}`,
-          { signal: controller.signal },
+          `/api/lyrics?artist_name=${encodeURIComponent(spotify.artist)}&track_name=${encodeURIComponent(
+            spotify.song,
+          )}&_=${Date.now()}`,
+          { signal: controller.signal, cache: "no-store" },
         );
         
         if (!res.ok) throw new Error(String(res.status));
@@ -347,7 +353,7 @@ export default function SpotifyLyricsPopup() {
         const data = (await res.json()) as LrclibResponse;
         const synced = data.syncedLyrics?.trim() ?? null;
         const plain = data.plainLyrics?.trim() ?? null;
-        const chosen = synced || plain || null;
+        const chosen = synced || existingSynced || plain || existingPlain || null;
 
         if (!cancelled) {
           setLyricsRaw(chosen);
@@ -360,8 +366,9 @@ export default function SpotifyLyricsPopup() {
               artist: spotify.artist,
               track: spotify.song,
               fetchedAt: Date.now(),
-              syncedLyrics: synced,
-              plainLyrics: plain,
+              // nunca apaga uma letra sincronizada já existente
+              syncedLyrics: synced || existingSynced,
+              plainLyrics: plain || existingPlain,
             });
           }
         }
