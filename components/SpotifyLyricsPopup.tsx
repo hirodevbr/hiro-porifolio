@@ -57,50 +57,6 @@ export default function SpotifyLyricsPopup() {
   const prevTrackKeyRef = useRef<string>("");
   const animationFrameRef = useRef<number | null>(null);
   const lastSyncTimeRef = useRef<number>(0);
-  const [serverOffsetMs, setServerOffsetMs] = useState(0);
-
-  // Mede offset entre relógio local e servidor (evita sync adiantada/atrasada por clock skew)
-  useEffect(() => {
-    if (!spotify) return;
-    let cancelled = false;
-
-    const syncOffset = async () => {
-      try {
-        const t0Perf = performance.now();
-        const t0Epoch = Date.now();
-
-        const res = await fetch("/api/time", { cache: "no-store" });
-        if (!res.ok) return;
-        const json = (await res.json()) as { now: number };
-
-        const t1Perf = performance.now();
-        const rttMs = t1Perf - t0Perf;
-        const clientMidEpoch = t0Epoch + rttMs / 2;
-        const nextOffset = Math.round(json.now - clientMidEpoch);
-
-        if (!cancelled) {
-          setServerOffsetMs(nextOffset);
-          lastSyncTimeRef.current = Date.now();
-        }
-      } catch {
-        // ignora: seguimos com offset 0
-      }
-    };
-
-    syncOffset();
-    const interval = window.setInterval(syncOffset, 60_000);
-
-    const onVis = () => {
-      if (document.visibilityState === "visible") syncOffset();
-    };
-    document.addEventListener("visibilitychange", onVis);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(interval);
-      document.removeEventListener("visibilitychange", onVis);
-    };
-  }, [spotify?.track_id]);
 
   const trackKey = useMemo(() => {
     if (!spotify) return "";
@@ -133,16 +89,10 @@ export default function SpotifyLyricsPopup() {
     const start = spotify.timestamps.start;
     const end = spotify.timestamps.end;
     const duration = Math.max(1, (end - start) / 1000);
-
-    // Detecta se é mobile para ajustar sincronização
-    const isMobileDevice = typeof window !== "undefined" && (
-      window.innerWidth <= 768 || 
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-    );
     
-    // Calcula tempo baseado no timestamp do Spotify (usando tempo do servidor quando disponível)
+    // Calcula tempo baseado no timestamp do Spotify (timestamps já vêm corretos do Lanyard)
     const calculateElapsed = () => {
-      const nowMs = Date.now() + serverOffsetMs;
+      const nowMs = Date.now();
       const elapsed = (nowMs - start) / 1000;
 
       // janela pequena para evitar flicker quando a presença chega levemente antes/depois
@@ -176,7 +126,7 @@ export default function SpotifyLyricsPopup() {
       animationFrameRef.current = requestAnimationFrame(updateTime);
     };
 
-    // Resync periódico para compensar drift
+    // Resync periódico para compensar drift (mais agressivo para manter sync preciso)
     const resync = () => {
       if (!spotify) return;
       
@@ -184,8 +134,8 @@ export default function SpotifyLyricsPopup() {
       const expectedElapsed = baseElapsed + (performance.now() - baseTimestamp) / 1000;
       const drift = Math.abs(actualElapsed - expectedElapsed);
 
-      // Para mobile: threshold menor para resync mais frequente
-      const driftThreshold = isMobileDevice ? 0.15 : 0.2;
+      // Threshold menor para resync mais frequente e preciso (100ms de tolerância)
+      const driftThreshold = 0.1;
       
       // Se o drift for maior que o threshold, resincroniza
       if (drift > driftThreshold) {
@@ -199,19 +149,17 @@ export default function SpotifyLyricsPopup() {
     // Inicia loop de atualização
     updateTime();
 
-    // Resync mais frequente no mobile para melhor sincronização
-    const resyncInterval = setInterval(resync, isMobileDevice ? 1000 : 2000);
+    // Resync frequente para manter sincronização precisa (a cada 500ms)
+    const resyncInterval = setInterval(resync, 500);
     
-    // Resync imediato no mobile após um pequeno delay para garantir sincronização inicial
-    if (isMobileDevice) {
-      setTimeout(() => {
-        const actualElapsed = calculateElapsed();
-        baseElapsed = actualElapsed;
-        baseTimestamp = performance.now();
-        setCurrentTime(clamp(actualElapsed, 0, duration));
-        lastUpdateTime = actualElapsed;
-      }, 500);
-    }
+    // Resync imediato após um pequeno delay para garantir sincronização inicial
+    setTimeout(() => {
+      const actualElapsed = calculateElapsed();
+      baseElapsed = actualElapsed;
+      baseTimestamp = performance.now();
+      setCurrentTime(clamp(actualElapsed, 0, duration));
+      lastUpdateTime = actualElapsed;
+    }, 200);
 
     // Resync quando a página volta ao foreground
     const handleVisibilityChange = () => {
@@ -233,7 +181,7 @@ export default function SpotifyLyricsPopup() {
       clearInterval(resyncInterval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [spotify, serverOffsetMs]);
+  }, [spotify]);
 
   // Calcula índice ativo baseado no tempo atual
   const activeIndex = useMemo(() => {
