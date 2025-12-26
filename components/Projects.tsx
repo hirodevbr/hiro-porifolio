@@ -104,17 +104,8 @@ export default function Projects() {
   };
 
   const getLanguageColor = (language: string | null) => {
-    const colors: Record<string, string> = {
-      JavaScript: "bg-yellow-500",
-      TypeScript: "bg-blue-500",
-      HTML: "bg-orange-500",
-      CSS: "bg-pink-500",
-      Python: "bg-green-500",
-      Java: "bg-red-500",
-      "C++": "bg-blue-600",
-      "C#": "bg-purple-500",
-    };
-    return colors[language || ""] || "bg-gray-500";
+    // Tema dark monocromático: manter indicação apenas com tons de cinza
+    return language ? "bg-white/30" : "bg-white/15";
   };
 
   // Função para verificar se um projeto é recente (últimos 30 dias)
@@ -194,8 +185,8 @@ export default function Projects() {
       >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary-400">{t("projects_title")}</h2>
-            <div className="w-24 h-1 bg-primary-500 mx-auto rounded-full" />
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">{t("projects_title")}</h2>
+            <div className="w-24 h-1 bg-white/20 mx-auto rounded-full" />
             <p className="text-gray-400 mt-4 max-w-2xl mx-auto">
               {t("projects_subtitle")}
             </p>
@@ -219,8 +210,8 @@ export default function Projects() {
           transition={{ duration: 0.5 }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary-400">{t("projects_title")}</h2>
-          <div className="w-24 h-1 bg-primary-500 mx-auto rounded-full" />
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">{t("projects_title")}</h2>
+          <div className="w-24 h-1 bg-white/20 mx-auto rounded-full" />
           <p className="text-gray-400 mt-4 max-w-2xl mx-auto">
             {t("projects_subtitle")}
           </p>
@@ -232,8 +223,8 @@ export default function Projects() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center py-12"
           >
-            <div className="max-w-md mx-auto bg-gray-800/50 backdrop-blur-sm p-8 rounded-xl border border-red-500/50">
-              <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+            <div className="max-w-md mx-auto bg-gray-800/50 backdrop-blur-sm p-8 rounded-xl border border-white/10">
+              <AlertCircle className="w-16 h-16 text-gray-200 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-white mb-2">
                 {t("projects_error_title")}
               </h3>
@@ -248,7 +239,7 @@ export default function Projects() {
                 onClick={handleRetry}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 rounded-lg font-semibold text-white shadow-lg shadow-primary-500/50 hover:shadow-xl hover:shadow-primary-500/50 transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black rounded-lg font-semibold shadow-lg shadow-white/10 hover:shadow-xl hover:shadow-white/15 transition-all focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
               >
                 <RefreshCw className="w-5 h-5" />
                 {t("projects_error_retry")}
@@ -278,8 +269,8 @@ export default function Projects() {
                 transition={{ type: "spring", stiffness: 220, damping: 18 }}
                 className={`relative bg-gray-800/50 backdrop-blur-sm p-6 rounded-xl border transition-all group card-hover ${
                   isRecent
-                    ? "border-primary-500/50 shadow-lg shadow-primary-500/20 hover:shadow-xl hover:shadow-primary-500/40"
-                    : "border-gray-700 hover:border-primary-500/50 hover:shadow-lg hover:shadow-primary-500/20"
+                    ? "border-white/15 shadow-lg shadow-white/10 hover:shadow-xl hover:shadow-white/15"
+                    : "border-white/10 hover:border-white/20 hover:shadow-lg hover:shadow-white/10"
                 }`}
               >
                 {/* Badge de projeto recente */}
@@ -288,7 +279,7 @@ export default function Projects() {
                     initial={{ scale: 0, rotate: -180 }}
                     animate={{ scale: 1, rotate: 0 }}
                     transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                    className="absolute -top-3 -right-3 flex items-center gap-1 px-3 py-1 bg-primary-600 rounded-full text-xs font-semibold text-white shadow-lg"
+                    className="absolute -top-3 -right-3 flex items-center gap-1 px-3 py-1 bg-white text-black rounded-full text-xs font-semibold shadow-lg shadow-white/10"
                   >
                     <Sparkles className="w-3 h-3" />
                     <span>{t("projects_new")}</span>
@@ -298,9 +289,11 @@ export default function Projects() {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className={`text-xl font-semibold group-hover:text-primary-400 transition-colors ${
-                        isRecent ? "text-primary-300" : "text-white"
-                      }`}>
+                      <h3
+                        className={`text-xl font-semibold transition-colors ${
+                          isRecent ? "text-white" : "text-white"
+                        } group-hover:text-gray-200`}
+                      >
                         {repo.name}
                       </h3>
                     </div>
@@ -349,16 +342,19 @@ export default function Projects() {
                       whileHover={{ scale: 1.15, rotate: 5 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={() => trackProjectClick(repo.name, repo.html_url)}
-                      className={`p-2 rounded-lg transition-all hover-lift focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-800 ${
+                      className={`p-2 rounded-lg transition-all hover-lift focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black ${
                         isRecent
-                          ? "bg-primary-500/20 hover:bg-primary-500/40 hover:shadow-lg hover:shadow-primary-500/30"
-                          : "bg-gray-700/50 hover:bg-primary-500/30 hover:shadow-lg hover:shadow-primary-500/20"
+                          ? "bg-white/10 hover:bg-white/15 hover:shadow-lg hover:shadow-white/10"
+                          : "bg-white/5 hover:bg-white/10 hover:shadow-lg hover:shadow-white/10"
                       }`}
                       aria-label={`Ver código do projeto ${repo.name} no GitHub (abre em nova aba)`}
                     >
-                      <Github className={`w-5 h-5 transition-colors ${
-                        isRecent ? "text-primary-400" : "text-gray-400 hover:text-primary-400"
-                      }`} aria-hidden="true" />
+                      <Github
+                        className={`w-5 h-5 transition-colors ${
+                          isRecent ? "text-gray-200" : "text-gray-400 hover:text-white"
+                        }`}
+                        aria-hidden="true"
+                      />
                     </motion.a>
                     {repo.html_url && (
                       <motion.a
@@ -368,16 +364,19 @@ export default function Projects() {
                         whileHover={{ scale: 1.15, rotate: -5 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => trackProjectClick(repo.name, repo.html_url)}
-                        className={`p-2 rounded-lg transition-all hover-lift focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-800 ${
+                        className={`p-2 rounded-lg transition-all hover-lift focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black ${
                           isRecent
-                            ? "bg-primary-500/20 hover:bg-primary-500/40 hover:shadow-lg hover:shadow-primary-500/30"
-                            : "bg-gray-700/50 hover:bg-primary-500/30 hover:shadow-lg hover:shadow-primary-500/20"
+                            ? "bg-white/10 hover:bg-white/15 hover:shadow-lg hover:shadow-white/10"
+                            : "bg-white/5 hover:bg-white/10 hover:shadow-lg hover:shadow-white/10"
                         }`}
                         aria-label={`Abrir projeto ${repo.name} (abre em nova aba)`}
                       >
-                        <ExternalLink className={`w-5 h-5 transition-colors ${
-                          isRecent ? "text-primary-400" : "text-gray-400 hover:text-primary-400"
-                        }`} aria-hidden="true" />
+                        <ExternalLink
+                          className={`w-5 h-5 transition-colors ${
+                            isRecent ? "text-gray-200" : "text-gray-400 hover:text-white"
+                          }`}
+                          aria-hidden="true"
+                        />
                       </motion.a>
                     )}
                   </div>
@@ -401,7 +400,7 @@ export default function Projects() {
             whileHover={{ scale: 1.05, y: -4 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => trackSocialClick("GitHub", "https://github.com/hirodevbr")}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 rounded-lg font-semibold text-white shadow-lg shadow-primary-500/50 hover:shadow-xl hover:shadow-primary-500/70 hover-lift transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black rounded-lg font-semibold shadow-lg shadow-white/10 hover:shadow-xl hover:shadow-white/15 hover-lift transition-all focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
             aria-label={`${t("projects_view_all")} no GitHub (abre em nova aba)`}
           >
             <Github className="w-5 h-5" aria-hidden="true" />

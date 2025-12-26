@@ -10,19 +10,19 @@ const floatingElements = [
     id: "f1",
     icon: "< />",
     className:
-      "hidden md:block absolute -left-2 top-24 text-xs text-primary-500/40",
+      "hidden md:block absolute -left-2 top-24 text-xs text-white/40",
   },
   {
     id: "f2",
     icon: "{}",
     className:
-      "hidden md:block absolute right-10 top-10 text-xs text-purple-400/40",
+      "hidden md:block absolute right-10 top-10 text-xs text-white/35",
   },
   {
     id: "f3",
     icon: "🐞",
     className:
-      "hidden md:block absolute left-10 bottom-10 text-2xl text-emerald-400/50",
+      "hidden md:block absolute left-10 bottom-10 text-2xl text-white/40",
   },
 ];
 
@@ -90,10 +90,10 @@ export default function BugHunter() {
   }, []);
 
   const getLogColor = (line: string) => {
-    if (line.startsWith("[scan]")) return "text-cyan-300";
-    if (line.startsWith("[warn]")) return "text-yellow-300";
-    if (line.startsWith("[report]")) return "text-purple-300";
-    if (line.startsWith("[fix]")) return "text-emerald-300";
+    if (line.startsWith("[scan]")) return "text-gray-200";
+    if (line.startsWith("[warn]")) return "text-gray-200";
+    if (line.startsWith("[report]")) return "text-gray-200";
+    if (line.startsWith("[fix]")) return "text-gray-200";
     return "text-gray-300";
   };
 
@@ -126,7 +126,7 @@ export default function BugHunter() {
           ease: "easeInOut",
         }}
       >
-        <div className="w-full h-full bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.15),_transparent_60%),radial-gradient(circle_at_bottom,_rgba(147,51,234,0.15),_transparent_60%)]" />
+        <div className="w-full h-full bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.07),_transparent_60%),radial-gradient(circle_at_bottom,_rgba(255,255,255,0.05),_transparent_60%)]" />
       </motion.div>
 
       {/* elementos flutuando em volta da seção */}
@@ -162,10 +162,10 @@ export default function BugHunter() {
           transition={{ duration: 0.5 }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary-400">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
               {t("bughunter_title")}
           </h2>
-          <div className="w-24 h-1 bg-primary-500 mx-auto rounded-full" />
+          <div className="w-24 h-1 bg-white/20 mx-auto rounded-full" />
           <p className="text-gray-400 mt-4 max-w-2xl mx-auto">
             {t("bughunter_subtitle")}
           </p>
@@ -179,7 +179,7 @@ export default function BugHunter() {
             transition={{ duration: 0.6 }}
             className="space-y-6"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-primary-500/10 border border-primary-500/40 text-primary-300 text-sm font-semibold">
+            <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-white/5 border border-white/10 text-gray-200 text-sm font-semibold">
               <span>🐛</span>
               <span>{t("bughunter_chip_label")}</span>
             </div>
@@ -211,7 +211,7 @@ export default function BugHunter() {
               <motion.div
                 whileHover={{ y: -4, scale: 1.04 }}
                 transition={{ type: "spring", stiffness: 200, damping: 18 }}
-                className="bg-gray-800/60 border border-primary-500/40 rounded-xl p-4"
+                className="bg-gray-800/60 border border-white/10 rounded-xl p-4"
               >
                 <p className="text-sm text-gray-400 mb-1">
                   Discord • Web
@@ -234,7 +234,7 @@ export default function BugHunter() {
             transition={{ duration: 0.6 }}
             className="relative"
           >
-            <div className="relative bg-gray-900/80 border border-gray-700 rounded-2xl overflow-hidden shadow-2xl shadow-primary-500/20">
+            <div className="relative bg-gray-900/80 border border-white/10 rounded-2xl overflow-hidden shadow-2xl shadow-white/5">
               {/* bordas com glitch */}
               <motion.div
                 aria-hidden="true"
@@ -259,9 +259,9 @@ export default function BugHunter() {
               {/* topo tipo header de janela */}
               <div className="relative z-10 flex items-center justify-between px-4 py-3 border-b border-gray-700 bg-gray-900/90">
                 <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-red-500/80" />
-                  <span className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                  <span className="w-3 h-3 rounded-full bg-green-500/80" />
+                  <span className="w-3 h-3 rounded-full bg-white/20" />
+                  <span className="w-3 h-3 rounded-full bg-white/20" />
+                  <span className="w-3 h-3 rounded-full bg-white/20" />
                 </div>
                 <span className="text-xs text-gray-400 font-mono">
                   bug-hunter.ts
@@ -294,7 +294,7 @@ export default function BugHunter() {
                   {/* camada colorida para efeito de glitch */}
                   <motion.span
                     aria-hidden="true"
-                    className="absolute inset-0 text-primary-400 blur-[1px]"
+                    className="absolute inset-0 text-white/50 blur-[1px]"
                     animate={
                       inView
                         ? {
@@ -317,7 +317,7 @@ export default function BugHunter() {
                 <p className="mt-6 text-sm md:text-base text-gray-400 font-mono">
                   $ npm run scan --target="{currentPlatformSlug},web"
                 </p>
-                <p className="mt-1 text-xs md:text-sm text-primary-300 font-mono">
+                <p className="mt-1 text-xs md:text-sm text-gray-200 font-mono">
                   ✔ {t("bughunter_status_found")}
                 </p>
 
@@ -328,9 +328,9 @@ export default function BugHunter() {
                     inView
                       ? {
                           boxShadow: [
-                            "0 0 0 rgba(59,130,246,0)",
-                            "0 0 24px rgba(59,130,246,0.25)",
-                            "0 0 0 rgba(59,130,246,0)",
+                            "0 0 0 rgba(255,255,255,0)",
+                            "0 0 24px rgba(255,255,255,0.10)",
+                            "0 0 0 rgba(255,255,255,0)",
                           ],
                         }
                       : {}
@@ -348,7 +348,7 @@ export default function BugHunter() {
                         key={`${line}-${index}`}
                         className="flex items-center gap-2"
                       >
-                        <span className="text-primary-500 select-none">
+                        <span className="text-white/40 select-none">
                           {index === 0 ? ">" : "•"}
                         </span>
                         <span className={`whitespace-pre-wrap ${getLogColor(line)}`}>
@@ -360,7 +360,7 @@ export default function BugHunter() {
                   })}
                   {visibleLogs.length === 0 && (
                     <div className="flex items-center gap-2">
-                      <span className="text-primary-500 select-none">{">"}</span>
+                      <span className="text-white/40 select-none">{">"}</span>
                       <span className="whitespace-pre-wrap opacity-60">
                         {t("bughunter_log_placeholder")}
                       </span>
@@ -372,7 +372,7 @@ export default function BugHunter() {
               {/* linha de scan descendo */}
               <motion.div
                 aria-hidden="true"
-                className="absolute left-0 right-0 h-10 bg-primary-500/20 mix-blend-screen"
+                className="absolute left-0 right-0 h-10 bg-white/10 mix-blend-screen"
                 style={{ top: 0 }}
                 animate={
                   inView
@@ -392,7 +392,7 @@ export default function BugHunter() {
               {/* inseto saindo do card */}
               <motion.div
                 aria-hidden="true"
-                className="absolute -right-4 bottom-4 md:right-4 md:-bottom-6 text-5xl drop-shadow-[0_0_20px_rgba(56,189,248,0.6)]"
+                className="absolute -right-4 bottom-4 md:right-4 md:-bottom-6 text-5xl drop-shadow-[0_0_20px_rgba(255,255,255,0.18)]"
                 animate={
                   inView
                     ? {

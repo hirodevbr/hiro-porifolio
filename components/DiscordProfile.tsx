@@ -797,8 +797,12 @@ export default function DiscordProfile() {
       if (indexB === -1) return -1;
       return indexA - indexB;
     });
-    
-    return calculatedBadges;
+    // Normalizar cores para tema dark monocromático (sem cores vivas)
+    return calculatedBadges.map((b) => ({
+      ...b,
+      color: "text-gray-200",
+      bgColor: "bg-white/10 border-white/10",
+    }));
   }, [
     discordData?.discord_user?.public_flags,
     discordData?.discord_user?.premium_type,
@@ -817,7 +821,7 @@ export default function DiscordProfile() {
         <div className="max-w-4xl mx-auto">
           <div className="bg-gray-800/50 backdrop-blur-sm p-8 rounded-xl border border-gray-700">
             <div className="flex items-center justify-center">
-              <Loader2 className="w-8 h-8 text-primary-400 animate-spin" aria-label="Carregando perfil do Discord" role="status" />
+              <Loader2 className="w-8 h-8 text-white/70 animate-spin" aria-label="Carregando perfil do Discord" role="status" />
             </div>
           </div>
         </div>
@@ -839,10 +843,8 @@ export default function DiscordProfile() {
             transition={{ duration: 0.5 }}
             className="text-center mb-8"
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              <span className="text-primary-400">{t("discord_title")}</span>
-            </h2>
-            <div className="w-24 h-1 bg-primary-500 mx-auto rounded-full" />
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">{t("discord_title")}</h2>
+            <div className="w-24 h-1 bg-white/20 mx-auto rounded-full" />
           </motion.div>
           <div className="bg-gray-800/50 backdrop-blur-sm p-8 rounded-xl border border-gray-700 text-center">
             <p className="text-gray-400">{error || "Perfil n�o dispon�vel"}</p>
@@ -945,10 +947,10 @@ export default function DiscordProfile() {
           transition={{ duration: 0.5 }}
           className="text-center mb-8"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary-400">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
               {t("discord_title")}
           </h2>
-          <div className="w-24 h-1 bg-primary-500 mx-auto rounded-full" />
+          <div className="w-24 h-1 bg-white/20 mx-auto rounded-full" />
           <p className="text-gray-400 mt-4">
             {t("discord_subtitle")}
           </p>
@@ -959,7 +961,7 @@ export default function DiscordProfile() {
           animate={inView ? { opacity: 1, y: 0 } : {}}
           whileHover={{ y: -6, scale: 1.01 }}
           transition={{ duration: 0.5, type: "spring", stiffness: 220, damping: 18 }}
-          className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 hover:border-primary-500/50 transition-all overflow-hidden"
+          className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-white/10 hover:border-white/20 transition-all overflow-hidden"
         >
           {/* Perfil do Discord */}
           <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-700 px-6 pt-6">
@@ -1047,7 +1049,7 @@ export default function DiscordProfile() {
                             alt={badge.name}
                             width={24}
                             height={24}
-                            className="object-contain cursor-pointer transition-transform focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-800 rounded"
+                            className="object-contain cursor-pointer transition-transform focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded"
                             loading="lazy"
                             unoptimized
                             tabIndex={0}
@@ -1057,7 +1059,7 @@ export default function DiscordProfile() {
                         ) : (
                           badge.icon && (
                             <div 
-                              className={`w-6 h-6 flex items-center justify-center ${badge.color} cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-800 rounded`}
+                              className={`w-6 h-6 flex items-center justify-center ${badge.color} cursor-pointer focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded`}
                               tabIndex={0}
                               role="img"
                               aria-label={badge.name}
@@ -1085,7 +1087,7 @@ export default function DiscordProfile() {
               initial={{ opacity: 0, x: -20 }}
               animate={inView ? { opacity: 1, x: 0 } : {}}
               transition={{ duration: 0.3 }}
-              className="mb-6 p-4 bg-gradient-to-r from-green-500/10 to-green-600/10 rounded-lg border border-green-500/20 mx-6"
+              className="mb-6 p-4 bg-white/5 rounded-lg border border-white/10 mx-6"
             >
               {/* Componente Spotify Timer */}
               {(() => {
@@ -1131,8 +1133,8 @@ export default function DiscordProfile() {
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-col gap-1 mb-2">
                           <div className="flex items-center gap-2">
-                          <Music className="w-4 h-4 text-green-400" aria-hidden="true" />
-                        <span className="text-xs text-green-400 font-semibold">
+                          <Music className="w-4 h-4 text-gray-200" aria-hidden="true" />
+                        <span className="text-xs text-gray-200 font-semibold">
                           {t("discord_listening_spotify")}
                         </span>
                           </div>
@@ -1148,7 +1150,7 @@ export default function DiscordProfile() {
                         <div className="mb-1">
                           <div className="w-full h-1 bg-gray-700/50 rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-green-500 transition-all duration-1000 ease-linear"
+                              className="h-full bg-white/40 transition-all duration-1000 ease-linear"
                               style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
                             />
                           </div>
@@ -1173,7 +1175,7 @@ export default function DiscordProfile() {
           {activities && activities.length > 0 ? (
             <div className="space-y-4 px-6 pb-6">
               <h4 className="text-lg font-semibold text-white flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-primary-400" aria-hidden="true" />
+                <Sparkles className="w-5 h-5 text-gray-200" aria-hidden="true" />
                 {t("discord_activities")}
               </h4>
               {activities
@@ -1284,7 +1286,7 @@ export default function DiscordProfile() {
                       }
                       return (
                         <div className="w-20 h-20 bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <div className="text-primary-400">
+                          <div className="text-gray-200">
                             {activityIcon}
                           </div>
                         </div>
@@ -1305,7 +1307,7 @@ export default function DiscordProfile() {
                       }
                       return (
                         <div className="w-20 h-20 bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <div className="text-primary-400">
+                          <div className="text-gray-200">
                             {activityIcon}
                           </div>
                         </div>

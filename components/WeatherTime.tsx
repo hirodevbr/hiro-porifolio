@@ -118,7 +118,7 @@ export default function WeatherTime() {
       transition={{ duration: 0.5 }}
       className="w-full"
     >
-      <div className="bg-gray-800/70 rounded-2xl p-6 backdrop-blur-sm border border-gray-700 hover:border-primary-500/50 hover:shadow-xl hover:shadow-primary-500/20 transition-all duration-300">
+      <div className="bg-gray-800/70 rounded-2xl p-6 backdrop-blur-sm border border-white/10 hover:border-white/20 hover:shadow-xl hover:shadow-white/10 transition-all duration-300">
         <div className="flex flex-col items-center justify-center space-y-4">
           {/* Localização */}
           <div className="flex items-center gap-2 text-gray-300">
@@ -137,7 +137,7 @@ export default function WeatherTime() {
                 initial={{ scale: 1.1 }}
                 animate={{ scale: 1 }}
                 transition={{ duration: 0.3 }}
-                className="text-5xl md:text-6xl font-bold text-primary-400"
+                className="text-5xl md:text-6xl font-bold text-white"
               >
                 {time}
               </motion.div>

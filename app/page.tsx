@@ -12,7 +12,7 @@ import SpotifyLyricsPopup from "@/components/SpotifyLyricsPopup";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gray-900">
+    <main className="min-h-screen bg-black">
       <SpotifyLyricsPopup />
       <Navbar />
       <div className="transition-all duration-500 ease-in-out">

@@ -216,10 +216,10 @@ function DiscordServers() {
           transition={{ duration: 0.5 }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary-400">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
             {t("discord_servers_title")}
           </h2>
-          <div className="w-24 h-1 bg-primary-500 mx-auto rounded-full" />
+          <div className="w-24 h-1 bg-white/20 mx-auto rounded-full" />
           <p className="text-gray-400 mt-4">
             {t("discord_servers_subtitle")}
           </p>
@@ -231,8 +231,8 @@ function DiscordServers() {
             onClick={() => setActiveTab("community")}
             className={`px-6 py-3 rounded-lg font-semibold transition-all ${
               activeTab === "community"
-                ? "bg-primary-500 text-white shadow-lg shadow-primary-500/50"
-                : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-300"
+                ? "bg-white/10 text-white shadow-lg shadow-white/10 border border-white/10"
+                : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-white/10"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -244,8 +244,8 @@ function DiscordServers() {
             onClick={() => setActiveTab("ecosystem")}
             className={`px-6 py-3 rounded-lg font-semibold transition-all ${
               activeTab === "ecosystem"
-                ? "bg-primary-500 text-white shadow-lg shadow-primary-500/50"
-                : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-300"
+                ? "bg-white/10 text-white shadow-lg shadow-white/10 border border-white/10"
+                : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-white/10"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -257,8 +257,8 @@ function DiscordServers() {
             onClick={() => setActiveTab("friends")}
             className={`px-6 py-3 rounded-lg font-semibold transition-all ${
               activeTab === "friends"
-                ? "bg-primary-500 text-white shadow-lg shadow-primary-500/50"
-                : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-300"
+                ? "bg-white/10 text-white shadow-lg shadow-white/10 border border-white/10"
+                : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-white/10"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -270,8 +270,8 @@ function DiscordServers() {
             onClick={() => setActiveTab("previous")}
             className={`px-6 py-3 rounded-lg font-semibold transition-all ${
               activeTab === "previous"
-                ? "bg-primary-500 text-white shadow-lg shadow-primary-500/50"
-                : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-300"
+                ? "bg-white/10 text-white shadow-lg shadow-white/10 border border-white/10"
+                : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-white/10"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -292,8 +292,8 @@ function DiscordServers() {
             <div className="bg-gray-900/80 backdrop-blur-sm p-12 rounded-2xl border border-gray-700/50 shadow-2xl relative overflow-hidden">
               {/* Background decoration */}
               <div className="absolute inset-0 bg-gray-900/40" />
-              <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full blur-3xl" />
-              <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/6 rounded-full blur-3xl" />
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/4 rounded-full blur-3xl" />
               
               <div className="relative z-10 text-center">
                 <motion.div
@@ -309,10 +309,10 @@ function DiscordServers() {
                   }}
                   className="inline-block mb-6"
                 >
-                  <Wrench className="w-20 h-20 text-primary-400 mx-auto" />
+                  <Wrench className="w-20 h-20 text-gray-200 mx-auto" />
                 </motion.div>
                 
-                <h3 className="text-3xl font-bold mb-4 text-primary-400">{t("discord_servers_previous_construction")}</h3>
+                <h3 className="text-3xl font-bold mb-4 text-white">{t("discord_servers_previous_construction")}</h3>
                 
                 <p className="text-gray-300 text-lg leading-relaxed">
                   {t("discord_servers_previous_construction_desc")}
@@ -323,7 +323,7 @@ function DiscordServers() {
                   {[0, 1, 2].map((i) => (
                     <motion.div
                       key={i}
-                      className="w-3 h-3 rounded-full bg-primary-500"
+                      className="w-3 h-3 rounded-full bg-white/30"
                       animate={{
                         scale: [1, 1.5, 1],
                         opacity: [0.5, 1, 0.5],
@@ -358,7 +358,7 @@ function DiscordServers() {
                   exit={{ opacity: 0, x: -24, scale: 0.98 }}
                   transition={{ duration: 0.45, type: "spring", stiffness: 120, damping: 18 }}
                   whileHover={{ y: -8 }}
-                  className="bg-gray-800/50 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-gray-700 hover:border-primary-500/50 hover:shadow-2xl hover:shadow-primary-500/20 transition-all group relative block"
+                  className="bg-gray-800/50 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-white/10 hover:border-white/20 hover:shadow-2xl hover:shadow-white/10 transition-all group relative block"
                 >
                   {/* Verified Badge */}
                   {activeServer.verified && (
@@ -386,7 +386,7 @@ function DiscordServers() {
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-2xl font-semibold text-white group-hover:text-primary-400 transition-colors truncate">
+                      <h3 className="text-2xl font-semibold text-white group-hover:text-gray-200 transition-colors truncate">
                         {activeServer.name}
                       </h3>
                       <p className="text-sm text-gray-500 mt-1">
@@ -407,7 +407,7 @@ function DiscordServers() {
                   </p>
 
                   {/* Link */}
-                  <div className="flex items-center gap-2 text-primary-400 group-hover:text-primary-300 transition-colors">
+                  <div className="flex items-center gap-2 text-gray-200 group-hover:text-white transition-colors">
                     <span className="text-sm font-medium">{t("discord_servers_join")}</span>
                     <ExternalLink className="w-4 h-4" />
                   </div>
@@ -423,7 +423,7 @@ function DiscordServers() {
                     key={`dot-${activeTab}-${i}`}
                     onClick={() => setCurrentIndex(i)}
                     className={`h-2.5 rounded-full transition-all ${
-                      i === currentIndex ? "w-8 bg-primary-500" : "w-2.5 bg-gray-700 hover:bg-gray-600"
+                      i === currentIndex ? "w-8 bg-white/40" : "w-2.5 bg-white/10 hover:bg-white/20"
                     }`}
                     aria-label={`Ir para servidor ${i + 1}`}
                   />

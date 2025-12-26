@@ -79,7 +79,7 @@ export default function Navbar() {
       animate={{ y: 0 }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? "bg-gray-900/80 backdrop-blur-md shadow-lg"
+          ? "bg-black/60 backdrop-blur-xl border-b border-white/10 shadow-lg"
           : "bg-transparent"
       }`}
     >
@@ -88,7 +88,7 @@ export default function Navbar() {
           <motion.a
             href="#home"
             onClick={(e) => handleSmoothScroll(e, "#home")}
-            className="text-2xl font-bold text-primary-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900 rounded"
+            className="text-2xl font-bold text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             aria-label="Ir para o início"
@@ -103,13 +103,13 @@ export default function Navbar() {
                 key={item.key}
                 href={item.href}
                 onClick={(e) => handleSmoothScroll(e, item.href)}
-                className="text-gray-300 hover:text-primary-400 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900 rounded px-2 py-1 relative group"
+                className="text-gray-300 hover:text-white transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded px-2 py-1 relative group"
                 whileHover={{ y: -2 }}
                 whileTap={{ y: 0 }}
                 aria-label={`Navegar para ${t(item.key)}`}
               >
                 {t(item.key)}
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-400 transition-all duration-300 group-hover:w-full"></span>
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-full"></span>
               </motion.a>
             ))}
             {/* Language Selector */}
@@ -121,7 +121,7 @@ export default function Navbar() {
                     setIsLanguageMenuOpen(false);
                   }
                 }}
-                className="flex items-center gap-2 text-gray-300 hover:text-primary-400 transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900 rounded px-2 py-1 hover-lift"
+                className="flex items-center gap-2 text-gray-300 hover:text-white transition-all focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded px-2 py-1 hover-lift"
                 whileHover={{ scale: 1.1, rotate: 5 }}
                 whileTap={{ scale: 0.95 }}
                 aria-label="Selecionar idioma"
@@ -137,7 +137,7 @@ export default function Navbar() {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="absolute right-0 mt-2 w-32 bg-gray-800 rounded-lg shadow-lg border border-gray-700 overflow-hidden z-50"
+                    className="absolute right-0 mt-2 w-32 bg-black/70 backdrop-blur-xl rounded-lg shadow-lg border border-white/10 overflow-hidden z-50"
                     role="menu"
                     aria-label="Menu de seleção de idioma"
                   >
@@ -153,10 +153,10 @@ export default function Navbar() {
                           setIsLanguageMenuOpen(false);
                         }
                       }}
-                      className={`w-full px-4 py-2 text-left text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-inset ${
+                      className={`w-full px-4 py-2 text-left text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-inset ${
                         language === "pt_BR"
-                          ? "bg-primary-500/20 text-primary-400"
-                          : "text-gray-300 hover:bg-gray-700"
+                          ? "bg-white/10 text-white"
+                          : "text-gray-300 hover:bg-white/10"
                       }`}
                       role="menuitem"
                       aria-label="Selecionar Português (BR)"
@@ -175,10 +175,10 @@ export default function Navbar() {
                           setIsLanguageMenuOpen(false);
                         }
                       }}
-                      className={`w-full px-4 py-2 text-left text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-inset ${
+                      className={`w-full px-4 py-2 text-left text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-inset ${
                         language === "en_US"
-                          ? "bg-primary-500/20 text-primary-400"
-                          : "text-gray-300 hover:bg-gray-700"
+                          ? "bg-white/10 text-white"
+                          : "text-gray-300 hover:bg-white/10"
                       }`}
                       role="menuitem"
                       aria-label="Selecionar English (US)"
@@ -197,10 +197,10 @@ export default function Navbar() {
                 whileHover={{ scale: 1.15, rotate: 5, y: -2 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => trackSocialClick("GitHub", "https://github.com/hirodevbr")}
-                className="focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900 rounded hover-lift"
+                className="focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded hover-lift"
                 aria-label="Visitar perfil no GitHub (abre em nova aba)"
               >
-                <Github className="w-5 h-5 text-gray-300 hover:text-primary-400 transition-all" />
+                <Github className="w-5 h-5 text-gray-300 hover:text-white transition-all" />
               </motion.a>
               <motion.a
                 href="https://instagram.com/sxmu.slv"
@@ -209,10 +209,10 @@ export default function Navbar() {
                 whileHover={{ scale: 1.15, rotate: -5, y: -2 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => trackSocialClick("Instagram", "https://instagram.com/sxmu.slv")}
-                className="focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900 rounded hover-lift"
+                className="focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded hover-lift"
                 aria-label="Visitar perfil no Instagram (abre em nova aba)"
               >
-                <Instagram className="w-5 h-5 text-gray-300 hover:text-primary-400 transition-all" />
+                <Instagram className="w-5 h-5 text-gray-300 hover:text-white transition-all" />
               </motion.a>
               <motion.a
                 href="https://twitter.com/virtualhiro"
@@ -221,17 +221,17 @@ export default function Navbar() {
                 whileHover={{ scale: 1.15, rotate: 5, y: -2 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => trackSocialClick("Twitter", "https://twitter.com/virtualhiro")}
-                className="focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900 rounded hover-lift"
+                className="focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded hover-lift"
                 aria-label="Visitar perfil no Twitter (abre em nova aba)"
               >
-                <Twitter className="w-5 h-5 text-gray-300 hover:text-primary-400 transition-all" />
+                <Twitter className="w-5 h-5 text-gray-300 hover:text-white transition-all" />
               </motion.a>
             </div>
           </div>
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden text-gray-300"
+            className="md:hidden text-gray-300 hover:text-white transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label={isMobileMenuOpen ? "Fechar menu" : "Abrir menu"}
             aria-expanded={isMobileMenuOpen}
@@ -250,7 +250,7 @@ export default function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-gray-900/95 backdrop-blur-md"
+            className="md:hidden bg-black/70 backdrop-blur-xl border-t border-white/10"
             role="menu"
             aria-label="Menu de navegação mobile"
           >
@@ -279,7 +279,7 @@ export default function Navbar() {
                       }
                     }
                   }}
-                  className="block px-3 py-2 text-gray-300 hover:text-primary-400 hover:bg-gray-800 rounded-md transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-inset"
+                  className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-md transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-white focus:ring-inset"
                   role="menuitem"
                   aria-label={`Navegar para ${t(item.key)}`}
                 >
@@ -297,9 +297,9 @@ export default function Navbar() {
                       setLanguage("pt_BR");
                     }
                   }}
-                  className={`text-sm px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-inset ${
+                  className={`text-sm px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-white focus:ring-inset ${
                     language === "pt_BR"
-                      ? "bg-primary-500/20 text-primary-400"
+                      ? "bg-white/10 text-white"
                       : "text-gray-400 hover:text-gray-300"
                   }`}
                   aria-label="Selecionar Português (BR)"
@@ -315,9 +315,9 @@ export default function Navbar() {
                       setLanguage("en_US");
                     }
                   }}
-                  className={`text-sm px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-inset ${
+                  className={`text-sm px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-white focus:ring-inset ${
                     language === "en_US"
-                      ? "bg-primary-500/20 text-primary-400"
+                      ? "bg-white/10 text-white"
                       : "text-gray-400 hover:text-gray-300"
                   }`}
                   aria-label="Selecionar English (US)"
@@ -331,30 +331,30 @@ export default function Navbar() {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => trackSocialClick("GitHub", "https://github.com/hirodevbr")}
-                  className="focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900 rounded"
+                  className="focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded"
                   aria-label="Visitar perfil no GitHub (abre em nova aba)"
                 >
-                  <Github className="w-5 h-5 text-gray-300 hover:text-primary-400" />
+                  <Github className="w-5 h-5 text-gray-300 hover:text-white" />
                 </a>
                 <a
                   href="https://instagram.com/sxmu.slv"
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => trackSocialClick("Instagram", "https://instagram.com/sxmu.slv")}
-                  className="focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900 rounded"
+                  className="focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded"
                   aria-label="Visitar perfil no Instagram (abre em nova aba)"
                 >
-                  <Instagram className="w-5 h-5 text-gray-300 hover:text-primary-400" />
+                  <Instagram className="w-5 h-5 text-gray-300 hover:text-white" />
                 </a>
                 <a
                   href="https://twitter.com/virtualhiro"
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => trackSocialClick("Twitter", "https://twitter.com/virtualhiro")}
-                  className="focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900 rounded"
+                  className="focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded"
                   aria-label="Visitar perfil no Twitter (abre em nova aba)"
                 >
-                  <Twitter className="w-5 h-5 text-gray-300 hover:text-primary-400" />
+                  <Twitter className="w-5 h-5 text-gray-300 hover:text-white" />
                 </a>
               </div>
             </div>

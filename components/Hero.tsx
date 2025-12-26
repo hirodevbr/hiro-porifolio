@@ -107,7 +107,7 @@ export default function Hero() {
       <div className="absolute inset-0 overflow-hidden">
         {/* Círculo principal azul - movimento flutuante com parallax */}
         <motion.div
-          className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-500/20 rounded-full blur-3xl parallax-container"
+          className="absolute top-1/4 left-1/4 w-96 h-96 bg-white/6 rounded-full blur-3xl parallax-container"
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{
             opacity: [0.3, 0.5, 0.3],
@@ -125,7 +125,7 @@ export default function Hero() {
         
         {/* Círculo roxo - movimento flutuante com parallax */}
         <motion.div
-          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl parallax-container"
+          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl parallax-container"
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{
             opacity: [0.3, 0.5, 0.3],
@@ -143,7 +143,7 @@ export default function Hero() {
         
         {/* Círculo secundário azul - movimento mais lento com parallax */}
         <motion.div
-          className="absolute top-1/2 right-1/3 w-72 h-72 bg-primary-400/15 rounded-full blur-3xl parallax-container"
+          className="absolute top-1/2 right-1/3 w-72 h-72 bg-white/4 rounded-full blur-3xl parallax-container"
           initial={{ opacity: 0, scale: 0 }}
           animate={{
             opacity: [0.2, 0.4, 0.2],
@@ -166,7 +166,7 @@ export default function Hero() {
         
         {/* Círculo secundário roxo - movimento mais lento com parallax */}
         <motion.div
-          className="absolute bottom-1/3 left-1/3 w-80 h-80 bg-purple-400/15 rounded-full blur-3xl parallax-container"
+          className="absolute bottom-1/3 left-1/3 w-80 h-80 bg-white/4 rounded-full blur-3xl parallax-container"
           initial={{ opacity: 0, scale: 0 }}
           animate={{
             opacity: [0.2, 0.35, 0.2],
@@ -189,7 +189,7 @@ export default function Hero() {
         
         {/* Círculo pequeno decorativo */}
         <motion.div
-          className="absolute top-1/3 right-1/4 w-48 h-48 bg-cyan-500/10 rounded-full blur-2xl"
+          className="absolute top-1/3 right-1/4 w-48 h-48 bg-white/3 rounded-full blur-2xl"
           initial={{ opacity: 0 }}
           animate={{
             opacity: [0.1, 0.3, 0.1],
@@ -216,7 +216,7 @@ export default function Hero() {
             <motion.div
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 300 }}
-              className="w-36 h-36 md:w-44 md:h-44 rounded-full bg-primary-500/15 border-4 border-primary-500/50 flex items-center justify-center shadow-2xl shadow-primary-500/30 backdrop-blur-sm"
+              className="w-36 h-36 md:w-44 md:h-44 rounded-full bg-white/5 border-4 border-white/15 flex items-center justify-center shadow-2xl shadow-white/10 backdrop-blur-sm"
             >
               {/* Foto de perfil em: public/profile/profile.avif */}
               <Image
@@ -242,9 +242,9 @@ export default function Hero() {
               animate={{ rotate: [0, 10, -10, 0] }}
               transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
             >
-              <Sparkles className="w-12 h-12 text-primary-400 mb-4" aria-hidden="true" />
+              <Sparkles className="w-12 h-12 text-gray-200 mb-4" aria-hidden="true" />
             </motion.div>
-            <h2 className="text-primary-400 font-semibold text-lg mb-2">
+            <h2 className="text-gray-200 font-semibold text-lg mb-2">
               {t("hero_greeting")}
             </h2>
           </motion.div>
@@ -253,7 +253,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-5xl md:text-7xl font-bold mb-6 text-primary-400"
+            className="text-5xl md:text-7xl font-bold mb-6 text-white"
           >
               {t("hero_name")}
           </motion.h1>
@@ -264,7 +264,7 @@ export default function Hero() {
             transition={{ duration: 0.5, delay: 0.4 }}
             className="flex items-center justify-center gap-2 mb-4"
           >
-            <Code className="w-6 h-6 text-primary-400" aria-hidden="true" />
+            <Code className="w-6 h-6 text-gray-200" aria-hidden="true" />
             <h2 className="text-2xl md:text-4xl font-semibold text-gray-300">
               {t("hero_role")}
             </h2>
@@ -294,7 +294,7 @@ export default function Hero() {
                   handleSmoothScroll(e as any, "#projects");
                 }
               }}
-              className="px-8 py-4 bg-primary-600 rounded-lg font-semibold text-white shadow-lg shadow-primary-500/50 hover:shadow-xl hover:shadow-primary-500/70 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900 hover-lift"
+              className="px-8 py-4 bg-white text-black rounded-lg font-semibold shadow-lg shadow-white/10 hover:shadow-xl hover:shadow-white/15 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black hover-lift"
               whileHover={{ scale: 1.05, y: -4 }}
               whileTap={{ scale: 0.95 }}
               aria-label={`Navegar para ${t("hero_projects")}`}
@@ -310,7 +310,7 @@ export default function Hero() {
                   handleSmoothScroll(e as any, "#contact");
                 }
               }}
-              className="px-8 py-4 border-2 border-primary-500 rounded-lg font-semibold text-primary-400 hover:bg-primary-500/20 hover:border-primary-400 hover:text-white transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900 hover-lift"
+              className="px-8 py-4 border-2 border-white/25 rounded-lg font-semibold text-white hover:bg-white/10 hover:border-white/40 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black hover-lift"
               whileHover={{ scale: 1.05, y: -4 }}
               whileTap={{ scale: 0.95 }}
               aria-label={`Navegar para ${t("hero_contact")}`}
@@ -336,10 +336,10 @@ export default function Hero() {
               }}
               animate={{ y: [0, 10, 0] }}
               transition={{ duration: 2, repeat: Infinity }}
-              className="inline-block cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900 rounded-full"
+              className="inline-block cursor-pointer focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded-full"
               aria-label={`Navegar para ${t("about_title")}`}
             >
-              <ArrowDown className="w-8 h-8 text-gray-400 hover:text-primary-400 transition-colors cursor-pointer" aria-hidden="true" />
+              <ArrowDown className="w-8 h-8 text-gray-400 hover:text-white transition-colors cursor-pointer" aria-hidden="true" />
             </motion.a>
           </motion.div>
         </div>

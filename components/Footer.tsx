@@ -19,7 +19,7 @@ export default function Footer() {
             viewport={{ once: true }}
             className="text-gray-400 text-sm flex items-center gap-2"
           >
-            {t("footer_made_by")} <Heart className="w-4 h-4 text-red-500 fill-red-500" aria-hidden="true" />{" "}
+            {t("footer_made_by")} <Heart className="w-4 h-4 text-gray-300 fill-gray-300" aria-hidden="true" />{" "}
             {t("footer_by")}
           </motion.p>
           <motion.p
@@ -38,10 +38,10 @@ export default function Footer() {
               whileHover={{ scale: 1.1, y: -2 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => trackSocialClick("GitHub", "https://github.com/hirodevbr")}
-              className="focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900 rounded"
+              className="focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded"
               aria-label="Visitar perfil no GitHub (abre em nova aba)"
             >
-              <Github className="w-5 h-5 text-gray-400 hover:text-primary-400 transition-colors" aria-hidden="true" />
+              <Github className="w-5 h-5 text-gray-400 hover:text-white transition-colors" aria-hidden="true" />
             </motion.a>
             <motion.a
               href="https://instagram.com/sxmu.slv"
@@ -50,10 +50,10 @@ export default function Footer() {
               whileHover={{ scale: 1.1, y: -2 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => trackSocialClick("Instagram", "https://instagram.com/sxmu.slv")}
-              className="focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900 rounded"
+              className="focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded"
               aria-label="Visitar perfil no Instagram (abre em nova aba)"
             >
-              <Instagram className="w-5 h-5 text-gray-400 hover:text-pink-500 transition-colors" aria-hidden="true" />
+              <Instagram className="w-5 h-5 text-gray-400 hover:text-white transition-colors" aria-hidden="true" />
             </motion.a>
             <motion.a
               href="https://twitter.com/virtualhiro"
@@ -62,10 +62,10 @@ export default function Footer() {
               whileHover={{ scale: 1.1, y: -2 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => trackSocialClick("Twitter", "https://twitter.com/virtualhiro")}
-              className="focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900 rounded"
+              className="focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded"
               aria-label="Visitar perfil no Twitter (abre em nova aba)"
             >
-              <Twitter className="w-5 h-5 text-gray-400 hover:text-blue-400 transition-colors" aria-hidden="true" />
+              <Twitter className="w-5 h-5 text-gray-400 hover:text-white transition-colors" aria-hidden="true" />
             </motion.a>
           </div>
         </div>

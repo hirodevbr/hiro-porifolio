@@ -485,7 +485,7 @@ export default function SpotifyLyricsPopup() {
                   <p className="truncate text-xs text-white/60">{subtitle}</p>
                   <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
                     <div
-                      className="h-full rounded-full bg-green-500"
+                      className="h-full rounded-full bg-white/40"
                       style={{
                         width: `${clamp((currentTime / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
                       }}
@@ -569,7 +569,7 @@ export default function SpotifyLyricsPopup() {
 
                 {loadingLyrics && (
                   <p className="flex items-center gap-2 text-sm text-white/70">
-                    <Loader2 className="h-4 w-4 animate-spin text-primary-400" aria-hidden="true" />
+                    <Loader2 className="h-4 w-4 animate-spin text-white/70" aria-hidden="true" />
                     <span>{loadingLabel}</span>
                   </p>
                 )}
@@ -603,7 +603,7 @@ export default function SpotifyLyricsPopup() {
                       </div>
                       <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
                         <div
-                          className="h-full rounded-full bg-green-500"
+                          className="h-full rounded-full bg-white/40"
                           style={{
                             width: `${clamp((currentTime / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
                           }}
@@ -722,7 +722,7 @@ export default function SpotifyLyricsPopup() {
                           </div>
                           <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
                             <div
-                              className="h-full rounded-full bg-green-500"
+                              className="h-full rounded-full bg-white/40"
                               style={{
                                 width: `${clamp((currentTime / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
                               }}
@@ -775,7 +775,7 @@ export default function SpotifyLyricsPopup() {
                                       transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.7 }}
                                       className={[
                                         "relative block w-full overflow-hidden rounded-lg px-2 py-1.5 text-left",
-                                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/40",
+                                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20",
                                         active ? "text-white" : "text-white/55 hover:text-white/80",
                                       ].join(" ")}
                                       aria-current={active ? "true" : "false"}
@@ -876,7 +876,7 @@ export default function SpotifyLyricsPopup() {
                                       transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.7 }}
                                       className={[
                                         "relative block w-full overflow-hidden rounded-lg px-2 py-1.5 text-left",
-                                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/40",
+                                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20",
                                         active ? "text-white" : "text-white/55 hover:text-white/80",
                                       ].join(" ")}
                                       aria-current={active ? "true" : "false"}
@@ -959,7 +959,7 @@ export default function SpotifyLyricsPopup() {
                   </div>
                   <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
                     <div
-                      className="h-full rounded-full bg-green-500"
+                      className="h-full rounded-full bg-white/40"
                       style={{
                         width: `${clamp((currentTime / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
                       }}

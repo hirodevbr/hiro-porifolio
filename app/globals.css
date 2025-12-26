@@ -8,27 +8,15 @@ html {
 }
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+  /* Tema único: dark (preto/cinza/branco) */
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 0, 0, 0;
+  --background-end-rgb: 0, 0, 0;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  background: rgb(var(--background-start-rgb));
 }
 
 @layer utilities {
@@ -47,17 +35,17 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #0ea5e9;
+  background: #525252;
   border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #0284c7;
+  background: #737373;
 }
 
 /* Melhorias de acessibilidade - Contraste */
 :focus-visible {
-  outline: 2px solid #0ea5e9;
+  outline: 2px solid #ffffff;
   outline-offset: 2px;
 }
 
@@ -70,9 +58,9 @@ body {
   color: #6b7280; /* Contraste melhorado */
 }
 
-/* Melhorar contraste em estados hover */
+/* Melhorar contraste em estados hover (remover acento azul) */
 .hover\:text-primary-400:hover {
-  color: #38bdf8; /* Contraste melhorado */
+  color: #ffffff;
 }
 
 /* Garantir contraste mínimo em backgrounds escuros */
@@ -82,14 +70,14 @@ body {
 
 /* Melhorar visibilidade de links */
 a:focus-visible {
-  outline: 2px solid #0ea5e9;
+  outline: 2px solid #ffffff;
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 /* Melhorar visibilidade de botões */
 button:focus-visible {
-  outline: 2px solid #0ea5e9;
+  outline: 2px solid #ffffff;
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -97,7 +85,7 @@ button:focus-visible {
 /* Melhorar contraste em inputs */
 input:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid #0ea5e9;
+  outline: 2px solid #ffffff;
   outline-offset: 2px;
 }
 
@@ -120,7 +108,7 @@ a, button {
 
 .hover-lift:hover {
   transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(14, 165, 233, 0.2);
+  box-shadow: 0 10px 25px rgba(255, 255, 255, 0.08);
 }
 
 .hover-glow {
@@ -128,7 +116,7 @@ a, button {
 }
 
 .hover-glow:hover {
-  box-shadow: 0 0 20px rgba(14, 165, 233, 0.4);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.12);
 }
 
 /* Transições de página suaves */
@@ -166,7 +154,7 @@ section {
 
 .card-hover:hover {
   transform: translateY(-8px) scale(1.02);
-  box-shadow: 0 20px 40px rgba(14, 165, 233, 0.15);
+  box-shadow: 0 20px 40px rgba(255, 255, 255, 0.06);
 }
 
 /* Efeito de brilho em hover */
@@ -182,7 +170,7 @@ section {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
   transition: left 0.5s;
 }
 

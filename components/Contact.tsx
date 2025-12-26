@@ -145,13 +145,13 @@ export default function Contact() {
       name: "Instagram",
       icon: Instagram,
       href: "https://instagram.com/sxmu.slv",
-      color: "hover:text-pink-500",
+      color: "hover:text-white",
     },
     {
       name: "Twitter",
       icon: Twitter,
       href: "https://twitter.com/virtualhiro",
-      color: "hover:text-blue-400",
+      color: "hover:text-white",
     },
   ];
 
@@ -168,10 +168,10 @@ export default function Contact() {
           transition={{ duration: 0.5 }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary-400">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
             {t("contact_title")}
           </h2>
-          <div className="w-24 h-1 bg-primary-500 mx-auto rounded-full" />
+          <div className="w-24 h-1 bg-white/20 mx-auto rounded-full" />
           <p className="text-gray-400 mt-4 max-w-2xl mx-auto">
             {t("contact_subtitle")}
           </p>
@@ -197,15 +197,15 @@ export default function Contact() {
               <motion.a
                 href="mailto:hiro.communitydev@gmail.com"
                 whileHover={{ x: 5, y: -4 }}
-                className="flex items-center gap-4 p-4 bg-gray-800/50 backdrop-blur-sm rounded-lg border border-gray-700 hover:border-primary-500/50 hover:shadow-lg hover:shadow-primary-500/20 card-hover transition-all group focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                className="flex items-center gap-4 p-4 bg-gray-800/50 backdrop-blur-sm rounded-lg border border-white/10 hover:border-white/20 hover:shadow-lg hover:shadow-white/10 card-hover transition-all group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
                 aria-label={`Enviar email para hiro.communitydev@gmail.com`}
               >
-                <div className="w-12 h-12 bg-primary-600 rounded-lg flex items-center justify-center">
+                <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center">
                   <Mail className="w-6 h-6 text-white" aria-hidden="true" />
                 </div>
                 <div>
                   <p className="text-gray-400 text-sm">{t("contact_email")}</p>
-                  <p className="text-white group-hover:text-primary-400 transition-colors">
+                  <p className="text-white group-hover:text-white transition-colors">
                     hiro.communitydev@gmail.com
                   </p>  
                 </div>
@@ -228,7 +228,7 @@ export default function Contact() {
                       whileHover={{ scale: 1.15, y: -5, rotate: 5 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={() => trackSocialClick(social.name, social.href)}
-                      className={`w-12 h-12 bg-gray-800/50 backdrop-blur-sm rounded-lg border border-gray-700 flex items-center justify-center text-gray-400 ${social.color} hover:shadow-lg hover:shadow-primary-500/30 hover-lift transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900`}
+                      className={`w-12 h-12 bg-gray-800/50 backdrop-blur-sm rounded-lg border border-white/10 flex items-center justify-center text-gray-400 ${social.color} hover:shadow-lg hover:shadow-white/10 hover-lift transition-all focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black`}
                       aria-label={`Visitar perfil no ${social.name} (abre em nova aba)`}
                     >
                       <Icon className="w-6 h-6" aria-hidden="true" />
@@ -260,8 +260,8 @@ export default function Contact() {
                 onChange={handleChange("name")}
                 className={`w-full px-4 py-3 bg-gray-800/50 backdrop-blur-sm border rounded-lg text-white placeholder-gray-500 focus:outline-none transition-colors ${
                   errors.name
-                    ? "border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/50"
-                    : "border-gray-700 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/50"
+                    ? "border-white/25 focus:border-white/40 focus:ring-2 focus:ring-white/20"
+                    : "border-white/10 focus:border-white/25 focus:ring-2 focus:ring-white/10"
                 }`}
                 placeholder={t("contact_name")}
                 disabled={isSubmitting}
@@ -271,7 +271,7 @@ export default function Contact() {
                 <motion.p
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-1 text-sm text-red-400 flex items-center gap-1"
+                  className="mt-1 text-sm text-gray-300 flex items-center gap-1"
                 >
                   <XCircle className="w-4 h-4" />
                   {errors.name}
@@ -292,8 +292,8 @@ export default function Contact() {
                 onChange={handleChange("email")}
                 className={`w-full px-4 py-3 bg-gray-800/50 backdrop-blur-sm border rounded-lg text-white placeholder-gray-500 focus:outline-none transition-colors ${
                   errors.email
-                    ? "border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/50"
-                    : "border-gray-700 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/50"
+                    ? "border-white/25 focus:border-white/40 focus:ring-2 focus:ring-white/20"
+                    : "border-white/10 focus:border-white/25 focus:ring-2 focus:ring-white/10"
                 }`}
                 placeholder={t("contact_email")}
                 disabled={isSubmitting}
@@ -303,7 +303,7 @@ export default function Contact() {
                 <motion.p
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-1 text-sm text-red-400 flex items-center gap-1"
+                  className="mt-1 text-sm text-gray-300 flex items-center gap-1"
                 >
                   <XCircle className="w-4 h-4" />
                   {errors.email}
@@ -324,8 +324,8 @@ export default function Contact() {
                 rows={6}
                 className={`w-full px-4 py-3 bg-gray-800/50 backdrop-blur-sm border rounded-lg text-white placeholder-gray-500 focus:outline-none transition-colors resize-none ${
                   errors.message
-                    ? "border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/50"
-                    : "border-gray-700 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/50"
+                    ? "border-white/25 focus:border-white/40 focus:ring-2 focus:ring-white/20"
+                    : "border-white/10 focus:border-white/25 focus:ring-2 focus:ring-white/10"
                 }`}
                 placeholder={t("contact_message")}
                 disabled={isSubmitting}
@@ -335,7 +335,7 @@ export default function Contact() {
                 <motion.p
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-1 text-sm text-red-400 flex items-center gap-1"
+                  className="mt-1 text-sm text-gray-300 flex items-center gap-1"
                 >
                   <XCircle className="w-4 h-4" />
                   {errors.message}
@@ -348,24 +348,14 @@ export default function Contact() {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`p-4 rounded-lg flex items-center gap-3 ${
-                  submitStatus === "success"
-                    ? "bg-green-500/20 border border-green-500/50"
-                    : "bg-red-500/20 border border-red-500/50"
-                }`}
+                className="p-4 rounded-lg flex items-center gap-3 bg-white/5 border border-white/10"
               >
                 {submitStatus === "success" ? (
-                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <CheckCircle className="w-5 h-5 text-gray-200" />
                 ) : (
-                  <XCircle className="w-5 h-5 text-red-400" />
+                  <XCircle className="w-5 h-5 text-gray-200" />
                 )}
-                <p
-                  className={
-                    submitStatus === "success"
-                      ? "text-green-400"
-                      : "text-red-400"
-                  }
-                >
+                <p className="text-gray-200">
                   {submitMessage}
                 </p>
               </motion.div>
@@ -375,7 +365,7 @@ export default function Contact() {
               whileHover={!isSubmitting ? { scale: 1.05, y: -4 } : {}}
               whileTap={!isSubmitting ? { scale: 0.95 } : {}}
               disabled={isSubmitting}
-              className={`w-full px-6 py-3 bg-primary-600 rounded-lg font-semibold text-white shadow-lg shadow-primary-500/50 hover:shadow-xl hover:shadow-primary-500/70 hover-lift transition-all flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900 ${
+              className={`w-full px-6 py-3 bg-white text-black rounded-lg font-semibold shadow-lg shadow-white/10 hover:shadow-xl hover:shadow-white/15 hover-lift transition-all flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black ${
                 isSubmitting
                   ? "opacity-70 cursor-not-allowed"
                   : "cursor-pointer"
