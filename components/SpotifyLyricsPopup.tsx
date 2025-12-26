@@ -20,8 +20,30 @@ function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
-// Ajuste fino de sincronização wave/lyrics. Valor positivo adianta a letra em relação ao áudio.
-const WAVE_OFFSET_MS = -150; // iOS: mais atraso para compensar adiantamento percebido
+// Detectar navegador para ajustar offset dinamicamente
+function getBrowserOffset(): number {
+  if (typeof window === "undefined") return -100;
+  
+  const ua = navigator.userAgent.toLowerCase();
+  // iOS Safari: mais atraso para compensar adiantamento percebido
+  if (/iphone|ipad|ipod/.test(ua) && /safari/.test(ua) && !/chrome|crios|fxios/.test(ua)) {
+    return -150;
+  }
+  // Chrome/Edge: offset menor
+  if (/chrome|edg/.test(ua)) {
+    return -100;
+  }
+  // Firefox: offset médio
+  if (/firefox/.test(ua)) {
+    return -120;
+  }
+  // Safari desktop: offset médio-alto
+  if (/safari/.test(ua) && !/chrome|edg|firefox/.test(ua)) {
+    return -130;
+  }
+  // Padrão conservador
+  return -100;
+}
 
 function formatTime(seconds: number) {
   const s = Math.max(0, Math.floor(seconds));
@@ -181,9 +203,11 @@ export default function SpotifyLyricsPopup() {
   }, [lyricsRaw]);
 
   const hasSynced = lines.length > 0;
+  // Calcular offset dinamicamente baseado no navegador
+  const waveOffsetMs = useMemo(() => getBrowserOffset(), []);
   const activeIndex = useMemo(
-    () => findActiveIndex(lines, Math.max(0, tSeconds * 1000 + WAVE_OFFSET_MS)),
-    [lines, tSeconds],
+    () => findActiveIndex(lines, Math.max(0, tSeconds * 1000 + waveOffsetMs)),
+    [lines, tSeconds, waveOffsetMs],
   );
   // Desabilitado: placeholder de "solo/instrumental" com "..." estava causando bugs.
   const showInstrumental = false;
@@ -226,42 +250,78 @@ export default function SpotifyLyricsPopup() {
     // (`performance.now`) para evitar drift/jumps do `Date.now()` e deixar a UI mais fluida (wave/progress).
     let raf = 0;
     let interval: number | null = null;
+    let driftCheckInterval: number | null = null;
     // Emitir estado em frequência limitada para evitar re-render 60fps (o que pode quebrar/jitter a barra e a UI)
-    // Mantém boa sensação de sync, mas reduz custo e “briga” com transições CSS.
+    // Mantém boa sensação de sync, mas reduz custo e "briga" com transições CSS.
     // Frequência de emissão: 45fps para suavidade suficiente sem jitter excessivo.
     const EMIT_HZ = 45;
     const EMIT_STEP = 1 / EMIT_HZ;
     let lastEmitted = -Infinity;
+    
+    // Histórico para detectar drift (média móvel simples)
+    const driftHistory: number[] = [];
+    const MAX_DRIFT_HISTORY = 5;
 
     const baseElapsed = clamp((Date.now() - start) / 1000, 0, total);
     let basePerf = performance.now();
     let base = baseElapsed;
+    let lastResyncTime = Date.now();
 
     const setFromNow = (nowPerf: number) => {
       const elapsed = base + (nowPerf - basePerf) / 1000;
       const clamped = clamp(elapsed, 0, total);
       if (!Number.isFinite(clamped)) return;
-      // Evita “voltar” no tempo em caso de drift ou data inconsistência do Lanyard.
+      // Evita "voltar" no tempo em caso de drift ou data inconsistência do Lanyard.
       const monotonic = Math.min(total, Math.max(lastProgressRef.current, clamped));
       lastProgressRef.current = monotonic;
-      // throttle: só seta state quando avançou o suficiente (ou quando resync fizer “pulo”)
+      // throttle: só seta state quando avançou o suficiente (ou quando resync fizer "pulo")
       if (Math.abs(monotonic - lastEmitted) >= EMIT_STEP) {
         lastEmitted = monotonic;
         setTSeconds(monotonic);
       }
     };
 
-    const resync = () => {
+    const resync = (force = false) => {
+      const now = Date.now();
+      const newBase = clamp((now - start) / 1000, 0, total);
+      
+      // Detectar drift: se a diferença entre o tempo calculado e o esperado for grande, forçar resync
+      if (!force) {
+        const expectedElapsed = base + (performance.now() - basePerf) / 1000;
+        const actualElapsed = (now - start) / 1000;
+        const drift = Math.abs(expectedElapsed - actualElapsed);
+        
+        driftHistory.push(drift);
+        if (driftHistory.length > MAX_DRIFT_HISTORY) {
+          driftHistory.shift();
+        }
+        
+        // Se o drift médio for maior que 200ms, forçar resync mais frequente
+        const avgDrift = driftHistory.reduce((a, b) => a + b, 0) / driftHistory.length;
+        if (avgDrift < 0.2 && !force) {
+          // Drift pequeno, não precisa resync agressivo
+          return;
+        }
+      }
+      
       // Reancora de tempos em tempos para acompanhar possíveis correções do Lanyard e evitar drift longo.
-      base = clamp((Date.now() - start) / 1000, 0, total);
+      base = newBase;
       basePerf = performance.now();
+      lastResyncTime = now;
       // força emissão após resync (corrige UI imediatamente)
       lastEmitted = -Infinity;
     };
 
     const loop = (nowPerf: number) => {
-      // Se a aba estiver oculta, RAF vira “suspenso”; nessa situação, deixamos o interval assumir.
-      if (!document.hidden) setFromNow(nowPerf);
+      // Se a aba estiver oculta, RAF vira "suspenso"; nessa situação, deixamos o interval assumir.
+      if (!document.hidden) {
+        setFromNow(nowPerf);
+        // Resync automático se passou muito tempo desde o último resync (compensa drift longo)
+        const timeSinceResync = Date.now() - lastResyncTime;
+        if (timeSinceResync > 2000) {
+          resync(true);
+        }
+      }
       raf = window.requestAnimationFrame(loop);
     };
 
@@ -271,19 +331,30 @@ export default function SpotifyLyricsPopup() {
     // RAF para suavidade (principalmente na borda do highlight/wave)
     raf = window.requestAnimationFrame(loop);
 
-    // Resync leve (corrige deriva e saltos do relógio)
-    // Resync mais frequente para reduzir drift perceptível (ex.: atraso leve da wave)
-    interval = window.setInterval(resync, 1000);
+    // Resync mais frequente (500ms) para reduzir drift perceptível entre navegadores
+    // Isso ajuda especialmente em navegadores com relógios menos precisos
+    interval = window.setInterval(() => resync(false), 500);
+    
+    // Verificação de drift mais agressiva a cada 2s para detectar problemas maiores
+    driftCheckInterval = window.setInterval(() => {
+      const timeSinceResync = Date.now() - lastResyncTime;
+      if (timeSinceResync > 3000) {
+        resync(true);
+      }
+    }, 2000);
 
     const onVisibility = () => {
-      // Ao voltar para a aba, ressincroniza na hora pra não “pular” atrasado.
-      if (!document.hidden) resync();
+      // Ao voltar para a aba, ressincroniza na hora pra não "pular" atrasado.
+      if (!document.hidden) {
+        resync(true);
+      }
     };
     document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
       if (raf) window.cancelAnimationFrame(raf);
       if (interval) window.clearInterval(interval);
+      if (driftCheckInterval) window.clearInterval(driftCheckInterval);
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [spotify]);
@@ -433,7 +504,7 @@ export default function SpotifyLyricsPopup() {
     if (Date.now() - lastUserScrollAtRef.current < 2500) return;
 
     const total = Math.max(1, (spotify.timestamps.end - spotify.timestamps.start) / 1000);
-    const progress = clamp(Math.max(0, tSeconds + WAVE_OFFSET_MS / 1000) / total, 0, 1);
+    const progress = clamp(Math.max(0, tSeconds + waveOffsetMs / 1000) / total, 0, 1);
     const maxTop = Math.max(0, container.scrollHeight - container.clientHeight);
     const targetTop = maxTop * progress;
 
@@ -860,7 +931,7 @@ export default function SpotifyLyricsPopup() {
                                   const active = !showInstrumental && idx === activeIndex;
                                   const progress = (() => {
                                     if (!active) return 0;
-                                    const tMs = Math.max(0, tSeconds * 1000 + WAVE_OFFSET_MS);
+                                    const tMs = Math.max(0, tSeconds * 1000 + waveOffsetMs);
                                     const startMs = l.timeMs;
                                     const endMs =
                                       lines[idx + 1]?.timeMs ??
@@ -1012,7 +1083,7 @@ export default function SpotifyLyricsPopup() {
                                   const active = !showInstrumental && idx === activeIndex;
                                   const progress = (() => {
                                     if (!active) return 0;
-                                    const tMs = Math.max(0, tSeconds * 1000 + WAVE_OFFSET_MS);
+                                    const tMs = Math.max(0, tSeconds * 1000 + waveOffsetMs);
                                     const startMs = l.timeMs;
                                     const endMs =
                                       lines[idx + 1]?.timeMs ??
