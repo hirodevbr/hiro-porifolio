@@ -1,6 +1,6 @@
 // Service Worker para cache de recursos estáticos
-const CACHE_NAME = 'portfolio-cache-v2';
-const RUNTIME_CACHE = 'portfolio-runtime-v2';
+const CACHE_NAME = 'portfolio-cache-v3';
+const RUNTIME_CACHE = 'portfolio-runtime-v3';
 const OFFLINE_PAGE = '/offline.html';
 
 // Recursos para cachear imediatamente
