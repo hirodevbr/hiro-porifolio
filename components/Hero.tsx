@@ -206,30 +206,13 @@ export default function Hero() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center">
-          {/* Avatar circular */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
-            className="mb-8 flex justify-center"
-          >
-            {/* Foto de perfil em: public/profile/profile.avif */}
-            <Image
-              src="/profile/profile.avif"
-              alt="Foto de perfil"
-              width={176}
-              height={176}
-              priority
-              unoptimized
-              className="rounded-full w-36 h-36 md:w-44 md:h-44 object-cover object-[50%_25%]"
-            />
-          </motion.div>
+          {/* Avatar removido */}
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="mb-6"
+            className="mb-8"
           >
             <motion.div
               className="inline-block"
