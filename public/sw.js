@@ -1,6 +1,7 @@
 // Service Worker para cache de recursos estáticos
-const CACHE_NAME = 'portfolio-cache-v3';
-const RUNTIME_CACHE = 'portfolio-runtime-v3';
+// Versão atualizada automaticamente limpa caches antigos
+const CACHE_NAME = 'portfolio-cache-v4';
+const RUNTIME_CACHE = 'portfolio-runtime-v4';
 const OFFLINE_PAGE = '/offline.html';
 
 // Recursos para cachear imediatamente
@@ -89,19 +90,28 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   console.log('Service Worker: Ativando...');
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME && name !== RUNTIME_CACHE)
-          .map((name) => {
-            console.log('Service Worker: Removendo cache antigo:', name);
-            return caches.delete(name);
-          })
-      );
-    })
+    Promise.all([
+      // Remove caches antigos
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames
+            .filter((name) => name !== CACHE_NAME && name !== RUNTIME_CACHE)
+            .map((name) => {
+              console.log('Service Worker: Removendo cache antigo:', name);
+              return caches.delete(name);
+            })
+        );
+      }),
+      // Notifica clientes para limpar localStorage se necessário
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+        clients.forEach((client) => {
+          client.postMessage({ type: 'CLEAR_CACHE' });
+        });
+      })
+    ])
   );
   self.clients.claim();
-  console.log('Service Worker: Ativado e pronto');
+  console.log('Service Worker: Ativado e pronto - Cache limpo automaticamente');
 });
 
 // Interceptação de requisições

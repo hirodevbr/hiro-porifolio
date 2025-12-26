@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { initCacheManager, checkAndClearCache } from "@/lib/cacheManager";
 
 export default function RegisterSW() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
+    // Inicializa sistema de limpeza de cache
+    initCacheManager();
     // Em desenvolvimento, service worker costuma quebrar HMR/cache do Next.
     // Então a gente desregistra e não registra novamente.
     if (process.env.NODE_ENV !== "production") {
@@ -56,7 +59,16 @@ export default function RegisterSW() {
 
       // Detectar quando o service worker assume controle
       navigator.serviceWorker.addEventListener("controllerchange", () => {
+        // Limpa cache antes de recarregar
+        checkAndClearCache();
         window.location.reload();
+      });
+
+      // Escuta mensagens do Service Worker para limpar cache
+      navigator.serviceWorker.addEventListener("message", (event) => {
+        if (event.data && event.data.type === "CLEAR_CACHE") {
+          checkAndClearCache();
+        }
       });
     }
   }, []);
