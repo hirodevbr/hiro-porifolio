@@ -213,22 +213,16 @@ export default function Hero() {
             transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
             className="mb-8 flex justify-center"
           >
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 300 }}
-              className="w-36 h-36 md:w-44 md:h-44 rounded-full bg-white/5 border-4 border-white/15 flex items-center justify-center shadow-2xl shadow-white/10 backdrop-blur-sm"
-            >
-              {/* Foto de perfil em: public/profile/profile.avif */}
-              <Image
-                src="/profile/profile.avif"
-                alt="Foto de perfil"
-                width={160}
-                height={160}
-                priority
-                unoptimized
-                className="rounded-full w-full h-full object-cover object-[50%_25%]"
-              />
-            </motion.div>
+            {/* Foto de perfil em: public/profile/profile.avif */}
+            <Image
+              src="/profile/profile.avif"
+              alt="Foto de perfil"
+              width={176}
+              height={176}
+              priority
+              unoptimized
+              className="rounded-full w-36 h-36 md:w-44 md:h-44 object-cover object-[50%_25%]"
+            />
           </motion.div>
 
           <motion.div
