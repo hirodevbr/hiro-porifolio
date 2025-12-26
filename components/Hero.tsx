@@ -255,7 +255,7 @@ export default function Hero() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-5xl md:text-7xl font-bold mb-6 text-primary-400"
           >
-            {t("hero_name")}
+              {t("hero_name")}
           </motion.h1>
 
           <motion.div

@@ -163,7 +163,7 @@ export default function BugHunter() {
           className="text-center mb-16"
         >
           <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary-400">
-            {t("bughunter_title")}
+              {t("bughunter_title")}
           </h2>
           <div className="w-24 h-1 bg-primary-500 mx-auto rounded-full" />
           <p className="text-gray-400 mt-4 max-w-2xl mx-auto">

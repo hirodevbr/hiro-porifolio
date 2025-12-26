@@ -946,7 +946,7 @@ export default function DiscordProfile() {
           className="text-center mb-8"
         >
           <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary-400">
-            {t("discord_title")}
+              {t("discord_title")}
           </h2>
           <div className="w-24 h-1 bg-primary-500 mx-auto rounded-full" />
           <p className="text-gray-400 mt-4">
@@ -1085,7 +1085,7 @@ export default function DiscordProfile() {
               initial={{ opacity: 0, x: -20 }}
               animate={inView ? { opacity: 1, x: 0 } : {}}
               transition={{ duration: 0.3 }}
-            className="mb-6 p-4 bg-gradient-to-r from-green-500/10 to-green-600/10 rounded-lg border border-green-500/20 mx-6"
+              className="mb-6 p-4 bg-gradient-to-r from-green-500/10 to-green-600/10 rounded-lg border border-green-500/20 mx-6"
             >
               {/* Componente Spotify Timer */}
               {(() => {
@@ -1131,10 +1131,10 @@ export default function DiscordProfile() {
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-col gap-1 mb-2">
                           <div className="flex items-center gap-2">
-                            <Music className="w-4 h-4 text-green-400" aria-hidden="true" />
-                            <span className="text-xs text-green-400 font-semibold">
-                              {t("discord_listening_spotify")}
-                            </span>
+                          <Music className="w-4 h-4 text-green-400" aria-hidden="true" />
+                        <span className="text-xs text-green-400 font-semibold">
+                          {t("discord_listening_spotify")}
+                        </span>
                           </div>
                         </div>
                         <p className="text-white font-semibold truncate mb-1">

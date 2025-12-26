@@ -48,7 +48,7 @@ export default function About() {
           className="text-center mb-16"
         >
           <motion.h2 variants={itemVariants} className="text-4xl md:text-5xl font-bold mb-4 text-primary-400">
-            {t("about_title")}
+              {t("about_title")}
           </motion.h2>
           <motion.div variants={itemVariants} className="w-24 h-1 bg-primary-500 mx-auto rounded-full" />
         </motion.div>
