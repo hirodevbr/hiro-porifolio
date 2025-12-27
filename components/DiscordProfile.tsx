@@ -1118,6 +1118,72 @@ export default function DiscordProfile() {
                   const [currentTime, setCurrentTime] = useState(0);
                   const [totalDuration, setTotalDuration] = useState(0);
                   const animationFrameRef = useRef<number | null>(null);
+                  const syncOffsetRef = useRef<number>(0); // Offset de sincronização inicial
+                  const hasSyncedInitialRef = useRef<boolean>(false); // Flag para sincronização inicial
+                  const prevTrackKeyRef = useRef<string>(""); // Rastreia mudança de música
+
+                  // Sincronização inicial: quando recebe dados do Spotify pela primeira vez
+                  useEffect(() => {
+                    if (!spotify) {
+                      hasSyncedInitialRef.current = false;
+                      syncOffsetRef.current = 0;
+                      prevTrackKeyRef.current = "";
+                      return;
+                    }
+
+                    // Se já sincronizou para esta música, não precisa sincronizar novamente
+                    const currentTrackKey = `${spotify.track_id}:${spotify.timestamps.start}`;
+                    if (hasSyncedInitialRef.current && prevTrackKeyRef.current === currentTrackKey) {
+                      return;
+                    }
+
+                    // Faz sincronização inicial: busca tempo do servidor e calcula offset
+                    const syncInitial = async () => {
+                      try {
+                        const clientTimeBefore = Date.now();
+                        const response = await fetch('/api/time', { 
+                          cache: 'no-store',
+                          headers: { 'Cache-Control': 'no-cache' }
+                        });
+                        const clientTimeAfter = Date.now();
+                        
+                        if (!response.ok) return;
+                        
+                        const data = await response.json();
+                        const serverTime = data.now;
+                        
+                        // Calcula latência da requisição (tempo de ida e volta / 2)
+                        const roundTripTime = clientTimeAfter - clientTimeBefore;
+                        const estimatedLatency = roundTripTime / 2;
+                        
+                        // Tempo estimado do servidor quando recebemos a resposta
+                        const estimatedServerTime = serverTime + estimatedLatency;
+                        
+                        // Calcula offset: diferença entre o tempo estimado do servidor e o start_timestamp
+                        // Se o start_timestamp está no passado em relação ao servidor, precisamos compensar
+                        const spotifyStart = spotify.timestamps.start;
+                        const offset = estimatedServerTime - spotifyStart;
+                        
+                        // Só aplica offset se for razoável (entre -5 e 10 segundos)
+                        // Valores muito grandes podem indicar erro ou música antiga
+                        if (Math.abs(offset) <= 10000 && Math.abs(offset) >= -5000) {
+                          syncOffsetRef.current = offset;
+                        } else {
+                          syncOffsetRef.current = 0;
+                        }
+                        
+                        hasSyncedInitialRef.current = true;
+                        prevTrackKeyRef.current = currentTrackKey;
+                      } catch (error) {
+                        console.error('Erro na sincronização inicial:', error);
+                        syncOffsetRef.current = 0;
+                        hasSyncedInitialRef.current = true;
+                        prevTrackKeyRef.current = currentTrackKey;
+                      }
+                    };
+
+                    syncInitial();
+                  }, [spotify]);
 
                   useEffect(() => {
                     if (!spotify) {
@@ -1158,7 +1224,9 @@ export default function DiscordProfile() {
                       setTotalDuration(duration);
                       
                       const now = Date.now();
-                      const elapsed = (now - start) / 1000;
+                      // Aplica offset de sincronização inicial
+                      const adjustedStart = start + syncOffsetRef.current;
+                      const elapsed = (now - adjustedStart) / 1000;
                       
                       // Limita o tempo ao máximo da duração da música
                       // Se elapsed for muito maior que duration, pode ser que os timestamps mudaram
