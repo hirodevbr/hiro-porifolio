@@ -1122,7 +1122,10 @@ export default function DiscordProfile() {
                   const hasSyncedInitialRef = useRef<boolean>(false); // Flag para sincronização inicial
                   const prevTrackKeyRef = useRef<string>(""); // Rastreia mudança de música
 
-                  // Sincronização inicial: quando recebe dados do Spotify pela primeira vez
+                  // Função de sincronização reutilizável
+                  const syncInitial = useRef<(() => Promise<void>) | null>(null);
+
+                  // Sincronização inicial: quando recebe dados do Spotify pela primeira vez ou quando volta do background
                   useEffect(() => {
                     if (!spotify) {
                       hasSyncedInitialRef.current = false;
@@ -1131,14 +1134,8 @@ export default function DiscordProfile() {
                       return;
                     }
 
-                    // Se já sincronizou para esta música, não precisa sincronizar novamente
-                    const currentTrackKey = `${spotify.track_id}:${spotify.timestamps.start}`;
-                    if (hasSyncedInitialRef.current && prevTrackKeyRef.current === currentTrackKey) {
-                      return;
-                    }
-
-                    // Faz sincronização inicial: busca tempo do servidor e calcula offset
-                    const syncInitial = async () => {
+                    // Cria função de sincronização
+                    syncInitial.current = async () => {
                       try {
                         const clientTimeBefore = Date.now();
                         const response = await fetch('/api/time', { 
@@ -1172,17 +1169,47 @@ export default function DiscordProfile() {
                           syncOffsetRef.current = 0;
                         }
                         
+                        const currentTrackKey = `${spotify.track_id}:${spotify.timestamps.start}`;
                         hasSyncedInitialRef.current = true;
                         prevTrackKeyRef.current = currentTrackKey;
                       } catch (error) {
                         console.error('Erro na sincronização inicial:', error);
                         syncOffsetRef.current = 0;
+                        const currentTrackKey = `${spotify.track_id}:${spotify.timestamps.start}`;
                         hasSyncedInitialRef.current = true;
                         prevTrackKeyRef.current = currentTrackKey;
                       }
                     };
 
-                    syncInitial();
+                    // Se já sincronizou para esta música, não precisa sincronizar novamente
+                    const currentTrackKey = `${spotify.track_id}:${spotify.timestamps.start}`;
+                    if (hasSyncedInitialRef.current && prevTrackKeyRef.current === currentTrackKey) {
+                      return;
+                    }
+
+                    // Executa sincronização inicial
+                    syncInitial.current();
+                  }, [spotify]);
+
+                  // Listener para quando a página volta do background (especialmente mobile)
+                  useEffect(() => {
+                    const handleVisibilityChange = () => {
+                      // Quando a página volta do background, força nova sincronização
+                      if (document.visibilityState === 'visible' && spotify && syncInitial.current) {
+                        // Reseta flag para forçar nova sincronização
+                        const currentTrackKey = `${spotify.track_id}:${spotify.timestamps.start}`;
+                        if (prevTrackKeyRef.current === currentTrackKey) {
+                          // Força nova sincronização mesmo se já sincronizou antes
+                          hasSyncedInitialRef.current = false;
+                          syncInitial.current();
+                        }
+                      }
+                    };
+
+                    document.addEventListener('visibilitychange', handleVisibilityChange);
+                    return () => {
+                      document.removeEventListener('visibilitychange', handleVisibilityChange);
+                    };
                   }, [spotify]);
 
                   useEffect(() => {
