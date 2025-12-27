@@ -1161,12 +1161,15 @@ export default function DiscordProfile() {
                       const elapsed = (adjustedNow - start) / 1000;
 
                       // Garante que o tempo nunca seja negativo ou maior que a duração
-                      // Para iOS, limita mais agressivamente para evitar ultrapassar a duração
                       if (elapsed < 0) return 0;
-                      if (elapsed < 2 && elapsed >= -1) return 0;
-                      // Limita rigorosamente à duração (especialmente importante para iOS)
-                      const maxElapsed = browserInfoRef.current?.isIOS ? duration * 0.99 : duration;
-                      return Math.max(0, Math.min(elapsed, maxElapsed));
+                      // Para iOS, janela mais restritiva para evitar começar tarde
+                      const windowStart = browserInfoRef.current?.isIOS ? 0.5 : -1;
+                      if (elapsed < 2 && elapsed >= windowStart) {
+                        if (elapsed < 0.5) return 0;
+                        return elapsed;
+                      }
+                      // Limita à duração
+                      return Math.max(0, Math.min(elapsed, duration));
                     };
 
                     // Inicializa com o tempo atual
@@ -1262,18 +1265,25 @@ export default function DiscordProfile() {
                     // Resync com intervalo dinâmico
                     const resyncIntervalId = setInterval(resync, resyncIntervalMs);
 
-                    // Resync inicial
+                    // Resync inicial - zera timeCorrection e recalcula do zero
                     const initialDelay = browserInfoRef.current?.isIOS ? 100 : 150;
                     const initialResyncTimeout = setTimeout(() => {
-                      const actualElapsed = calculateElapsed();
-                      baseElapsed = actualElapsed;
-                      baseTimestamp = performance.now();
-                      baseDateTimestamp = Date.now();
+                      // Zera correção e recalcula do zero para garantir início correto
+                      timeCorrection = 0;
+                      browserOffsetRef.current = getSyncOffset(); // Recarrega offset
                       lastDateNow = Date.now();
                       lastPerformanceNow = performance.now();
-                      setCurrentTime(Math.max(0, Math.min(actualElapsed, duration)));
-                      lastUpdateTime = actualElapsed;
-                      timeCorrection = 0;
+                      
+                      // Recalcula elapsed sem correções acumuladas
+                      const nowMs = Date.now();
+                      const adjustedNow = nowMs + browserOffsetRef.current; // Sem timeCorrection
+                      const actualElapsed = Math.max(0, (adjustedNow - start) / 1000);
+                      
+                      baseElapsed = Math.min(actualElapsed, duration);
+                      baseTimestamp = performance.now();
+                      baseDateTimestamp = Date.now();
+                      setCurrentTime(Math.max(0, Math.min(baseElapsed, duration)));
+                      lastUpdateTime = baseElapsed;
                     }, initialDelay);
 
                     // Resync quando volta ao foreground

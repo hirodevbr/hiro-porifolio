@@ -89,8 +89,8 @@ export function detectBrowser(): BrowserInfo {
 
   if (isIOS) {
     // iOS tem problemas conhecidos com timers e performance.now()
-    // Usa offset maior e resync mais frequente
-    syncOffset = -150;
+    // Offset reduzido para evitar que música comece tarde
+    syncOffset = -50; // Reduzido de -150 para -50
     resyncInterval = 200; // Resync a cada 200ms
     driftThreshold = 0.025; // Threshold ainda menor (25ms)
   } else if (name === "Safari" && !isMobile) {

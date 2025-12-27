@@ -152,7 +152,13 @@ export default function SpotifyLyricsPopup() {
       const elapsed = (adjustedNow - start) / 1000;
 
       // Janela pequena para evitar flicker quando a presença chega levemente antes/depois
-      if (elapsed < 2 && elapsed >= -1) return 0;
+      // Para iOS, janela mais restritiva para evitar começar tarde
+      const windowStart = browserInfoRef.current?.isIOS ? 0.5 : -1;
+      if (elapsed < 2 && elapsed >= windowStart) {
+        // Se está muito no início, retorna 0 (especialmente importante para iOS)
+        if (elapsed < 0.5) return 0;
+        return elapsed; // Permite valores pequenos positivos
+      }
 
       // Limita à duração (sem redução de 99% para manter sincronia com letra)
       return clamp(elapsed, 0, duration);
@@ -269,18 +275,25 @@ export default function SpotifyLyricsPopup() {
     // Resync com intervalo dinâmico baseado no navegador
     const resyncIntervalId = setInterval(resync, resyncIntervalMs);
 
-    // Resync imediato após delay inicial (otimizado para todos)
+    // Resync inicial - zera timeCorrection e recalcula do zero
     const initialDelay = browserInfoRef.current?.isIOS ? 100 : 150;
     const initialResyncTimeout = setTimeout(() => {
-      const actualElapsed = calculateElapsed();
-      baseElapsed = actualElapsed;
-      baseTimestamp = performance.now();
-      baseDateTimestamp = Date.now();
+      // Zera correção e recalcula do zero para garantir início correto
+      timeCorrection = 0;
+      browserOffsetRef.current = getSyncOffset(); // Recarrega offset (pode ter mudado)
       lastDateNow = Date.now();
       lastPerformanceNow = performance.now();
-      setCurrentTime(clamp(actualElapsed, 0, duration));
-      lastUpdateTime = actualElapsed;
-      timeCorrection = 0;
+      
+      // Recalcula elapsed sem correções acumuladas
+      const nowMs = Date.now();
+      const adjustedNow = nowMs + browserOffsetRef.current; // Sem timeCorrection
+      const actualElapsed = Math.max(0, (adjustedNow - start) / 1000);
+      
+      baseElapsed = Math.min(actualElapsed, duration);
+      baseTimestamp = performance.now();
+      baseDateTimestamp = Date.now();
+      setCurrentTime(clamp(baseElapsed, 0, duration));
+      lastUpdateTime = baseElapsed;
     }, initialDelay);
 
     // Resync quando a página volta ao foreground (crítico para iOS)
