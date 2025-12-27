@@ -1109,20 +1109,32 @@ export default function DiscordProfile() {
                       return;
                     }
 
-                    // Calcula duração total
-                    const start = spotify.timestamps.start;
-                    const end = spotify.timestamps.end;
-                    const duration = Math.max(1, Math.floor((end - start) / 1000));
-                    setTotalDuration(duration);
-
-                    // Calcula tempo de forma simples: Date.now() - start_timestamp
+                    // Calcula tempo sempre acessando diretamente do spotify para evitar closure stale
                     const updateTime = () => {
-                      if (!spotify) return;
+                      if (!spotify) {
+                        if (animationFrameRef.current) {
+                          cancelAnimationFrame(animationFrameRef.current);
+                          animationFrameRef.current = null;
+                        }
+                        return;
+                      }
+                      
+                      // Sempre acessa diretamente do spotify para pegar valores atualizados
+                      const start = spotify.timestamps.start;
+                      const end = spotify.timestamps.end;
+                      const duration = Math.max(1, Math.floor((end - start) / 1000));
+                      
+                      // Atualiza duração total sempre (pode mudar se a música mudar)
+                      setTotalDuration(duration);
                       
                       const now = Date.now();
                       const elapsed = (now - start) / 1000;
                       
-                      setCurrentTime(Math.max(0, elapsed));
+                      // Limita o tempo ao máximo da duração da música
+                      const clampedTime = Math.max(0, Math.min(elapsed, duration));
+                      setCurrentTime(clampedTime);
+                      
+                      // Continua atualizando mesmo se a música terminou (para manter UI responsiva)
                       animationFrameRef.current = requestAnimationFrame(updateTime);
                     };
 
@@ -1137,12 +1149,10 @@ export default function DiscordProfile() {
                     };
                   }, [spotify]);
 
-                  // Usa currentTime real para manter sincronia
-                  // Limita apenas para exibição e cálculo de remaining
+                  // Calcula valores de exibição
                   const safeTotalDuration = Math.max(1, totalDuration || 0);
                   const displayTime = Math.max(0, Math.min(currentTime || 0, safeTotalDuration));
                   const progress = safeTotalDuration > 0 ? (displayTime / safeTotalDuration) * 100 : 0;
-                  // Garante que remaining nunca seja negativo
                   const remaining = Math.max(0, Math.floor(safeTotalDuration - displayTime));
 
                   return (
