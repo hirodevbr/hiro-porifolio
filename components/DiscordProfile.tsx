@@ -1181,52 +1181,23 @@ export default function DiscordProfile() {
                     };
                   }, [spotify]);
 
-                  // Calcula valores de exibição
-                  // Sempre recalcula tudo diretamente do spotify para garantir sincronização perfeita
-                  const start = spotify?.timestamps.start ?? 0;
-                  const end = spotify?.timestamps.end ?? 0;
+                  // Calcula valores de exibição usando a mesma lógica do pop-up
+                  // Usa currentTime do state que é atualizado via requestAnimationFrame para animação suave
+                  const totalSeconds = useMemo(() => {
+                    if (!spotify) return 0;
+                    return Math.max(1, Math.floor((spotify.timestamps.end - spotify.timestamps.start) / 1000));
+                  }, [spotify]);
                   
-                  // Validação: garante que os timestamps são válidos
-                  const isValid = start > 0 && end > 0 && end > start;
+                  // Usa currentTime real para manter sincronia (igual ao pop-up)
+                  // Limita apenas para exibição e cálculo de remaining
+                  const displayTime = Math.max(0, Math.min(currentTime || 0, totalSeconds));
+                  const remaining = Math.max(0, Math.floor(totalSeconds - displayTime));
                   
-                  let actualDuration = 0;
-                  let displayTime = 0;
-                  let progress = 0;
-                  let remaining = 0;
+                  // Função clamp igual ao pop-up
+                  const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
                   
-                  if (isValid) {
-                    actualDuration = Math.max(1, Math.floor((end - start) / 1000));
-                    
-                    // Calcula tempo atual diretamente (mais preciso que usar state)
-                    const now = Date.now();
-                    const elapsed = (now - start) / 1000;
-                    
-                    // Validação: se elapsed for muito maior que duration, pode ser que os timestamps mudaram
-                    // Nesse caso, limita ao máximo da duração
-                    const safeTotalDuration = Math.max(1, actualDuration);
-                    displayTime = Math.max(0, Math.min(elapsed, safeTotalDuration));
-                    
-                    // Garante que o progresso nunca ultrapasse 100% e nunca seja NaN
-                    const calculatedProgress = safeTotalDuration > 0 ? (displayTime / safeTotalDuration) * 100 : 0;
-                    progress = isNaN(calculatedProgress) ? 0 : Math.min(100, Math.max(0, calculatedProgress));
-                    
-                    // Calcula remaining garantindo que nunca seja negativo
-                    // Usa Math.ceil para arredondar para cima e evitar valores negativos por arredondamento
-                    const calculatedRemaining = safeTotalDuration - displayTime;
-                    remaining = Math.max(0, Math.ceil(calculatedRemaining));
-                  } else {
-                    // Quando timestamps são inválidos, usa valores do state como fallback
-                    // Isso mantém a barra visível mesmo durante problemas de sincronização
-                    actualDuration = Math.max(1, totalDuration || 0);
-                    displayTime = Math.max(0, currentTime || 0);
-                    
-                    // Calcula progresso baseado nos valores do state
-                    const calculatedProgress = actualDuration > 0 ? (displayTime / actualDuration) * 100 : 0;
-                    progress = isNaN(calculatedProgress) ? 0 : Math.min(100, Math.max(0, calculatedProgress));
-                    
-                    const calculatedRemaining = actualDuration - displayTime;
-                    remaining = Math.max(0, Math.ceil(calculatedRemaining));
-                  }
+                  // Calcula progresso usando clamp igual ao pop-up
+                  const progress = clamp((displayTime / Math.max(1, totalSeconds)) * 100, 0, 100);
 
                   return (
                     <div className="flex items-center gap-3">
@@ -1257,15 +1228,13 @@ export default function DiscordProfile() {
                           {spotify.artist}
                         </p>
                         
-                        {/* Barra de progresso com animação fluida */}
+                        {/* Barra de progresso com animação fluida (igual ao pop-up) */}
                         <div className="mb-1">
                           <div className="w-full h-1.5 bg-gray-700/50 rounded-full overflow-hidden">
                             <div
-                              className="h-full rounded-full bg-white/40 transition-[width] duration-75 ease-out"
+                              className="h-full rounded-full bg-white/40"
                               style={{ 
-                                width: `${Math.min(100, Math.max(0, isNaN(progress) ? 0 : progress))}%`,
-                                minWidth: progress > 0 ? '2px' : '0px',
-                                willChange: 'width'
+                                width: `${clamp((displayTime / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
                               }}
                             />
                           </div>
