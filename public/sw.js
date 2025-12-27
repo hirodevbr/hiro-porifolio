@@ -1,7 +1,9 @@
 // Service Worker para cache de recursos estáticos
 // Versão atualizada automaticamente limpa caches antigos
-const CACHE_NAME = 'portfolio-cache-v4';
-const RUNTIME_CACHE = 'portfolio-runtime-v4';
+// IMPORTANTE: Incrementar a versão a cada deploy para forçar atualização
+const CACHE_VERSION = 'v5';
+const CACHE_NAME = `portfolio-cache-${CACHE_VERSION}`;
+const RUNTIME_CACHE = `portfolio-runtime-${CACHE_VERSION}`;
 const OFFLINE_PAGE = '/offline.html';
 
 // Recursos para cachear imediatamente
@@ -74,7 +76,7 @@ async function networkFirst(request) {
 
 // Instalação do Service Worker
 self.addEventListener('install', (event) => {
-  console.log('Service Worker: Instalando...');
+  console.log(`Service Worker: Instalando versão ${CACHE_VERSION}...`);
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('Service Worker: Cacheando recursos estáticos');
@@ -83,12 +85,13 @@ self.addEventListener('install', (event) => {
       });
     })
   );
+  // Força ativação imediata do novo service worker
   self.skipWaiting();
 });
 
 // Ativação do Service Worker
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Ativando...');
+  console.log(`Service Worker: Ativando versão ${CACHE_VERSION}...`);
   event.waitUntil(
     Promise.all([
       // Remove caches antigos
@@ -106,12 +109,15 @@ self.addEventListener('activate', (event) => {
       self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
         clients.forEach((client) => {
           client.postMessage({ type: 'CLEAR_CACHE' });
+          // Notifica sobre nova versão disponível
+          client.postMessage({ type: 'NEW_VERSION_AVAILABLE', version: CACHE_VERSION });
         });
       })
     ])
   );
+  // Assume controle imediato de todas as páginas
   self.clients.claim();
-  console.log('Service Worker: Ativado e pronto - Cache limpo automaticamente');
+  console.log(`Service Worker: Versão ${CACHE_VERSION} ativada e pronta - Cache limpo automaticamente`);
 });
 
 // Interceptação de requisições

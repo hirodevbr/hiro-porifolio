@@ -16,6 +16,11 @@ import {
   getResyncInterval,
   getDriftThreshold,
 } from "@/lib/browserSync";
+import {
+  recordLatencyMeasurement,
+  getCompensatedTime,
+  getLatency,
+} from "@/lib/latencyCompensator";
 
 type LrclibResponse = {
   syncedLyrics?: string | null;
@@ -64,7 +69,6 @@ export default function SpotifyLyricsPopup() {
   const prevTrackKeyRef = useRef<string>("");
   const animationFrameRef = useRef<number | null>(null);
   const lastSyncTimeRef = useRef<number>(0);
-  const browserOffsetRef = useRef<number>(0);
   const browserInfoRef = useRef<ReturnType<typeof getBrowserInfo> | null>(null);
 
   const trackKey = useMemo(() => {
@@ -98,14 +102,14 @@ export default function SpotifyLyricsPopup() {
     // Detecta navegador e obtém configurações
     if (!browserInfoRef.current) {
       browserInfoRef.current = getBrowserInfo();
-      browserOffsetRef.current = getSyncOffset();
+      const latency = getLatency();
       console.log("🌐 Navegador detectado:", {
         name: browserInfoRef.current.name,
         version: browserInfoRef.current.version,
         os: browserInfoRef.current.os,
         isMobile: browserInfoRef.current.isMobile,
         isIOS: browserInfoRef.current.isIOS,
-        syncOffset: browserOffsetRef.current,
+        detectedLatency: latency,
         resyncInterval: browserInfoRef.current.resyncInterval,
         driftThreshold: browserInfoRef.current.driftThreshold,
       });
@@ -117,20 +121,25 @@ export default function SpotifyLyricsPopup() {
     const resyncIntervalMs = getResyncInterval();
     const driftThreshold = getDriftThreshold();
 
+    // Registra medição de latência quando recebe dados do Spotify
+    recordLatencyMeasurement(start);
+
     // Usa múltiplas fontes de tempo para maior precisão
     let lastDateNow = Date.now();
     let lastPerformanceNow = performance.now();
     let timeCorrection = 0; // Correção acumulada de tempo
     const isIOS = browserInfoRef.current?.isIOS ?? false;
 
-    // Calcula tempo baseado no timestamp do Spotify com offset e correção
-    // No iOS, usa APENAS Date.now() porque performance.now() é suspenso quando o app é minimizado
+    // Calcula tempo baseado no timestamp do Spotify com compensação de latência
+    // Usa sistema de compensação de latência dinâmica para corrigir delay da API
     const calculateElapsed = () => {
-      const nowMs = Date.now();
+      // Obtém tempo compensado (subtrai latência detectada)
+      const compensatedNow = getCompensatedTime(start, Date.now());
       
       // No iOS, usa APENAS Date.now() para evitar problemas de suspensão
       if (isIOS) {
-        const adjustedNow = nowMs + browserOffsetRef.current + timeCorrection;
+        // Aplica apenas correção acumulada (offset já está na compensação de latência)
+        const adjustedNow = compensatedNow + timeCorrection;
         const elapsed = (adjustedNow - start) / 1000;
         
         // Janela pequena para evitar flicker quando a presença chega levemente antes/depois
@@ -146,22 +155,22 @@ export default function SpotifyLyricsPopup() {
       // Para outros navegadores, usa combinação de Date.now() e performance.now()
       const perfNow = performance.now();
       const perfDelta = perfNow - lastPerformanceNow;
-      const dateDelta = nowMs - lastDateNow;
+      const dateDelta = compensatedNow - lastDateNow;
       
-      let adjustedNow = nowMs;
+      let adjustedNow = compensatedNow;
       
       // Se a diferença entre as duas fontes for muito grande, confia mais em Date.now()
       if (Math.abs(perfDelta - dateDelta) > 100) {
-        adjustedNow = nowMs;
+        adjustedNow = compensatedNow;
       } else {
-        // Média ponderada: 60% Date.now, 40% performance.now
+        // Média ponderada: 60% Date.now compensado, 40% performance.now
         const dateWeight = 0.6;
         const perfWeight = 0.4;
-        adjustedNow = nowMs * dateWeight + (lastDateNow + perfDelta) * perfWeight;
+        adjustedNow = compensatedNow * dateWeight + (lastDateNow + perfDelta) * perfWeight;
       }
       
-      // Aplica offset do navegador e correção acumulada
-      adjustedNow = adjustedNow + browserOffsetRef.current + timeCorrection;
+      // Aplica apenas correção acumulada (latência já compensada)
+      adjustedNow = adjustedNow + timeCorrection;
       const elapsed = (adjustedNow - start) / 1000;
 
       // Janela pequena para evitar flicker quando a presença chega levemente antes/depois
@@ -247,13 +256,8 @@ export default function SpotifyLyricsPopup() {
           if (driftAbs > minDriftForCalibration) {
             const driftMs = drift * 1000;
             recordDriftMeasurement(driftMs);
-
-            const newOffset = getSyncOffset();
-            const offsetChangeThreshold = 5;
-            if (Math.abs(newOffset - browserOffsetRef.current) > offsetChangeThreshold) {
-              browserOffsetRef.current = newOffset;
-              console.log("🔧 Offset de sincronização atualizado:", newOffset, "ms");
-            }
+            // Latência é compensada automaticamente pelo sistema de compensação
+            console.log("🔧 Drift detectado e compensado:", driftMs, "ms");
           }
         } else {
           consecutiveDrifts = 0;
@@ -299,13 +303,8 @@ export default function SpotifyLyricsPopup() {
           if (driftAbs > minDriftForCalibration) {
             const driftMs = drift * 1000;
             recordDriftMeasurement(driftMs);
-
-            const newOffset = getSyncOffset();
-            const offsetChangeThreshold = 8;
-            if (Math.abs(newOffset - browserOffsetRef.current) > offsetChangeThreshold) {
-              browserOffsetRef.current = newOffset;
-              console.log("🔧 Offset de sincronização atualizado:", newOffset, "ms");
-            }
+            // Latência é compensada automaticamente pelo sistema de compensação
+            console.log("🔧 Drift detectado e compensado:", driftMs, "ms");
           }
         } else {
           consecutiveDrifts = 0;
@@ -334,16 +333,16 @@ export default function SpotifyLyricsPopup() {
     const initialResyncTimeout = setTimeout(() => {
       // Zera correção e recalcula do zero para garantir início correto
       timeCorrection = 0;
-      browserOffsetRef.current = getSyncOffset(); // Recarrega offset (pode ter mudado)
+      // Registra nova medição de latência
+      recordLatencyMeasurement(start);
       lastDateNow = Date.now();
       if (!isIOS) {
         lastPerformanceNow = performance.now();
       }
       
-      // Recalcula elapsed sem correções acumuladas
-      const nowMs = Date.now();
-      const adjustedNow = nowMs + browserOffsetRef.current; // Sem timeCorrection
-      const actualElapsed = Math.max(0, (adjustedNow - start) / 1000);
+      // Recalcula elapsed sem correções acumuladas, usando compensação de latência
+      const compensatedNow = getCompensatedTime(start, Date.now());
+      const actualElapsed = Math.max(0, (compensatedNow - start) / 1000);
       
       baseElapsed = Math.min(actualElapsed, duration);
       baseTimestamp = isIOS ? Date.now() : performance.now();

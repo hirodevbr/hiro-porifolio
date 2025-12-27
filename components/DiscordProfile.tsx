@@ -14,6 +14,11 @@ import {
   getResyncInterval,
   getDriftThreshold,
 } from "@/lib/browserSync";
+import {
+  recordLatencyMeasurement,
+  getCompensatedTime,
+  getLatency,
+} from "@/lib/latencyCompensator";
 import { 
   Music, 
   Gamepad2, 
@@ -1104,7 +1109,6 @@ export default function DiscordProfile() {
                   const [currentTime, setCurrentTime] = useState(0);
                   const [totalDuration, setTotalDuration] = useState(0);
                   const browserInfoRef = useRef<ReturnType<typeof getBrowserInfo> | null>(null);
-                  const browserOffsetRef = useRef<number>(0);
                   const animationFrameRef = useRef<number | null>(null);
 
                   useEffect(() => {
@@ -1121,7 +1125,6 @@ export default function DiscordProfile() {
                     // Detecta navegador e obtém configurações
                     if (!browserInfoRef.current) {
                       browserInfoRef.current = getBrowserInfo();
-                      browserOffsetRef.current = getSyncOffset();
                     }
 
                     const start = spotify.timestamps.start;
@@ -1130,6 +1133,9 @@ export default function DiscordProfile() {
                     const duration = Math.max(1, Math.floor((end - start) / 1000));
                     const resyncIntervalMs = getResyncInterval();
                     const driftThreshold = getDriftThreshold();
+                    
+                    // Registra medição de latência quando recebe dados do Spotify
+                    recordLatencyMeasurement(start);
                     
                     // Atualiza totalDuration imediatamente
                     setTotalDuration(duration);
@@ -1140,14 +1146,16 @@ export default function DiscordProfile() {
                     let timeCorrection = 0;
                     const isIOS = browserInfoRef.current?.isIOS ?? false;
 
-                    // Calcula tempo baseado no timestamp do Spotify com offset e correção
-                    // No iOS, usa APENAS Date.now() porque performance.now() é suspenso quando o app é minimizado
+                    // Calcula tempo baseado no timestamp do Spotify com compensação de latência
+                    // Usa sistema de compensação de latência dinâmica para corrigir delay da API
                     const calculateElapsed = () => {
-                      const nowMs = Date.now();
+                      // Obtém tempo compensado (subtrai latência detectada)
+                      const compensatedNow = getCompensatedTime(start, Date.now());
                       
                       // No iOS, usa APENAS Date.now() para evitar problemas de suspensão
                       if (isIOS) {
-                        const adjustedNow = nowMs + browserOffsetRef.current + timeCorrection;
+                        // Aplica apenas correção acumulada (latência já compensada)
+                        const adjustedNow = compensatedNow + timeCorrection;
                         const elapsed = (adjustedNow - start) / 1000;
                         
                         if (elapsed < 0) return 0;
@@ -1162,19 +1170,20 @@ export default function DiscordProfile() {
                       // Para outros navegadores, usa combinação de Date.now() e performance.now()
                       const perfNow = performance.now();
                       const perfDelta = perfNow - lastPerformanceNow;
-                      const dateDelta = nowMs - lastDateNow;
+                      const dateDelta = compensatedNow - lastDateNow;
 
-                      let adjustedNow = nowMs;
+                      let adjustedNow = compensatedNow;
 
                       if (Math.abs(perfDelta - dateDelta) > 100) {
-                        adjustedNow = nowMs;
+                        adjustedNow = compensatedNow;
                       } else {
                         const dateWeight = 0.6;
                         const perfWeight = 0.4;
-                        adjustedNow = nowMs * dateWeight + (lastDateNow + perfDelta) * perfWeight;
+                        adjustedNow = compensatedNow * dateWeight + (lastDateNow + perfDelta) * perfWeight;
                       }
 
-                      adjustedNow = adjustedNow + browserOffsetRef.current + timeCorrection;
+                      // Aplica apenas correção acumulada (latência já compensada)
+                      adjustedNow = adjustedNow + timeCorrection;
                       const elapsed = (adjustedNow - start) / 1000;
 
                       if (elapsed < 0) return 0;
@@ -1256,12 +1265,7 @@ export default function DiscordProfile() {
                           if (driftAbs > minDriftForCalibration) {
                             const driftMs = drift * 1000;
                             recordDriftMeasurement(driftMs);
-
-                            const newOffset = getSyncOffset();
-                            const offsetChangeThreshold = 5;
-                            if (Math.abs(newOffset - browserOffsetRef.current) > offsetChangeThreshold) {
-                              browserOffsetRef.current = newOffset;
-                            }
+                            // Latência é compensada automaticamente pelo sistema de compensação
                           }
                         } else {
                           consecutiveDrifts = 0;
@@ -1306,12 +1310,7 @@ export default function DiscordProfile() {
                           if (driftAbs > minDriftForCalibration) {
                             const driftMs = drift * 1000;
                             recordDriftMeasurement(driftMs);
-
-                            const newOffset = getSyncOffset();
-                            const offsetChangeThreshold = 8;
-                            if (Math.abs(newOffset - browserOffsetRef.current) > offsetChangeThreshold) {
-                              browserOffsetRef.current = newOffset;
-                            }
+                            // Latência é compensada automaticamente pelo sistema de compensação
                           }
                         } else {
                           consecutiveDrifts = 0;
@@ -1339,16 +1338,16 @@ export default function DiscordProfile() {
                     const initialResyncTimeout = setTimeout(() => {
                       // Zera correção e recalcula do zero para garantir início correto
                       timeCorrection = 0;
-                      browserOffsetRef.current = getSyncOffset(); // Recarrega offset
+                      // Registra nova medição de latência
+                      recordLatencyMeasurement(start);
                       lastDateNow = Date.now();
                       if (!isIOS) {
                         lastPerformanceNow = performance.now();
                       }
                       
-                      // Recalcula elapsed sem correções acumuladas
-                      const nowMs = Date.now();
-                      const adjustedNow = nowMs + browserOffsetRef.current; // Sem timeCorrection
-                      const actualElapsed = Math.max(0, (adjustedNow - start) / 1000);
+                      // Recalcula elapsed sem correções acumuladas, usando compensação de latência
+                      const compensatedNow = getCompensatedTime(start, Date.now());
+                      const actualElapsed = Math.max(0, (compensatedNow - start) / 1000);
                       
                       baseElapsed = Math.min(actualElapsed, duration);
                       baseTimestamp = isIOS ? Date.now() : performance.now();
