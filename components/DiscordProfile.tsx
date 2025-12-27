@@ -7,6 +7,13 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import Image from "next/image";
 import { DISCORD_USER_ID } from "@/lib/config";
 import { useLanyardUser } from "@/lib/lanyardClient";
+import {
+  getSyncOffset,
+  recordDriftMeasurement,
+  getBrowserInfo,
+  getResyncInterval,
+  getDriftThreshold,
+} from "@/lib/browserSync";
 import { 
   Music, 
   Gamepad2, 
@@ -402,8 +409,10 @@ export default function DiscordProfile() {
 
   // Fun��o para formatar tempo em minutos e segundos (para m�sica)
   const formatMusicTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+    // Garante que o valor seja sempre não-negativo e válido
+    const safeSeconds = Math.max(0, Math.floor(seconds || 0));
+    const mins = Math.floor(safeSeconds / 60);
+    const secs = safeSeconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
@@ -1089,33 +1098,222 @@ export default function DiscordProfile() {
               transition={{ duration: 0.3 }}
               className="mb-6 p-4 bg-white/5 rounded-lg border border-white/10 mx-6"
             >
-              {/* Componente Spotify Timer */}
+              {/* Componente Spotify Timer com sincronização robusta */}
               {(() => {
                 const SpotifyTimer = () => {
                   const [currentTime, setCurrentTime] = useState(0);
                   const [totalDuration, setTotalDuration] = useState(0);
+                  const browserInfoRef = useRef<ReturnType<typeof getBrowserInfo> | null>(null);
+                  const browserOffsetRef = useRef<number>(0);
+                  const animationFrameRef = useRef<number | null>(null);
 
                   useEffect(() => {
-                    const updateTime = () => {
-                      const now = Date.now();
-                      const elapsed = Math.floor((now - spotify.timestamps.start) / 1000);
-                      const duration = Math.floor((spotify.timestamps.end - spotify.timestamps.start) / 1000);
-                      
-                      setCurrentTime(Math.max(0, elapsed));
-                      setTotalDuration(Math.max(1, duration));
+                    if (!spotify) {
+                      setCurrentTime(0);
+                      setTotalDuration(0);
+                      if (animationFrameRef.current) {
+                        cancelAnimationFrame(animationFrameRef.current);
+                        animationFrameRef.current = null;
+                      }
+                      return;
+                    }
+
+                    // Detecta navegador e obtém configurações
+                    if (!browserInfoRef.current) {
+                      browserInfoRef.current = getBrowserInfo();
+                      browserOffsetRef.current = getSyncOffset();
+                    }
+
+                    const start = spotify.timestamps.start;
+                    const end = spotify.timestamps.end;
+                    const duration = Math.max(1, (end - start) / 1000);
+                    const resyncIntervalMs = getResyncInterval();
+                    const driftThreshold = getDriftThreshold();
+
+                    // Usa múltiplas fontes de tempo para maior precisão
+                    let lastDateNow = Date.now();
+                    let lastPerformanceNow = performance.now();
+                    let timeCorrection = 0;
+
+                    // Calcula tempo baseado no timestamp do Spotify com offset e correção
+                    const calculateElapsed = () => {
+                      const nowMs = Date.now();
+                      const perfNow = performance.now();
+
+                      const perfDelta = perfNow - lastPerformanceNow;
+                      const dateDelta = nowMs - lastDateNow;
+
+                      let adjustedNow = nowMs;
+
+                      if (Math.abs(perfDelta - dateDelta) > 100) {
+                        adjustedNow = nowMs;
+                      } else {
+                        const dateWeight = browserInfoRef.current?.isIOS ? 0.7 : 0.6;
+                        const perfWeight = 1 - dateWeight;
+                        adjustedNow = nowMs * dateWeight + (lastDateNow + perfDelta) * perfWeight;
+                      }
+
+                      adjustedNow = adjustedNow + browserOffsetRef.current + timeCorrection;
+                      const elapsed = (adjustedNow - start) / 1000;
+
+                      // Garante que o tempo nunca seja negativo ou maior que a duração
+                      if (elapsed < 0) return 0;
+                      if (elapsed < 2 && elapsed >= -1) return 0;
+                      return Math.max(0, Math.min(elapsed, duration));
                     };
 
-                    // Atualizar imediatamente
+                    setTotalDuration(duration);
+
+                    // Inicializa com o tempo atual
+                    let baseElapsed = calculateElapsed();
+                    let baseTimestamp = performance.now();
+                    let baseDateTimestamp = Date.now();
+                    let lastUpdateTime = baseElapsed;
+                    let consecutiveDrifts = 0;
+
+                    // Função de atualização usando RAF para suavidade
+                    const updateTime = () => {
+                      if (!spotify) return;
+
+                      const perfNow = performance.now();
+                      const deltaSeconds = (perfNow - baseTimestamp) / 1000;
+                      const calculatedTime = baseElapsed + deltaSeconds;
+                      const clampedTime = Math.max(0, Math.min(calculatedTime, duration));
+
+                      const updateThreshold = browserInfoRef.current?.isIOS ? 0.025 : 0.03;
+                      if (Math.abs(clampedTime - lastUpdateTime) >= updateThreshold) {
+                        setCurrentTime(clampedTime);
+                        lastUpdateTime = clampedTime;
+                      }
+
+                      animationFrameRef.current = requestAnimationFrame(updateTime);
+                    };
+
+                    // Resync periódico melhorado
+                    const resync = () => {
+                      if (!spotify) return;
+
+                      const actualElapsed = calculateElapsed();
+                      const perfNow = performance.now();
+                      const dateNow = Date.now();
+
+                      const perfDelta = (perfNow - baseTimestamp) / 1000;
+                      const dateDelta = (dateNow - baseDateTimestamp) / 1000;
+
+                      const dateWeight = browserInfoRef.current?.isIOS ? 0.7 : 0.6;
+                      const perfWeight = 1 - dateWeight;
+                      const expectedElapsed = baseElapsed + dateDelta * dateWeight + perfDelta * perfWeight;
+
+                      const drift = actualElapsed - expectedElapsed;
+                      const driftAbs = Math.abs(drift);
+
+                      if (driftAbs > driftThreshold) {
+                        const correctionFactor = browserInfoRef.current?.isIOS ? 0.8 : 0.85;
+                        const smoothCorrection = drift * (1 - correctionFactor);
+                        timeCorrection += smoothCorrection * 1000;
+
+                        baseElapsed = actualElapsed * correctionFactor + expectedElapsed * (1 - correctionFactor);
+                        baseTimestamp = perfNow;
+                        baseDateTimestamp = dateNow;
+                        setCurrentTime(Math.max(0, Math.min(actualElapsed, duration)));
+                        lastUpdateTime = actualElapsed;
+                        lastDateNow = dateNow;
+                        lastPerformanceNow = perfNow;
+
+                        consecutiveDrifts++;
+
+                        const minDriftForCalibration = browserInfoRef.current?.isIOS ? 0.08 : 0.15;
+                        if (driftAbs > minDriftForCalibration) {
+                          const driftMs = drift * 1000;
+                          recordDriftMeasurement(driftMs);
+
+                          const newOffset = getSyncOffset();
+                          const offsetChangeThreshold = browserInfoRef.current?.isIOS ? 5 : 8;
+                          if (Math.abs(newOffset - browserOffsetRef.current) > offsetChangeThreshold) {
+                            browserOffsetRef.current = newOffset;
+                          }
+                        }
+                      } else {
+                        consecutiveDrifts = 0;
+                        timeCorrection *= 0.95;
+                      }
+
+                      if (consecutiveDrifts > 5) {
+                        baseElapsed = calculateElapsed();
+                        baseTimestamp = performance.now();
+                        baseDateTimestamp = Date.now();
+                        timeCorrection = 0;
+                        consecutiveDrifts = 0;
+                      }
+                    };
+
+                    // Inicia loop de atualização
                     updateTime();
-                    
-                    // Atualizar a cada segundo
-                    const interval = setInterval(updateTime, 1000);
 
-                    return () => clearInterval(interval);
-                  }, [spotify.timestamps]);
+                    // Resync com intervalo dinâmico
+                    const resyncIntervalId = setInterval(resync, resyncIntervalMs);
 
-                  const progress = totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0;
-                  const remaining = Math.max(0, totalDuration - currentTime);
+                    // Resync inicial
+                    const initialDelay = browserInfoRef.current?.isIOS ? 100 : 150;
+                    const initialResyncTimeout = setTimeout(() => {
+                      const actualElapsed = calculateElapsed();
+                      baseElapsed = actualElapsed;
+                      baseTimestamp = performance.now();
+                      baseDateTimestamp = Date.now();
+                      lastDateNow = Date.now();
+                      lastPerformanceNow = performance.now();
+                      setCurrentTime(Math.max(0, Math.min(actualElapsed, duration)));
+                      lastUpdateTime = actualElapsed;
+                      timeCorrection = 0;
+                    }, initialDelay);
+
+                    // Resync quando volta ao foreground
+                    const handleVisibilityChange = () => {
+                      if (!document.hidden && spotify) {
+                        const actualElapsed = calculateElapsed();
+                        baseElapsed = actualElapsed;
+                        baseTimestamp = performance.now();
+                        baseDateTimestamp = Date.now();
+                        lastDateNow = Date.now();
+                        lastPerformanceNow = performance.now();
+                        setCurrentTime(Math.max(0, Math.min(actualElapsed, duration)));
+                        lastUpdateTime = actualElapsed;
+                        timeCorrection = 0;
+                        consecutiveDrifts = 0;
+                      }
+                    };
+
+                    const handleFocus = () => {
+                      if (spotify && !document.hidden) {
+                        const actualElapsed = calculateElapsed();
+                        baseElapsed = actualElapsed;
+                        baseTimestamp = performance.now();
+                        baseDateTimestamp = Date.now();
+                        setCurrentTime(Math.max(0, Math.min(actualElapsed, duration)));
+                        lastUpdateTime = actualElapsed;
+                      }
+                    };
+
+                    document.addEventListener("visibilitychange", handleVisibilityChange);
+                    window.addEventListener("focus", handleFocus);
+
+                    return () => {
+                      if (animationFrameRef.current) {
+                        cancelAnimationFrame(animationFrameRef.current);
+                        animationFrameRef.current = null;
+                      }
+                      clearInterval(resyncIntervalId);
+                      clearTimeout(initialResyncTimeout);
+                      document.removeEventListener("visibilitychange", handleVisibilityChange);
+                      window.removeEventListener("focus", handleFocus);
+                    };
+                  }, [spotify]);
+
+                  // Garante valores válidos e não-negativos
+                  const safeCurrentTime = Math.max(0, Math.min(currentTime || 0, totalDuration || 0));
+                  const safeTotalDuration = Math.max(1, totalDuration || 0);
+                  const progress = safeTotalDuration > 0 ? (safeCurrentTime / safeTotalDuration) * 100 : 0;
+                  const remaining = Math.max(0, safeTotalDuration - safeCurrentTime);
 
                   return (
                     <div className="flex items-center gap-3">
@@ -1158,7 +1356,7 @@ export default function DiscordProfile() {
                         
                         {/* Timer */}
                         <div className="flex items-center justify-between text-xs text-gray-400">
-                          <span>{formatMusicTime(currentTime)}</span>
+                          <span>{formatMusicTime(safeCurrentTime)}</span>
                           <span>-{formatMusicTime(remaining)}</span>
                         </div>
                       </div>
