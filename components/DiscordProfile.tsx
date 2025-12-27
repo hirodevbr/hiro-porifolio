@@ -98,6 +98,20 @@ export default function DiscordProfile() {
     triggerOnce: true,
     threshold: 0.1,
   });
+  
+  // Estado para controlar se já animou (evita piscar em re-renders)
+  const [hasAnimated, setHasAnimated] = useState(false);
+  
+  useEffect(() => {
+    if (inView && !hasAnimated) {
+      setHasAnimated(true);
+    }
+  }, [inView, hasAnimated]);
+  
+  // Memoiza o valor de animate para evitar recriação em re-renders
+  const animateProps = useMemo(() => {
+    return hasAnimated ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 };
+  }, [hasAnimated]);
 
   const { data: discordDataRaw, loading, error: lanyardError } = useLanyardUser(DISCORD_USER_ID);
   const discordData = (discordDataRaw as DiscordData | null) ?? null;
@@ -959,10 +973,17 @@ export default function DiscordProfile() {
         </motion.div>
 
         <motion.div
+          key="discord-profile-card"
           initial={{ opacity: 0, y: 30 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
+          animate={animateProps}
           whileHover={{ y: -6, scale: 1.01 }}
-          transition={{ duration: 0.5, type: "spring", stiffness: 220, damping: 18 }}
+          transition={{ 
+            duration: 0.5, 
+            type: "spring", 
+            stiffness: 220, 
+            damping: 18,
+            opacity: { duration: 0.3 }
+          }}
           className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-white/10 hover:border-white/20 transition-all overflow-hidden"
         >
           {/* Perfil do Discord */}
