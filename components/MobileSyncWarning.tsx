@@ -34,11 +34,8 @@ export default function MobileSyncWarning() {
       setIsMobile(mobile);
       
       if (mobile) {
-        // Verifica se o usuário já viu o aviso
-        const hasSeenWarning = localStorage.getItem("mobile_sync_warning_dismissed");
-        if (!hasSeenWarning) {
-          setShow(true);
-        }
+        // Sempre mostra em mobile
+        setShow(true);
       }
     };
 
@@ -47,8 +44,7 @@ export default function MobileSyncWarning() {
 
   const handleDismiss = () => {
     setShow(false);
-    // Salva no localStorage para não mostrar novamente
-    localStorage.setItem("mobile_sync_warning_dismissed", "true");
+    // Não salva no localStorage - aparece toda vez que abrir o site
   };
 
   if (!isMobile || !show) return null;
