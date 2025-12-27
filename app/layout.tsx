@@ -4,6 +4,7 @@ import "./globals.css";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import RegisterSW from "@/components/RegisterSW";
 import Analytics from "@/components/Analytics";
+import MobileSyncWarning from "@/components/MobileSyncWarning";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -102,6 +103,7 @@ export default function RootLayout({
           {children}
           <RegisterSW />
           <Analytics />
+          <MobileSyncWarning />
         </LanguageProvider>
       </body>
     </html>
