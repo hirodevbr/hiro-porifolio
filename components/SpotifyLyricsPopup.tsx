@@ -121,15 +121,30 @@ export default function SpotifyLyricsPopup() {
     let lastDateNow = Date.now();
     let lastPerformanceNow = performance.now();
     let timeCorrection = 0; // Correção acumulada de tempo
+    const isIOS = browserInfoRef.current?.isIOS ?? false;
 
     // Calcula tempo baseado no timestamp do Spotify com offset e correção
-    // Usa múltiplas fontes de tempo para todos os navegadores para maior precisão
+    // No iOS, usa APENAS Date.now() porque performance.now() é suspenso quando o app é minimizado
     const calculateElapsed = () => {
       const nowMs = Date.now();
-      const perfNow = performance.now();
       
-      // Para todos os navegadores, usa combinação de Date.now() e performance.now()
-      // para compensar diferenças e melhorar precisão
+      // No iOS, usa APENAS Date.now() para evitar problemas de suspensão
+      if (isIOS) {
+        const adjustedNow = nowMs + browserOffsetRef.current + timeCorrection;
+        const elapsed = (adjustedNow - start) / 1000;
+        
+        // Janela pequena para evitar flicker quando a presença chega levemente antes/depois
+        const windowStart = 0.5;
+        if (elapsed < 2 && elapsed >= windowStart) {
+          if (elapsed < 0.5) return 0;
+          return elapsed;
+        }
+        
+        return clamp(elapsed, 0, duration);
+      }
+      
+      // Para outros navegadores, usa combinação de Date.now() e performance.now()
+      const perfNow = performance.now();
       const perfDelta = perfNow - lastPerformanceNow;
       const dateDelta = nowMs - lastDateNow;
       
@@ -139,11 +154,9 @@ export default function SpotifyLyricsPopup() {
       if (Math.abs(perfDelta - dateDelta) > 100) {
         adjustedNow = nowMs;
       } else {
-        // Média ponderada adaptativa baseada no navegador
-        // iOS: 70% Date.now, 30% performance.now (performance.now menos confiável)
-        // Outros: 60% Date.now, 40% performance.now (melhor balanceamento)
-        const dateWeight = browserInfoRef.current?.isIOS ? 0.7 : 0.6;
-        const perfWeight = 1 - dateWeight;
+        // Média ponderada: 60% Date.now, 40% performance.now
+        const dateWeight = 0.6;
+        const perfWeight = 0.4;
         adjustedNow = nowMs * dateWeight + (lastDateNow + perfDelta) * perfWeight;
       }
       
@@ -152,12 +165,10 @@ export default function SpotifyLyricsPopup() {
       const elapsed = (adjustedNow - start) / 1000;
 
       // Janela pequena para evitar flicker quando a presença chega levemente antes/depois
-      // Para iOS, janela mais restritiva para evitar começar tarde
-      const windowStart = browserInfoRef.current?.isIOS ? 0.5 : -1;
+      const windowStart = -1;
       if (elapsed < 2 && elapsed >= windowStart) {
-        // Se está muito no início, retorna 0 (especialmente importante para iOS)
         if (elapsed < 0.5) return 0;
-        return elapsed; // Permite valores pequenos positivos
+        return elapsed;
       }
 
       // Limita à duração (sem redução de 99% para manter sincronia com letra)
@@ -166,7 +177,7 @@ export default function SpotifyLyricsPopup() {
 
     // Inicializa com o tempo atual
     let baseElapsed = calculateElapsed();
-    let baseTimestamp = performance.now();
+    let baseTimestamp = isIOS ? Date.now() : performance.now();
     let baseDateTimestamp = Date.now();
     let lastUpdateTime = baseElapsed;
     let lastResyncTime = Date.now();
@@ -176,21 +187,30 @@ export default function SpotifyLyricsPopup() {
     const updateTime = () => {
       if (!spotify) return;
 
-      const perfNow = performance.now();
-      const dateNow = Date.now();
-      const deltaSeconds = (perfNow - baseTimestamp) / 1000;
-      const calculatedTime = baseElapsed + deltaSeconds;
+      // No iOS, usa apenas Date.now() para evitar problemas de suspensão
+      if (isIOS) {
+        const dateNow = Date.now();
+        const deltaSeconds = (dateNow - baseDateTimestamp) / 1000;
+        const calculatedTime = baseElapsed + deltaSeconds;
+        const clampedTime = clamp(calculatedTime, 0, duration);
 
-      // Limita ao tempo total da música
-      // Limita à duração (sem redução para manter sincronia)
-      const clampedTime = clamp(calculatedTime, 0, duration);
+        const updateThreshold = 0.02;
+        if (Math.abs(clampedTime - lastUpdateTime) >= updateThreshold) {
+          setCurrentTime(clampedTime);
+          lastUpdateTime = clampedTime;
+        }
+      } else {
+        const perfNow = performance.now();
+        const dateNow = Date.now();
+        const deltaSeconds = (perfNow - baseTimestamp) / 1000;
+        const calculatedTime = baseElapsed + deltaSeconds;
+        const clampedTime = clamp(calculatedTime, 0, duration);
 
-      // Atualiza com threshold menor para todos os navegadores (melhor responsividade)
-      // Threshold menor para atualização mais suave e responsiva da barra de progresso
-      const updateThreshold = browserInfoRef.current?.isIOS ? 0.02 : 0.025;
-      if (Math.abs(clampedTime - lastUpdateTime) >= updateThreshold) {
-        setCurrentTime(clampedTime);
-        lastUpdateTime = clampedTime;
+        const updateThreshold = 0.025;
+        if (Math.abs(clampedTime - lastUpdateTime) >= updateThreshold) {
+          setCurrentTime(clampedTime);
+          lastUpdateTime = clampedTime;
+        }
       }
 
       animationFrameRef.current = requestAnimationFrame(updateTime);
@@ -201,71 +221,105 @@ export default function SpotifyLyricsPopup() {
       if (!spotify) return;
 
       const actualElapsed = calculateElapsed();
-      const perfNow = performance.now();
       const dateNow = Date.now();
       
-      // Calcula tempo esperado usando ambas as fontes para todos os navegadores
-      const perfDelta = (perfNow - baseTimestamp) / 1000;
-      const dateDelta = (dateNow - baseDateTimestamp) / 1000;
-      
-      // Usa média ponderada adaptativa para todos os navegadores
-      // iOS: 70% Date.now, 30% performance.now
-      // Outros: 60% Date.now, 40% performance.now
-      const dateWeight = browserInfoRef.current?.isIOS ? 0.7 : 0.6;
-      const perfWeight = 1 - dateWeight;
-      const expectedElapsed = baseElapsed + dateDelta * dateWeight + perfDelta * perfWeight;
-      
-      const drift = actualElapsed - expectedElapsed;
-      const driftAbs = Math.abs(drift);
+      // No iOS, usa apenas Date.now() para calcular o tempo esperado
+      if (isIOS) {
+        const dateDelta = (dateNow - baseDateTimestamp) / 1000;
+        const expectedElapsed = baseElapsed + dateDelta;
+        const drift = actualElapsed - expectedElapsed;
+        const driftAbs = Math.abs(drift);
 
-      // Se o drift for maior que o threshold, resincroniza
-      if (driftAbs > driftThreshold) {
-        // Suaviza a correção para evitar saltos bruscos (aplicado a todos)
-        // iOS: correção mais agressiva (0.8), outros: mais suave (0.85)
-        const correctionFactor = browserInfoRef.current?.isIOS ? 0.8 : 0.85;
-        const smoothCorrection = drift * (1 - correctionFactor);
-        timeCorrection += smoothCorrection * 1000; // Converte para ms
-        
-        // Atualiza base com suavização
-        baseElapsed = actualElapsed * correctionFactor + expectedElapsed * (1 - correctionFactor);
-        baseTimestamp = perfNow;
-        baseDateTimestamp = dateNow;
-        setCurrentTime(clamp(actualElapsed, 0, duration));
-        lastUpdateTime = actualElapsed;
-        lastDateNow = dateNow;
-        lastPerformanceNow = perfNow;
+        if (driftAbs > driftThreshold) {
+          const correctionFactor = 0.8;
+          const smoothCorrection = drift * (1 - correctionFactor);
+          timeCorrection += smoothCorrection * 1000;
+          
+          baseElapsed = actualElapsed * correctionFactor + expectedElapsed * (1 - correctionFactor);
+          baseDateTimestamp = dateNow;
+          setCurrentTime(clamp(actualElapsed, 0, duration));
+          lastUpdateTime = actualElapsed;
+          lastDateNow = dateNow;
 
-        consecutiveDrifts++;
-        
-        // Registra drift para calibração (threshold menor para todos)
-        const minDriftForCalibration = browserInfoRef.current?.isIOS ? 0.08 : 0.15;
-        if (driftAbs > minDriftForCalibration) {
-          const driftMs = drift * 1000;
-          recordDriftMeasurement(driftMs);
+          consecutiveDrifts++;
+          
+          const minDriftForCalibration = 0.08;
+          if (driftAbs > minDriftForCalibration) {
+            const driftMs = drift * 1000;
+            recordDriftMeasurement(driftMs);
 
-          // Atualiza offset se calibração mudou significativamente
-          const newOffset = getSyncOffset();
-          // Threshold menor para todos (mais responsivo)
-          const offsetChangeThreshold = browserInfoRef.current?.isIOS ? 5 : 8;
-          if (Math.abs(newOffset - browserOffsetRef.current) > offsetChangeThreshold) {
-            browserOffsetRef.current = newOffset;
-            console.log("🔧 Offset de sincronização atualizado:", newOffset, "ms");
+            const newOffset = getSyncOffset();
+            const offsetChangeThreshold = 5;
+            if (Math.abs(newOffset - browserOffsetRef.current) > offsetChangeThreshold) {
+              browserOffsetRef.current = newOffset;
+              console.log("🔧 Offset de sincronização atualizado:", newOffset, "ms");
+            }
           }
+        } else {
+          consecutiveDrifts = 0;
+          timeCorrection *= 0.95;
+        }
+
+        if (consecutiveDrifts > 5) {
+          baseElapsed = calculateElapsed();
+          baseDateTimestamp = Date.now();
+          timeCorrection = 0;
+          consecutiveDrifts = 0;
+          console.log("🔄 Resync forçado devido a múltiplos drifts");
         }
       } else {
-        consecutiveDrifts = 0;
-        // Reduz correção gradualmente se não há drift (aplicado a todos)
-        timeCorrection *= 0.95;
-      }
+        // Para outros navegadores, usa ambas as fontes
+        const perfNow = performance.now();
+        const perfDelta = (perfNow - baseTimestamp) / 1000;
+        const dateDelta = (dateNow - baseDateTimestamp) / 1000;
+        
+        const dateWeight = 0.6;
+        const perfWeight = 0.4;
+        const expectedElapsed = baseElapsed + dateDelta * dateWeight + perfDelta * perfWeight;
+        
+        const drift = actualElapsed - expectedElapsed;
+        const driftAbs = Math.abs(drift);
 
-      // Se há muitos drifts consecutivos, força resync mais agressivo
-      if (consecutiveDrifts > 5) {
-        baseElapsed = calculateElapsed();
-        baseTimestamp = performance.now();
-        baseDateTimestamp = Date.now();
-        timeCorrection = 0;
-        consecutiveDrifts = 0;
-        console.log("🔄 Resync forçado devido a múltiplos drifts");
+        if (driftAbs > driftThreshold) {
+          const correctionFactor = 0.85;
+          const smoothCorrection = drift * (1 - correctionFactor);
+          timeCorrection += smoothCorrection * 1000;
+          
+          baseElapsed = actualElapsed * correctionFactor + expectedElapsed * (1 - correctionFactor);
+          baseTimestamp = perfNow;
+          baseDateTimestamp = dateNow;
+          setCurrentTime(clamp(actualElapsed, 0, duration));
+          lastUpdateTime = actualElapsed;
+          lastDateNow = dateNow;
+          lastPerformanceNow = perfNow;
+
+          consecutiveDrifts++;
+          
+          const minDriftForCalibration = 0.15;
+          if (driftAbs > minDriftForCalibration) {
+            const driftMs = drift * 1000;
+            recordDriftMeasurement(driftMs);
+
+            const newOffset = getSyncOffset();
+            const offsetChangeThreshold = 8;
+            if (Math.abs(newOffset - browserOffsetRef.current) > offsetChangeThreshold) {
+              browserOffsetRef.current = newOffset;
+              console.log("🔧 Offset de sincronização atualizado:", newOffset, "ms");
+            }
+          }
+        } else {
+          consecutiveDrifts = 0;
+          timeCorrection *= 0.95;
+        }
+
+        if (consecutiveDrifts > 5) {
+          baseElapsed = calculateElapsed();
+          baseTimestamp = performance.now();
+          baseDateTimestamp = Date.now();
+          timeCorrection = 0;
+          consecutiveDrifts = 0;
+          console.log("🔄 Resync forçado devido a múltiplos drifts");
+        }
       }
     };
 
@@ -276,13 +330,15 @@ export default function SpotifyLyricsPopup() {
     const resyncIntervalId = setInterval(resync, resyncIntervalMs);
 
     // Resync inicial - zera timeCorrection e recalcula do zero
-    const initialDelay = browserInfoRef.current?.isIOS ? 100 : 150;
+    const initialDelay = isIOS ? 100 : 150;
     const initialResyncTimeout = setTimeout(() => {
       // Zera correção e recalcula do zero para garantir início correto
       timeCorrection = 0;
       browserOffsetRef.current = getSyncOffset(); // Recarrega offset (pode ter mudado)
       lastDateNow = Date.now();
-      lastPerformanceNow = performance.now();
+      if (!isIOS) {
+        lastPerformanceNow = performance.now();
+      }
       
       // Recalcula elapsed sem correções acumuladas
       const nowMs = Date.now();
@@ -290,7 +346,7 @@ export default function SpotifyLyricsPopup() {
       const actualElapsed = Math.max(0, (adjustedNow - start) / 1000);
       
       baseElapsed = Math.min(actualElapsed, duration);
-      baseTimestamp = performance.now();
+      baseTimestamp = isIOS ? Date.now() : performance.now();
       baseDateTimestamp = Date.now();
       setCurrentTime(clamp(baseElapsed, 0, duration));
       lastUpdateTime = baseElapsed;
@@ -300,17 +356,20 @@ export default function SpotifyLyricsPopup() {
     const handleVisibilityChange = () => {
       if (!document.hidden && spotify) {
         // Força resync completo quando volta ao foreground
+        // No iOS, recalcula baseado apenas em Date.now() porque performance.now() foi suspenso
         const actualElapsed = calculateElapsed();
         baseElapsed = actualElapsed;
-        baseTimestamp = performance.now();
+        baseTimestamp = isIOS ? Date.now() : performance.now();
         baseDateTimestamp = Date.now();
         lastDateNow = Date.now();
-        lastPerformanceNow = performance.now();
+        if (!isIOS) {
+          lastPerformanceNow = performance.now();
+        }
         setCurrentTime(clamp(actualElapsed, 0, duration));
         lastUpdateTime = actualElapsed;
         timeCorrection = 0;
         consecutiveDrifts = 0;
-        console.log("👁️ Resync após voltar ao foreground");
+        console.log("👁️ Resync após voltar ao foreground", isIOS ? "(iOS - usando apenas Date.now())" : "");
       }
     };
 
@@ -319,7 +378,7 @@ export default function SpotifyLyricsPopup() {
       if (spotify && !document.hidden) {
         const actualElapsed = calculateElapsed();
         baseElapsed = actualElapsed;
-        baseTimestamp = performance.now();
+        baseTimestamp = isIOS ? Date.now() : performance.now();
         baseDateTimestamp = Date.now();
         setCurrentTime(clamp(actualElapsed, 0, duration));
         lastUpdateTime = actualElapsed;

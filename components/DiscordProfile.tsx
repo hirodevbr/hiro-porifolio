@@ -1138,12 +1138,29 @@ export default function DiscordProfile() {
                     let lastDateNow = Date.now();
                     let lastPerformanceNow = performance.now();
                     let timeCorrection = 0;
+                    const isIOS = browserInfoRef.current?.isIOS ?? false;
 
                     // Calcula tempo baseado no timestamp do Spotify com offset e correção
+                    // No iOS, usa APENAS Date.now() porque performance.now() é suspenso quando o app é minimizado
                     const calculateElapsed = () => {
                       const nowMs = Date.now();
+                      
+                      // No iOS, usa APENAS Date.now() para evitar problemas de suspensão
+                      if (isIOS) {
+                        const adjustedNow = nowMs + browserOffsetRef.current + timeCorrection;
+                        const elapsed = (adjustedNow - start) / 1000;
+                        
+                        if (elapsed < 0) return 0;
+                        const windowStart = 0.5;
+                        if (elapsed < 2 && elapsed >= windowStart) {
+                          if (elapsed < 0.5) return 0;
+                          return elapsed;
+                        }
+                        return Math.max(0, Math.min(elapsed, duration));
+                      }
+                      
+                      // Para outros navegadores, usa combinação de Date.now() e performance.now()
                       const perfNow = performance.now();
-
                       const perfDelta = perfNow - lastPerformanceNow;
                       const dateDelta = nowMs - lastDateNow;
 
@@ -1152,29 +1169,26 @@ export default function DiscordProfile() {
                       if (Math.abs(perfDelta - dateDelta) > 100) {
                         adjustedNow = nowMs;
                       } else {
-                        const dateWeight = browserInfoRef.current?.isIOS ? 0.7 : 0.6;
-                        const perfWeight = 1 - dateWeight;
+                        const dateWeight = 0.6;
+                        const perfWeight = 0.4;
                         adjustedNow = nowMs * dateWeight + (lastDateNow + perfDelta) * perfWeight;
                       }
 
                       adjustedNow = adjustedNow + browserOffsetRef.current + timeCorrection;
                       const elapsed = (adjustedNow - start) / 1000;
 
-                      // Garante que o tempo nunca seja negativo ou maior que a duração
                       if (elapsed < 0) return 0;
-                      // Para iOS, janela mais restritiva para evitar começar tarde
-                      const windowStart = browserInfoRef.current?.isIOS ? 0.5 : -1;
+                      const windowStart = -1;
                       if (elapsed < 2 && elapsed >= windowStart) {
                         if (elapsed < 0.5) return 0;
                         return elapsed;
                       }
-                      // Limita à duração
                       return Math.max(0, Math.min(elapsed, duration));
                     };
 
                     // Inicializa com o tempo atual
                     let baseElapsed = calculateElapsed();
-                    let baseTimestamp = performance.now();
+                    let baseTimestamp = isIOS ? Date.now() : performance.now();
                     let baseDateTimestamp = Date.now();
                     let lastUpdateTime = baseElapsed;
                     let consecutiveDrifts = 0;
@@ -1183,19 +1197,29 @@ export default function DiscordProfile() {
                     const updateTime = () => {
                       if (!spotify) return;
 
-                      const perfNow = performance.now();
-                      const deltaSeconds = (perfNow - baseTimestamp) / 1000;
-                      const calculatedTime = baseElapsed + deltaSeconds;
-                      // Limita rigorosamente à duração (especialmente para iOS)
-                      const maxTime = browserInfoRef.current?.isIOS ? duration * 0.99 : duration;
-                      const clampedTime = Math.max(0, Math.min(calculatedTime, maxTime));
+                      // No iOS, usa apenas Date.now() para evitar problemas de suspensão
+                      if (isIOS) {
+                        const dateNow = Date.now();
+                        const deltaSeconds = (dateNow - baseDateTimestamp) / 1000;
+                        const calculatedTime = baseElapsed + deltaSeconds;
+                        const clampedTime = Math.max(0, Math.min(calculatedTime, duration));
 
-                      // Atualiza mais frequentemente para suavidade (especialmente para barra de progresso)
-                      // Threshold menor para atualização mais suave e responsiva
-                      const updateThreshold = browserInfoRef.current?.isIOS ? 0.02 : 0.025;
-                      if (Math.abs(clampedTime - lastUpdateTime) >= updateThreshold) {
-                        setCurrentTime(clampedTime);
-                        lastUpdateTime = clampedTime;
+                        const updateThreshold = 0.02;
+                        if (Math.abs(clampedTime - lastUpdateTime) >= updateThreshold) {
+                          setCurrentTime(clampedTime);
+                          lastUpdateTime = clampedTime;
+                        }
+                      } else {
+                        const perfNow = performance.now();
+                        const deltaSeconds = (perfNow - baseTimestamp) / 1000;
+                        const calculatedTime = baseElapsed + deltaSeconds;
+                        const clampedTime = Math.max(0, Math.min(calculatedTime, duration));
+
+                        const updateThreshold = 0.025;
+                        if (Math.abs(clampedTime - lastUpdateTime) >= updateThreshold) {
+                          setCurrentTime(clampedTime);
+                          lastUpdateTime = clampedTime;
+                        }
                       }
 
                       animationFrameRef.current = requestAnimationFrame(updateTime);
@@ -1206,58 +1230,101 @@ export default function DiscordProfile() {
                       if (!spotify) return;
 
                       const actualElapsed = calculateElapsed();
-                      const perfNow = performance.now();
                       const dateNow = Date.now();
+                      
+                      // No iOS, usa apenas Date.now() para calcular o tempo esperado
+                      if (isIOS) {
+                        const dateDelta = (dateNow - baseDateTimestamp) / 1000;
+                        const expectedElapsed = baseElapsed + dateDelta;
+                        const drift = actualElapsed - expectedElapsed;
+                        const driftAbs = Math.abs(drift);
 
-                      const perfDelta = (perfNow - baseTimestamp) / 1000;
-                      const dateDelta = (dateNow - baseDateTimestamp) / 1000;
+                        if (driftAbs > driftThreshold) {
+                          const correctionFactor = 0.8;
+                          const smoothCorrection = drift * (1 - correctionFactor);
+                          timeCorrection += smoothCorrection * 1000;
 
-                      const dateWeight = browserInfoRef.current?.isIOS ? 0.7 : 0.6;
-                      const perfWeight = 1 - dateWeight;
-                      const expectedElapsed = baseElapsed + dateDelta * dateWeight + perfDelta * perfWeight;
+                          baseElapsed = actualElapsed * correctionFactor + expectedElapsed * (1 - correctionFactor);
+                          baseDateTimestamp = dateNow;
+                          setCurrentTime(Math.max(0, Math.min(actualElapsed, duration)));
+                          lastUpdateTime = actualElapsed;
+                          lastDateNow = dateNow;
 
-                      const drift = actualElapsed - expectedElapsed;
-                      const driftAbs = Math.abs(drift);
+                          consecutiveDrifts++;
 
-                      if (driftAbs > driftThreshold) {
-                        const correctionFactor = browserInfoRef.current?.isIOS ? 0.8 : 0.85;
-                        const smoothCorrection = drift * (1 - correctionFactor);
-                        timeCorrection += smoothCorrection * 1000;
+                          const minDriftForCalibration = 0.08;
+                          if (driftAbs > minDriftForCalibration) {
+                            const driftMs = drift * 1000;
+                            recordDriftMeasurement(driftMs);
 
-                        baseElapsed = actualElapsed * correctionFactor + expectedElapsed * (1 - correctionFactor);
-                        baseTimestamp = perfNow;
-                        baseDateTimestamp = dateNow;
-                        // Limita rigorosamente à duração
-                        const maxTime = browserInfoRef.current?.isIOS ? duration * 0.99 : duration;
-                        setCurrentTime(Math.max(0, Math.min(actualElapsed, maxTime)));
-                        lastUpdateTime = actualElapsed;
-                        lastDateNow = dateNow;
-                        lastPerformanceNow = perfNow;
-
-                        consecutiveDrifts++;
-
-                        const minDriftForCalibration = browserInfoRef.current?.isIOS ? 0.08 : 0.15;
-                        if (driftAbs > minDriftForCalibration) {
-                          const driftMs = drift * 1000;
-                          recordDriftMeasurement(driftMs);
-
-                          const newOffset = getSyncOffset();
-                          const offsetChangeThreshold = browserInfoRef.current?.isIOS ? 5 : 8;
-                          if (Math.abs(newOffset - browserOffsetRef.current) > offsetChangeThreshold) {
-                            browserOffsetRef.current = newOffset;
+                            const newOffset = getSyncOffset();
+                            const offsetChangeThreshold = 5;
+                            if (Math.abs(newOffset - browserOffsetRef.current) > offsetChangeThreshold) {
+                              browserOffsetRef.current = newOffset;
+                            }
                           }
+                        } else {
+                          consecutiveDrifts = 0;
+                          timeCorrection *= 0.95;
+                        }
+
+                        if (consecutiveDrifts > 5) {
+                          baseElapsed = calculateElapsed();
+                          baseDateTimestamp = Date.now();
+                          timeCorrection = 0;
+                          consecutiveDrifts = 0;
                         }
                       } else {
-                        consecutiveDrifts = 0;
-                        timeCorrection *= 0.95;
-                      }
+                        // Para outros navegadores, usa ambas as fontes
+                        const perfNow = performance.now();
+                        const perfDelta = (perfNow - baseTimestamp) / 1000;
+                        const dateDelta = (dateNow - baseDateTimestamp) / 1000;
 
-                      if (consecutiveDrifts > 5) {
-                        baseElapsed = calculateElapsed();
-                        baseTimestamp = performance.now();
-                        baseDateTimestamp = Date.now();
-                        timeCorrection = 0;
-                        consecutiveDrifts = 0;
+                        const dateWeight = 0.6;
+                        const perfWeight = 0.4;
+                        const expectedElapsed = baseElapsed + dateDelta * dateWeight + perfDelta * perfWeight;
+
+                        const drift = actualElapsed - expectedElapsed;
+                        const driftAbs = Math.abs(drift);
+
+                        if (driftAbs > driftThreshold) {
+                          const correctionFactor = 0.85;
+                          const smoothCorrection = drift * (1 - correctionFactor);
+                          timeCorrection += smoothCorrection * 1000;
+
+                          baseElapsed = actualElapsed * correctionFactor + expectedElapsed * (1 - correctionFactor);
+                          baseTimestamp = perfNow;
+                          baseDateTimestamp = dateNow;
+                          setCurrentTime(Math.max(0, Math.min(actualElapsed, duration)));
+                          lastUpdateTime = actualElapsed;
+                          lastDateNow = dateNow;
+                          lastPerformanceNow = perfNow;
+
+                          consecutiveDrifts++;
+
+                          const minDriftForCalibration = 0.15;
+                          if (driftAbs > minDriftForCalibration) {
+                            const driftMs = drift * 1000;
+                            recordDriftMeasurement(driftMs);
+
+                            const newOffset = getSyncOffset();
+                            const offsetChangeThreshold = 8;
+                            if (Math.abs(newOffset - browserOffsetRef.current) > offsetChangeThreshold) {
+                              browserOffsetRef.current = newOffset;
+                            }
+                          }
+                        } else {
+                          consecutiveDrifts = 0;
+                          timeCorrection *= 0.95;
+                        }
+
+                        if (consecutiveDrifts > 5) {
+                          baseElapsed = calculateElapsed();
+                          baseTimestamp = performance.now();
+                          baseDateTimestamp = Date.now();
+                          timeCorrection = 0;
+                          consecutiveDrifts = 0;
+                        }
                       }
                     };
 
@@ -1268,13 +1335,15 @@ export default function DiscordProfile() {
                     const resyncIntervalId = setInterval(resync, resyncIntervalMs);
 
                     // Resync inicial - zera timeCorrection e recalcula do zero
-                    const initialDelay = browserInfoRef.current?.isIOS ? 100 : 150;
+                    const initialDelay = isIOS ? 100 : 150;
                     const initialResyncTimeout = setTimeout(() => {
                       // Zera correção e recalcula do zero para garantir início correto
                       timeCorrection = 0;
                       browserOffsetRef.current = getSyncOffset(); // Recarrega offset
                       lastDateNow = Date.now();
-                      lastPerformanceNow = performance.now();
+                      if (!isIOS) {
+                        lastPerformanceNow = performance.now();
+                      }
                       
                       // Recalcula elapsed sem correções acumuladas
                       const nowMs = Date.now();
@@ -1282,7 +1351,7 @@ export default function DiscordProfile() {
                       const actualElapsed = Math.max(0, (adjustedNow - start) / 1000);
                       
                       baseElapsed = Math.min(actualElapsed, duration);
-                      baseTimestamp = performance.now();
+                      baseTimestamp = isIOS ? Date.now() : performance.now();
                       baseDateTimestamp = Date.now();
                       setCurrentTime(Math.max(0, Math.min(baseElapsed, duration)));
                       lastUpdateTime = baseElapsed;
@@ -1291,15 +1360,16 @@ export default function DiscordProfile() {
                     // Resync quando volta ao foreground
                     const handleVisibilityChange = () => {
                       if (!document.hidden && spotify) {
+                        // No iOS, recalcula baseado apenas em Date.now() porque performance.now() foi suspenso
                         const actualElapsed = calculateElapsed();
                         baseElapsed = actualElapsed;
-                        baseTimestamp = performance.now();
+                        baseTimestamp = isIOS ? Date.now() : performance.now();
                         baseDateTimestamp = Date.now();
                         lastDateNow = Date.now();
-                        lastPerformanceNow = performance.now();
-                        // Limita rigorosamente à duração
-                        const maxTime = browserInfoRef.current?.isIOS ? duration * 0.99 : duration;
-                        setCurrentTime(Math.max(0, Math.min(actualElapsed, maxTime)));
+                        if (!isIOS) {
+                          lastPerformanceNow = performance.now();
+                        }
+                        setCurrentTime(Math.max(0, Math.min(actualElapsed, duration)));
                         lastUpdateTime = actualElapsed;
                         timeCorrection = 0;
                         consecutiveDrifts = 0;
@@ -1310,11 +1380,9 @@ export default function DiscordProfile() {
                       if (spotify && !document.hidden) {
                         const actualElapsed = calculateElapsed();
                         baseElapsed = actualElapsed;
-                        baseTimestamp = performance.now();
+                        baseTimestamp = isIOS ? Date.now() : performance.now();
                         baseDateTimestamp = Date.now();
-                        // Limita rigorosamente à duração
-                        const maxTime = browserInfoRef.current?.isIOS ? duration * 0.99 : duration;
-                        setCurrentTime(Math.max(0, Math.min(actualElapsed, maxTime)));
+                        setCurrentTime(Math.max(0, Math.min(actualElapsed, duration)));
                         lastUpdateTime = actualElapsed;
                       }
                     };
