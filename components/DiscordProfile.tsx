@@ -1126,9 +1126,13 @@ export default function DiscordProfile() {
 
                     const start = spotify.timestamps.start;
                     const end = spotify.timestamps.end;
-                    const duration = Math.max(1, (end - start) / 1000);
+                    // Garante que a duração seja sempre positiva e válida
+                    const duration = Math.max(1, Math.floor((end - start) / 1000));
                     const resyncIntervalMs = getResyncInterval();
                     const driftThreshold = getDriftThreshold();
+                    
+                    // Atualiza totalDuration imediatamente
+                    setTotalDuration(duration);
 
                     // Usa múltiplas fontes de tempo para maior precisão
                     let lastDateNow = Date.now();
@@ -1157,12 +1161,13 @@ export default function DiscordProfile() {
                       const elapsed = (adjustedNow - start) / 1000;
 
                       // Garante que o tempo nunca seja negativo ou maior que a duração
+                      // Para iOS, limita mais agressivamente para evitar ultrapassar a duração
                       if (elapsed < 0) return 0;
                       if (elapsed < 2 && elapsed >= -1) return 0;
-                      return Math.max(0, Math.min(elapsed, duration));
+                      // Limita rigorosamente à duração (especialmente importante para iOS)
+                      const maxElapsed = browserInfoRef.current?.isIOS ? duration * 0.99 : duration;
+                      return Math.max(0, Math.min(elapsed, maxElapsed));
                     };
-
-                    setTotalDuration(duration);
 
                     // Inicializa com o tempo atual
                     let baseElapsed = calculateElapsed();
@@ -1178,7 +1183,9 @@ export default function DiscordProfile() {
                       const perfNow = performance.now();
                       const deltaSeconds = (perfNow - baseTimestamp) / 1000;
                       const calculatedTime = baseElapsed + deltaSeconds;
-                      const clampedTime = Math.max(0, Math.min(calculatedTime, duration));
+                      // Limita rigorosamente à duração (especialmente para iOS)
+                      const maxTime = browserInfoRef.current?.isIOS ? duration * 0.99 : duration;
+                      const clampedTime = Math.max(0, Math.min(calculatedTime, maxTime));
 
                       const updateThreshold = browserInfoRef.current?.isIOS ? 0.025 : 0.03;
                       if (Math.abs(clampedTime - lastUpdateTime) >= updateThreshold) {
@@ -1215,7 +1222,9 @@ export default function DiscordProfile() {
                         baseElapsed = actualElapsed * correctionFactor + expectedElapsed * (1 - correctionFactor);
                         baseTimestamp = perfNow;
                         baseDateTimestamp = dateNow;
-                        setCurrentTime(Math.max(0, Math.min(actualElapsed, duration)));
+                        // Limita rigorosamente à duração
+                        const maxTime = browserInfoRef.current?.isIOS ? duration * 0.99 : duration;
+                        setCurrentTime(Math.max(0, Math.min(actualElapsed, maxTime)));
                         lastUpdateTime = actualElapsed;
                         lastDateNow = dateNow;
                         lastPerformanceNow = perfNow;
@@ -1276,7 +1285,9 @@ export default function DiscordProfile() {
                         baseDateTimestamp = Date.now();
                         lastDateNow = Date.now();
                         lastPerformanceNow = performance.now();
-                        setCurrentTime(Math.max(0, Math.min(actualElapsed, duration)));
+                        // Limita rigorosamente à duração
+                        const maxTime = browserInfoRef.current?.isIOS ? duration * 0.99 : duration;
+                        setCurrentTime(Math.max(0, Math.min(actualElapsed, maxTime)));
                         lastUpdateTime = actualElapsed;
                         timeCorrection = 0;
                         consecutiveDrifts = 0;
@@ -1289,7 +1300,9 @@ export default function DiscordProfile() {
                         baseElapsed = actualElapsed;
                         baseTimestamp = performance.now();
                         baseDateTimestamp = Date.now();
-                        setCurrentTime(Math.max(0, Math.min(actualElapsed, duration)));
+                        // Limita rigorosamente à duração
+                        const maxTime = browserInfoRef.current?.isIOS ? duration * 0.99 : duration;
+                        setCurrentTime(Math.max(0, Math.min(actualElapsed, maxTime)));
                         lastUpdateTime = actualElapsed;
                       }
                     };
@@ -1309,11 +1322,13 @@ export default function DiscordProfile() {
                     };
                   }, [spotify]);
 
-                  // Garante valores válidos e não-negativos
-                  const safeCurrentTime = Math.max(0, Math.min(currentTime || 0, totalDuration || 0));
+                  // Garante valores válidos e não-negativos (proteção extra para iOS)
                   const safeTotalDuration = Math.max(1, totalDuration || 0);
+                  // Limita currentTime rigorosamente para evitar valores maiores que a duração
+                  const safeCurrentTime = Math.max(0, Math.min(currentTime || 0, safeTotalDuration * 0.99));
                   const progress = safeTotalDuration > 0 ? (safeCurrentTime / safeTotalDuration) * 100 : 0;
-                  const remaining = Math.max(0, safeTotalDuration - safeCurrentTime);
+                  // Garante que remaining nunca seja negativo
+                  const remaining = Math.max(0, Math.floor(safeTotalDuration - safeCurrentTime));
 
                   return (
                     <div className="flex items-center gap-3">
