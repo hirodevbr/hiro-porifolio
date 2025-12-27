@@ -1190,7 +1190,9 @@ export default function DiscordProfile() {
                       const maxTime = browserInfoRef.current?.isIOS ? duration * 0.99 : duration;
                       const clampedTime = Math.max(0, Math.min(calculatedTime, maxTime));
 
-                      const updateThreshold = browserInfoRef.current?.isIOS ? 0.025 : 0.03;
+                      // Atualiza mais frequentemente para suavidade (especialmente para barra de progresso)
+                      // Threshold menor para atualização mais suave e responsiva
+                      const updateThreshold = browserInfoRef.current?.isIOS ? 0.02 : 0.025;
                       if (Math.abs(clampedTime - lastUpdateTime) >= updateThreshold) {
                         setCurrentTime(clampedTime);
                         lastUpdateTime = clampedTime;
@@ -1369,12 +1371,15 @@ export default function DiscordProfile() {
                           {spotify.artist}
                         </p>
                         
-                        {/* Barra de progresso */}
+                        {/* Barra de progresso com animação fluida */}
                         <div className="mb-1">
-                          <div className="w-full h-1 bg-gray-700/50 rounded-full overflow-hidden">
+                          <div className="w-full h-1.5 bg-gray-700/50 rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-white/40 transition-all duration-1000 ease-linear"
-                              style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+                              className="h-full rounded-full bg-white/40 transition-[width] duration-75 ease-out"
+                              style={{ 
+                                width: `${Math.min(100, Math.max(0, progress))}%`,
+                                willChange: 'width'
+                              }}
                             />
                           </div>
                         </div>

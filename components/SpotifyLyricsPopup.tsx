@@ -186,8 +186,8 @@ export default function SpotifyLyricsPopup() {
       const clampedTime = clamp(calculatedTime, 0, duration);
 
       // Atualiza com threshold menor para todos os navegadores (melhor responsividade)
-      // iOS ainda tem threshold um pouco menor
-      const updateThreshold = browserInfoRef.current?.isIOS ? 0.025 : 0.03;
+      // Threshold menor para atualização mais suave e responsiva da barra de progresso
+      const updateThreshold = browserInfoRef.current?.isIOS ? 0.02 : 0.025;
       if (Math.abs(clampedTime - lastUpdateTime) >= updateThreshold) {
         setCurrentTime(clampedTime);
         lastUpdateTime = clampedTime;
