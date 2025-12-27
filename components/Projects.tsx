@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-import { ExternalLink, Github, Star, GitFork, Sparkles, Clock, AlertCircle, RefreshCw } from "lucide-react";
+import { Github, Star, GitFork, Sparkles, Clock, AlertCircle, RefreshCw } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trackProjectClick, trackProjectView, trackSocialClick } from "@/lib/analytics";
@@ -422,29 +422,6 @@ export default function Projects() {
                         aria-hidden="true"
                       />
                     </motion.a>
-                    {repo.html_url && (
-                      <motion.a
-                        href={repo.html_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        whileHover={{ scale: 1.15, rotate: -5 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => trackProjectClick(repo.name, repo.html_url)}
-                        className={`p-2 rounded-lg transition-all hover-lift focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black ${
-                          isRecent
-                            ? "bg-white/10 hover:bg-white/15 hover:shadow-lg hover:shadow-white/10"
-                            : "bg-white/5 hover:bg-white/10 hover:shadow-lg hover:shadow-white/10"
-                        }`}
-                        aria-label={`Abrir projeto ${repo.name} (abre em nova aba)`}
-                      >
-                        <ExternalLink
-                          className={`w-5 h-5 transition-colors ${
-                            isRecent ? "text-gray-200" : "text-gray-400 hover:text-white"
-                          }`}
-                          aria-hidden="true"
-                        />
-                      </motion.a>
-                    )}
                   </div>
                 </div>
               </motion.div>
