@@ -7,10 +7,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import Image from "next/image";
 import { DISCORD_USER_ID } from "@/lib/config";
 import { useLanyardUser } from "@/lib/lanyardClient";
-import {
-  getBrowserInfo,
-  getResyncInterval,
-} from "@/lib/browserSync";
 import { 
   Music, 
   Gamepad2, 
@@ -1100,7 +1096,6 @@ export default function DiscordProfile() {
                 const SpotifyTimer = () => {
                   const [currentTime, setCurrentTime] = useState(0);
                   const [totalDuration, setTotalDuration] = useState(0);
-                  const browserInfoRef = useRef<ReturnType<typeof getBrowserInfo> | null>(null);
                   const animationFrameRef = useRef<number | null>(null);
 
                   useEffect(() => {
@@ -1114,81 +1109,31 @@ export default function DiscordProfile() {
                       return;
                     }
 
-                    // Detecta navegador e obtém configurações
-                    if (!browserInfoRef.current) {
-                      browserInfoRef.current = getBrowserInfo();
-                    }
+                    // Calcula duração total
+                    const start = spotify.timestamps.start;
+                    const end = spotify.timestamps.end;
+                    const duration = Math.max(1, Math.floor((end - start) / 1000));
+                    setTotalDuration(duration);
 
-                    const resyncIntervalMs = getResyncInterval();
-                    
-                    // Calcula tempo de forma simples e direta
-                    // Sempre usa os valores atuais do spotify para evitar problemas com closure
-                    const calculateElapsed = () => {
-                      if (!spotify) return 0;
-                      const start = spotify.timestamps.start;
-                      const end = spotify.timestamps.end;
-                      const duration = Math.max(1, Math.floor((end - start) / 1000));
-                      
-                      // Atualiza totalDuration quando necessário
-                      setTotalDuration((prev) => {
-                        if (prev !== duration) {
-                          return duration;
-                        }
-                        return prev;
-                      });
+                    // Calcula tempo de forma simples: Date.now() - start_timestamp
+                    const updateTime = () => {
+                      if (!spotify) return;
                       
                       const now = Date.now();
                       const elapsed = (now - start) / 1000;
-                      return Math.max(0, Math.min(elapsed, duration));
-                    };
-
-                    // Função de atualização simples
-                    const updateTime = () => {
-                      if (!spotify) return;
-                      const elapsed = calculateElapsed();
-                      setCurrentTime(elapsed);
+                      
+                      setCurrentTime(Math.max(0, elapsed));
                       animationFrameRef.current = requestAnimationFrame(updateTime);
-                    };
-
-                    // Resync periódico simplificado
-                    const resync = () => {
-                      if (!spotify) return;
-                      const elapsed = calculateElapsed();
-                      setCurrentTime(elapsed);
                     };
 
                     // Inicia loop de atualização
                     updateTime();
-
-                    // Resync com intervalo dinâmico
-                    const resyncIntervalId = setInterval(resync, resyncIntervalMs);
-
-                    // Resync quando volta ao foreground
-                    const handleVisibilityChange = () => {
-                      if (!document.hidden && spotify) {
-                        const elapsed = calculateElapsed();
-                        setCurrentTime(elapsed);
-                      }
-                    };
-
-                    const handleFocus = () => {
-                      if (spotify && !document.hidden) {
-                        const elapsed = calculateElapsed();
-                        setCurrentTime(elapsed);
-                      }
-                    };
-
-                    document.addEventListener("visibilitychange", handleVisibilityChange);
-                    window.addEventListener("focus", handleFocus);
 
                     return () => {
                       if (animationFrameRef.current) {
                         cancelAnimationFrame(animationFrameRef.current);
                         animationFrameRef.current = null;
                       }
-                      clearInterval(resyncIntervalId);
-                      document.removeEventListener("visibilitychange", handleVisibilityChange);
-                      window.removeEventListener("focus", handleFocus);
                     };
                   }, [spotify]);
 

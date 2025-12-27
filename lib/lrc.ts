@@ -15,6 +15,9 @@ function fractionToMs(fraction: string | undefined) {
  * Parse simples de LRC.
  * Suporta múltiplos timestamps por linha, ex:
  * [00:12.00][00:14.00]Refrão
+ * 
+ * NOTA: Se este parse não funcionar bem para alguns casos, pode ser substituído
+ * por uma versão mais robusta.
  */
 export function parseLrc(lrc: string): LrcLine[] {
   const lines = lrc.replace(/\r\n/g, "\n").split("\n");

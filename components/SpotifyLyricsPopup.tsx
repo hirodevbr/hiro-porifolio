@@ -9,10 +9,6 @@ import { getCachedLyrics, setCachedLyrics } from "@/lib/lyricsCache";
 import { DISCORD_USER_ID } from "@/lib/config";
 import { useLanyardUser, type LanyardSpotify } from "@/lib/lanyardClient";
 import { useLanguage } from "@/contexts/LanguageContext";
-import {
-  getBrowserInfo,
-  getResyncInterval,
-} from "@/lib/browserSync";
 
 type LrclibResponse = {
   syncedLyrics?: string | null;
@@ -60,8 +56,6 @@ export default function SpotifyLyricsPopup() {
   const programmaticScrollRef = useRef(false);
   const prevTrackKeyRef = useRef<string>("");
   const animationFrameRef = useRef<number | null>(null);
-  const lastSyncTimeRef = useRef<number>(0);
-  const browserInfoRef = useRef<ReturnType<typeof getBrowserInfo> | null>(null);
 
   const trackKey = useMemo(() => {
     if (!spotify) return "";
@@ -91,76 +85,27 @@ export default function SpotifyLyricsPopup() {
       return;
     }
 
-    // Detecta navegador e obtém configurações
-    if (!browserInfoRef.current) {
-      browserInfoRef.current = getBrowserInfo();
-    }
-
-    const resyncIntervalMs = getResyncInterval();
-
-    // Calcula tempo de forma simples e direta
-    // Sempre usa os valores atuais do spotify para evitar problemas com closure
-    const calculateElapsed = () => {
-      if (!spotify) return 0;
-      const start = spotify.timestamps.start;
-      const end = spotify.timestamps.end;
-      const duration = Math.max(1, (end - start) / 1000);
-      
-      const now = Date.now();
-      const elapsed = (now - start) / 1000;
-      return Math.max(0, Math.min(elapsed, duration));
-    };
-
-    // Função de atualização simples
+    // Calcula tempo de forma simples: Date.now() - start_timestamp
     const updateTime = () => {
       if (!spotify) return;
       
-      const elapsed = calculateElapsed();
-      setCurrentTime(elapsed);
+      const start = spotify.timestamps.start;
+      const now = Date.now();
+      const elapsed = (now - start) / 1000;
+      
+      setCurrentTime(Math.max(0, elapsed));
       
       animationFrameRef.current = requestAnimationFrame(updateTime);
     };
 
-    // Resync periódico simplificado
-    const resync = () => {
-      if (!spotify) return;
-      const elapsed = calculateElapsed();
-      setCurrentTime(elapsed);
-    };
-
     // Inicia loop de atualização
     updateTime();
-
-    // Resync com intervalo dinâmico baseado no navegador
-    const resyncIntervalId = setInterval(resync, resyncIntervalMs);
-
-    // Resync quando a página volta ao foreground (crítico para iOS)
-    const handleVisibilityChange = () => {
-      if (!document.hidden && spotify) {
-        const elapsed = calculateElapsed();
-        setCurrentTime(elapsed);
-      }
-    };
-
-    // Resync quando a página ganha foco (importante para mobile)
-    const handleFocus = () => {
-      if (spotify && !document.hidden) {
-        const elapsed = calculateElapsed();
-        setCurrentTime(elapsed);
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("focus", handleFocus);
 
     return () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = null;
       }
-      clearInterval(resyncIntervalId);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("focus", handleFocus);
     };
   }, [spotify]);
 
