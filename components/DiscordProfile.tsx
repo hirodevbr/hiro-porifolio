@@ -1171,10 +1171,22 @@ export default function DiscordProfile() {
                   }, [spotify]);
 
                   // Calcula valores de exibição
-                  const safeTotalDuration = Math.max(1, totalDuration || 0);
-                  const displayTime = Math.max(0, Math.min(currentTime || 0, safeTotalDuration));
+                  // Sempre recalcula tudo diretamente do spotify para garantir sincronização perfeita
+                  const start = spotify?.timestamps.start ?? 0;
+                  const end = spotify?.timestamps.end ?? 0;
+                  const actualDuration = Math.max(1, Math.floor((end - start) / 1000));
+                  
+                  // Calcula tempo atual diretamente (mais preciso que usar state)
+                  const now = Date.now();
+                  const elapsed = start > 0 ? (now - start) / 1000 : 0;
+                  
+                  const safeTotalDuration = Math.max(1, actualDuration);
+                  const displayTime = Math.max(0, Math.min(elapsed, safeTotalDuration));
                   const progress = safeTotalDuration > 0 ? (displayTime / safeTotalDuration) * 100 : 0;
-                  const remaining = Math.max(0, Math.floor(safeTotalDuration - displayTime));
+                  
+                  // Calcula remaining garantindo que nunca seja negativo
+                  const calculatedRemaining = safeTotalDuration - displayTime;
+                  const remaining = Math.max(0, Math.floor(calculatedRemaining));
 
                   return (
                     <div className="flex items-center gap-3">
