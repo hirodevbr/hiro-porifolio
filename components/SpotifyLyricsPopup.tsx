@@ -96,13 +96,16 @@ export default function SpotifyLyricsPopup() {
       browserInfoRef.current = getBrowserInfo();
     }
 
-    const start = spotify.timestamps.start;
-    const end = spotify.timestamps.end;
-    const duration = Math.max(1, (end - start) / 1000);
     const resyncIntervalMs = getResyncInterval();
 
     // Calcula tempo de forma simples e direta
+    // Sempre usa os valores atuais do spotify para evitar problemas com closure
     const calculateElapsed = () => {
+      if (!spotify) return 0;
+      const start = spotify.timestamps.start;
+      const end = spotify.timestamps.end;
+      const duration = Math.max(1, (end - start) / 1000);
+      
       const now = Date.now();
       const elapsed = (now - start) / 1000;
       return Math.max(0, Math.min(elapsed, duration));
