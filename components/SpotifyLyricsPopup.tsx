@@ -154,9 +154,8 @@ export default function SpotifyLyricsPopup() {
       // Janela pequena para evitar flicker quando a presença chega levemente antes/depois
       if (elapsed < 2 && elapsed >= -1) return 0;
 
-      // Limita rigorosamente à duração (especialmente importante para iOS)
-      const maxElapsed = browserInfoRef.current?.isIOS ? duration * 0.99 : duration;
-      return clamp(elapsed, 0, maxElapsed);
+      // Limita à duração (sem redução de 99% para manter sincronia com letra)
+      return clamp(elapsed, 0, duration);
     };
 
     // Inicializa com o tempo atual
@@ -177,9 +176,8 @@ export default function SpotifyLyricsPopup() {
       const calculatedTime = baseElapsed + deltaSeconds;
 
       // Limita ao tempo total da música
-      // Limita rigorosamente à duração (especialmente para iOS)
-      const maxTime = browserInfoRef.current?.isIOS ? duration * 0.99 : duration;
-      const clampedTime = clamp(calculatedTime, 0, maxTime);
+      // Limita à duração (sem redução para manter sincronia)
+      const clampedTime = clamp(calculatedTime, 0, duration);
 
       // Atualiza com threshold menor para todos os navegadores (melhor responsividade)
       // iOS ainda tem threshold um pouco menor
@@ -540,9 +538,10 @@ export default function SpotifyLyricsPopup() {
     return Math.max(1, Math.floor((spotify.timestamps.end - spotify.timestamps.start) / 1000));
   }, [spotify]);
   
-  // Garante que currentTime nunca ultrapasse totalSeconds (especialmente para iOS)
-  const safeCurrentTime = Math.max(0, Math.min(currentTime || 0, totalSeconds * 0.99));
-  const remainingSeconds = Math.max(0, Math.floor(totalSeconds - safeCurrentTime));
+  // Usa currentTime real para manter sincronia com a letra
+  // Limita apenas para exibição e cálculo de remaining
+  const displayTime = Math.max(0, Math.min(currentTime || 0, totalSeconds));
+  const remainingSeconds = Math.max(0, Math.floor(totalSeconds - displayTime));
 
   const loadingLabel = useMemo(() => {
     const lang = (language ?? "").toLowerCase();
@@ -624,12 +623,12 @@ export default function SpotifyLyricsPopup() {
                     <div
                       className="h-full rounded-full bg-white/40"
                       style={{
-                        width: `${clamp((safeCurrentTime / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
+                        width: `${clamp((displayTime / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
                       }}
                     />
                   </div>
                   <div className="mt-1 flex items-center justify-between text-[11px] tabular-nums text-white/50">
-                    <span aria-label={`Tempo atual ${formatTime(safeCurrentTime)}`}>{formatTime(safeCurrentTime)}</span>
+                    <span aria-label={`Tempo atual ${formatTime(displayTime)}`}>{formatTime(displayTime)}</span>
                     <span aria-label={`Tempo restante ${formatTime(remainingSeconds)}`}>
                       -{formatTime(remainingSeconds)}
                     </span>
@@ -742,12 +741,12 @@ export default function SpotifyLyricsPopup() {
                         <div
                           className="h-full rounded-full bg-white/40"
                           style={{
-                            width: `${clamp((safeCurrentTime / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
+                            width: `${clamp((displayTime / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
                           }}
                         />
                       </div>
                       <div className="flex items-center justify-between text-xs text-white/60 tabular-nums">
-                        <span>{formatTime(safeCurrentTime)}</span>
+                        <span>{formatTime(displayTime)}</span>
                         <span>-{formatTime(remainingSeconds)}</span>
                       </div>
                       <div className="flex items-center justify-center gap-2 flex-wrap">
@@ -861,7 +860,7 @@ export default function SpotifyLyricsPopup() {
                             <div
                               className="h-full rounded-full bg-white/40"
                               style={{
-                                width: `${clamp((safeCurrentTime / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
+                                width: `${clamp((displayTime / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
                               }}
                             />
                           </div>
@@ -1098,7 +1097,7 @@ export default function SpotifyLyricsPopup() {
                     <div
                       className="h-full rounded-full bg-white/40"
                       style={{
-                        width: `${clamp((safeCurrentTime / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
+                        width: `${clamp((displayTime / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
                       }}
                     />
                   </div>

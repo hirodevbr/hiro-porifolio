@@ -1322,13 +1322,13 @@ export default function DiscordProfile() {
                     };
                   }, [spotify]);
 
-                  // Garante valores válidos e não-negativos (proteção extra para iOS)
+                  // Usa currentTime real para manter sincronia
+                  // Limita apenas para exibição e cálculo de remaining
                   const safeTotalDuration = Math.max(1, totalDuration || 0);
-                  // Limita currentTime rigorosamente para evitar valores maiores que a duração
-                  const safeCurrentTime = Math.max(0, Math.min(currentTime || 0, safeTotalDuration * 0.99));
-                  const progress = safeTotalDuration > 0 ? (safeCurrentTime / safeTotalDuration) * 100 : 0;
+                  const displayTime = Math.max(0, Math.min(currentTime || 0, safeTotalDuration));
+                  const progress = safeTotalDuration > 0 ? (displayTime / safeTotalDuration) * 100 : 0;
                   // Garante que remaining nunca seja negativo
-                  const remaining = Math.max(0, Math.floor(safeTotalDuration - safeCurrentTime));
+                  const remaining = Math.max(0, Math.floor(safeTotalDuration - displayTime));
 
                   return (
                     <div className="flex items-center gap-3">
@@ -1371,7 +1371,7 @@ export default function DiscordProfile() {
                         
                         {/* Timer */}
                         <div className="flex items-center justify-between text-xs text-gray-400">
-                          <span>{formatMusicTime(safeCurrentTime)}</span>
+                          <span>{formatMusicTime(displayTime)}</span>
                           <span>-{formatMusicTime(remaining)}</span>
                         </div>
                       </div>
