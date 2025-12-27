@@ -9,6 +9,7 @@ import { getCachedLyrics, setCachedLyrics } from "@/lib/lyricsCache";
 import { DISCORD_USER_ID } from "@/lib/config";
 import { useLanyardUser, type LanyardSpotify } from "@/lib/lanyardClient";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getSyncOffset, recordDriftMeasurement, getBrowserInfo } from "@/lib/browserSync";
 
 type LrclibResponse = {
   syncedLyrics?: string | null;
@@ -57,6 +58,8 @@ export default function SpotifyLyricsPopup() {
   const prevTrackKeyRef = useRef<string>("");
   const animationFrameRef = useRef<number | null>(null);
   const lastSyncTimeRef = useRef<number>(0);
+  const browserOffsetRef = useRef<number>(0);
+  const browserInfoRef = useRef<ReturnType<typeof getBrowserInfo> | null>(null);
 
   const trackKey = useMemo(() => {
     if (!spotify) return "";
@@ -75,7 +78,7 @@ export default function SpotifyLyricsPopup() {
 
   const hasSynced = lines.length > 0;
 
-  // Sistema de sincronização simplificado e robusto
+  // Sistema de sincronização com detecção de navegador
   useEffect(() => {
     if (!spotify) {
       setCurrentTime(0);
@@ -86,14 +89,29 @@ export default function SpotifyLyricsPopup() {
       return;
     }
 
+    // Detecta navegador e obtém offset de sincronização
+    if (!browserInfoRef.current) {
+      browserInfoRef.current = getBrowserInfo();
+      browserOffsetRef.current = getSyncOffset();
+      console.log("🌐 Navegador detectado:", {
+        name: browserInfoRef.current.name,
+        version: browserInfoRef.current.version,
+        os: browserInfoRef.current.os,
+        isMobile: browserInfoRef.current.isMobile,
+        syncOffset: browserOffsetRef.current,
+      });
+    }
+
     const start = spotify.timestamps.start;
     const end = spotify.timestamps.end;
     const duration = Math.max(1, (end - start) / 1000);
     
-    // Calcula tempo baseado no timestamp do Spotify (timestamps já vêm corretos do Lanyard)
+    // Calcula tempo baseado no timestamp do Spotify com offset do navegador
     const calculateElapsed = () => {
       const nowMs = Date.now();
-      const elapsed = (nowMs - start) / 1000;
+      // Aplica offset do navegador para compensar diferenças
+      const adjustedNow = nowMs + browserOffsetRef.current;
+      const elapsed = (adjustedNow - start) / 1000;
 
       // janela pequena para evitar flicker quando a presença chega levemente antes/depois
       if (elapsed < 2 && elapsed >= -1) return 0;
@@ -126,23 +144,38 @@ export default function SpotifyLyricsPopup() {
       animationFrameRef.current = requestAnimationFrame(updateTime);
     };
 
-    // Resync periódico para compensar drift (mais agressivo para manter sync preciso)
+    // Resync periódico para compensar drift com calibração automática
     const resync = () => {
       if (!spotify) return;
       
       const actualElapsed = calculateElapsed();
       const expectedElapsed = baseElapsed + (performance.now() - baseTimestamp) / 1000;
-      const drift = Math.abs(actualElapsed - expectedElapsed);
+      const drift = actualElapsed - expectedElapsed; // Mantém sinal para calibração
+      const driftAbs = Math.abs(drift);
 
       // Threshold menor para resync mais frequente e preciso (100ms de tolerância)
       const driftThreshold = 0.1;
       
       // Se o drift for maior que o threshold, resincroniza
-      if (drift > driftThreshold) {
+      if (driftAbs > driftThreshold) {
         baseElapsed = actualElapsed;
         baseTimestamp = performance.now();
         setCurrentTime(clamp(actualElapsed, 0, duration));
         lastUpdateTime = actualElapsed;
+
+        // Registra drift para calibração automática (apenas se drift significativo)
+        if (driftAbs > 0.2) {
+          // Converte drift em milissegundos para calibração
+          const driftMs = drift * 1000;
+          recordDriftMeasurement(driftMs);
+          
+          // Atualiza offset se calibração mudou significativamente
+          const newOffset = getSyncOffset();
+          if (Math.abs(newOffset - browserOffsetRef.current) > 10) {
+            browserOffsetRef.current = newOffset;
+            console.log("🔧 Offset de sincronização atualizado:", newOffset, "ms");
+          }
+        }
       }
     };
 
