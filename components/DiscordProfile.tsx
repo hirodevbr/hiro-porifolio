@@ -1143,6 +1143,15 @@ export default function DiscordProfile() {
                       // Sempre acessa diretamente do spotify para pegar valores atualizados
                       const start = spotify.timestamps.start;
                       const end = spotify.timestamps.end;
+                      
+                      // Validação: garante que os timestamps são válidos
+                      if (!start || !end || start <= 0 || end <= 0 || end <= start) {
+                        setCurrentTime(0);
+                        setTotalDuration(0);
+                        animationFrameRef.current = requestAnimationFrame(updateTime);
+                        return;
+                      }
+                      
                       const duration = Math.max(1, Math.floor((end - start) / 1000));
                       
                       // Atualiza duração total sempre (pode mudar se a música mudar)
@@ -1152,6 +1161,8 @@ export default function DiscordProfile() {
                       const elapsed = (now - start) / 1000;
                       
                       // Limita o tempo ao máximo da duração da música
+                      // Se elapsed for muito maior que duration, pode ser que os timestamps mudaram
+                      // Nesse caso, limita ao máximo da duração
                       const clampedTime = Math.max(0, Math.min(elapsed, duration));
                       setCurrentTime(clampedTime);
                       
@@ -1174,19 +1185,41 @@ export default function DiscordProfile() {
                   // Sempre recalcula tudo diretamente do spotify para garantir sincronização perfeita
                   const start = spotify?.timestamps.start ?? 0;
                   const end = spotify?.timestamps.end ?? 0;
-                  const actualDuration = Math.max(1, Math.floor((end - start) / 1000));
                   
-                  // Calcula tempo atual diretamente (mais preciso que usar state)
-                  const now = Date.now();
-                  const elapsed = start > 0 ? (now - start) / 1000 : 0;
+                  // Validação: garante que os timestamps são válidos
+                  const isValid = start > 0 && end > 0 && end > start;
                   
-                  const safeTotalDuration = Math.max(1, actualDuration);
-                  const displayTime = Math.max(0, Math.min(elapsed, safeTotalDuration));
-                  const progress = safeTotalDuration > 0 ? (displayTime / safeTotalDuration) * 100 : 0;
+                  let actualDuration = 0;
+                  let displayTime = 0;
+                  let progress = 0;
+                  let remaining = 0;
                   
-                  // Calcula remaining garantindo que nunca seja negativo
-                  const calculatedRemaining = safeTotalDuration - displayTime;
-                  const remaining = Math.max(0, Math.floor(calculatedRemaining));
+                  if (isValid) {
+                    actualDuration = Math.max(1, Math.floor((end - start) / 1000));
+                    
+                    // Calcula tempo atual diretamente (mais preciso que usar state)
+                    const now = Date.now();
+                    const elapsed = (now - start) / 1000;
+                    
+                    // Validação: se elapsed for muito maior que duration, pode ser que os timestamps mudaram
+                    // Nesse caso, limita ao máximo da duração
+                    const safeTotalDuration = Math.max(1, actualDuration);
+                    displayTime = Math.max(0, Math.min(elapsed, safeTotalDuration));
+                    
+                    // Garante que o progresso nunca ultrapasse 100%
+                    progress = Math.min(100, Math.max(0, safeTotalDuration > 0 ? (displayTime / safeTotalDuration) * 100 : 0));
+                    
+                    // Calcula remaining garantindo que nunca seja negativo
+                    // Usa Math.ceil para arredondar para cima e evitar valores negativos por arredondamento
+                    const calculatedRemaining = safeTotalDuration - displayTime;
+                    remaining = Math.max(0, Math.ceil(calculatedRemaining));
+                  } else {
+                    // Valores padrão quando timestamps são inválidos
+                    actualDuration = totalDuration || 0;
+                    displayTime = currentTime || 0;
+                    progress = 0;
+                    remaining = 0;
+                  }
 
                   return (
                     <div className="flex items-center gap-3">
