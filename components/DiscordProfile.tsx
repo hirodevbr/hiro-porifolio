@@ -1206,19 +1206,26 @@ export default function DiscordProfile() {
                     const safeTotalDuration = Math.max(1, actualDuration);
                     displayTime = Math.max(0, Math.min(elapsed, safeTotalDuration));
                     
-                    // Garante que o progresso nunca ultrapasse 100%
-                    progress = Math.min(100, Math.max(0, safeTotalDuration > 0 ? (displayTime / safeTotalDuration) * 100 : 0));
+                    // Garante que o progresso nunca ultrapasse 100% e nunca seja NaN
+                    const calculatedProgress = safeTotalDuration > 0 ? (displayTime / safeTotalDuration) * 100 : 0;
+                    progress = isNaN(calculatedProgress) ? 0 : Math.min(100, Math.max(0, calculatedProgress));
                     
                     // Calcula remaining garantindo que nunca seja negativo
                     // Usa Math.ceil para arredondar para cima e evitar valores negativos por arredondamento
                     const calculatedRemaining = safeTotalDuration - displayTime;
                     remaining = Math.max(0, Math.ceil(calculatedRemaining));
                   } else {
-                    // Valores padrão quando timestamps são inválidos
-                    actualDuration = totalDuration || 0;
-                    displayTime = currentTime || 0;
-                    progress = 0;
-                    remaining = 0;
+                    // Quando timestamps são inválidos, usa valores do state como fallback
+                    // Isso mantém a barra visível mesmo durante problemas de sincronização
+                    actualDuration = Math.max(1, totalDuration || 0);
+                    displayTime = Math.max(0, currentTime || 0);
+                    
+                    // Calcula progresso baseado nos valores do state
+                    const calculatedProgress = actualDuration > 0 ? (displayTime / actualDuration) * 100 : 0;
+                    progress = isNaN(calculatedProgress) ? 0 : Math.min(100, Math.max(0, calculatedProgress));
+                    
+                    const calculatedRemaining = actualDuration - displayTime;
+                    remaining = Math.max(0, Math.ceil(calculatedRemaining));
                   }
 
                   return (
@@ -1256,7 +1263,8 @@ export default function DiscordProfile() {
                             <div
                               className="h-full rounded-full bg-white/40 transition-[width] duration-75 ease-out"
                               style={{ 
-                                width: `${Math.min(100, Math.max(0, progress))}%`,
+                                width: `${Math.min(100, Math.max(0, isNaN(progress) ? 0 : progress))}%`,
+                                minWidth: progress > 0 ? '2px' : '0px',
                                 willChange: 'width'
                               }}
                             />
