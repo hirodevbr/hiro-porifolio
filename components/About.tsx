@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { MapPin, Calendar, Heart } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import WeatherTime from "./WeatherTime";
 
 export default function About() {
   const { t } = useLanguage();
@@ -53,7 +52,7 @@ export default function About() {
           <motion.div variants={itemVariants} className="w-24 h-1 bg-white/20 mx-auto rounded-full" />
         </motion.div>
 
-        <div className="grid md:grid-cols-2 gap-12 items-center">
+        <div className="max-w-4xl mx-auto">
           <motion.div
             variants={itemVariants}
             initial="hidden"
@@ -140,14 +139,6 @@ export default function About() {
             </motion.div>
           </motion.div>
 
-          <motion.div
-            variants={itemVariants}
-            initial="hidden"
-            animate={inView ? "visible" : "hidden"}
-            className="relative"
-          >
-            <WeatherTime />
-          </motion.div>
         </div>
       </div>
     </section>
