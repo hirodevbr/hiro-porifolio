@@ -889,12 +889,11 @@ export default function DiscordProfile() {
   try {
     if (discord_user.id) {
       const creationDate = getAccountCreationDate(discord_user.id);
-      const locale = language === 'pt_BR' ? 'pt-BR' : 'en-US';
-      const formattedDate = creationDate.toLocaleDateString(locale, {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
+      // Formatar data no formato DD/MM/ANO
+      const day = creationDate.getDate().toString().padStart(2, '0');
+      const month = (creationDate.getMonth() + 1).toString().padStart(2, '0');
+      const year = creationDate.getFullYear();
+      const formattedDate = `${day}/${month}/${year}`;
       const accountAge = formatCreationDate(creationDate);
       accountCreationInfo = { formattedDate, accountAge };
     }
