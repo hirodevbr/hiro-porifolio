@@ -457,6 +457,7 @@ export default function DiscordProfile() {
     avatarDecoration?: any,
     primaryGuild?: { badge?: string | null; tag?: string | null }
   ): Badge[] => {
+    const t = useLanguage().t;
     const badges: Badge[] = [];
     
     // Debug removido para evitar logs excessivos
@@ -475,7 +476,7 @@ export default function DiscordProfile() {
     // Discord Partner (2)
     if (flags && flags & 2) {
       badges.push({
-        name: "Parceiro do Discord",
+        name: t("badge_discord_partner"),
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/discordpartner.svg",
         icon: <Crown className="w-4 h-4" />,
         color: "text-purple-400",
@@ -486,7 +487,7 @@ export default function DiscordProfile() {
     // HypeSquad Events (4)
     if (flags && flags & 4) {
       badges.push({
-        name: "HypeSquad Events",
+        name: t("badge_hypesquad_events"),
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/hypesquadevents.svg",
         icon: <Zap className="w-4 h-4" />,
         color: "text-yellow-400",
@@ -508,7 +509,7 @@ export default function DiscordProfile() {
     // HypeSquad Bravery (64)
     if (flags && flags & 64) {
       badges.push({
-        name: "HypeSquad Bravery",
+        name: t("badge_hypesquad_bravery"),
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/hypesquadbravery.svg",
         icon: <Shield className="w-4 h-4" />,
         color: "text-orange-400",
@@ -519,7 +520,7 @@ export default function DiscordProfile() {
     // HypeSquad Brilliance (128)
     if (flags && flags & 128) {
       badges.push({
-        name: "HypeSquad Brilliance",
+        name: t("badge_hypesquad_brilliance"),
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/hypesquadbrilliance.svg",
         icon: <Shield className="w-4 h-4" />,
         color: "text-blue-400",
@@ -530,7 +531,7 @@ export default function DiscordProfile() {
     // HypeSquad Balance (256)
     if (flags && flags & 256) {
       badges.push({
-        name: "HypeSquad Balance",
+        name: t("badge_hypesquad_balance"),
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/hypesquadbalance.svg",
         icon: <Shield className="w-4 h-4" />,
         color: "text-cyan-400",
@@ -541,7 +542,7 @@ export default function DiscordProfile() {
     // Early Supporter (512)
     if (flags && flags & 512) {
       badges.push({
-        name: "Early Supporter",
+        name: t("badge_early_supporter"),
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/discordearlysupporter.svg",
         icon: <Heart className="w-4 h-4" />,
         color: "text-pink-400",
@@ -563,7 +564,7 @@ export default function DiscordProfile() {
     // Verified Bot Developer (131072)
     if (flags && flags & 131072) {
       badges.push({
-        name: "Desenvolvedor de Bot Verificado",
+        name: t("badge_verified_bot_developer"),
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/discordbotdev.svg",
         icon: <CheckCircle className="w-4 h-4" />,
         color: "text-indigo-400",
@@ -574,7 +575,7 @@ export default function DiscordProfile() {
     // Certified Moderator (262144)
     if (flags && flags & 262144) {
       badges.push({
-        name: "Moderador Certificado",
+        name: t("badge_certified_moderator"),
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/discordmod.svg",
         icon: <Shield className="w-4 h-4" />,
         color: "text-violet-400",
@@ -585,7 +586,7 @@ export default function DiscordProfile() {
     // Active Developer (4194304)
     if (flags && flags & 4194304) {
       badges.push({
-        name: "Desenvolvedor Ativo",
+        name: t("badge_active_developer"),
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/activedeveloper.svg",
         icon: <Code className="w-4 h-4" />,
         color: "text-primary-400",
@@ -596,7 +597,7 @@ export default function DiscordProfile() {
     // Nitro Badge (premium_type ou avatar_decoration indica Nitro)
     if (premiumType && premiumType > 0) {
       badges.push({
-        name: premiumType === 1 ? "Nitro Classic" : "Nitro",
+        name: premiumType === 1 ? t("badge_nitro_classic") : t("badge_nitro"),
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/refs/heads/main/assets/subscriptions/badges/diamond.png",
         icon: <Gem className="w-4 h-4" />,
         color: "text-rose-400",
@@ -604,7 +605,7 @@ export default function DiscordProfile() {
       });
     } else if (avatarDecoration) {
       badges.push({
-        name: "Nitro",
+        name: t("badge_nitro"),
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/refs/heads/main/assets/subscriptions/badges/diamond.png",
         icon: <Gem className="w-4 h-4" />,
         color: "text-rose-400",
@@ -615,7 +616,7 @@ export default function DiscordProfile() {
     // Pomelo Badge
     if (primaryGuild?.tag) {
       badges.push({
-        name: "Pomelo",
+        name: t("badge_pomelo"),
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/username.png",
         icon: <Gift className="w-4 h-4" />,
         color: "text-fuchsia-400",
@@ -628,7 +629,7 @@ export default function DiscordProfile() {
       const badgeName = primaryGuild.badge;
       if (badgeName.includes("orb") || badgeName.includes("Orb")) {
         badges.push({
-          name: "Orb",
+          name: t("badge_orb"),
           iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/orb.svg",
           icon: <Circle className="w-3 h-3" />,
           color: "text-cyan-400",
@@ -636,7 +637,7 @@ export default function DiscordProfile() {
         });
       } else if (badgeName.includes("boost") || badgeName.includes("Impulso")) {
         badges.push({
-          name: "Impulso de Servidor",
+          name: t("badge_server_boost"),
           iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/boosts/discordboost9.svg",
           icon: <Rocket className="w-4 h-4" />,
           color: "text-purple-400",
@@ -656,7 +657,7 @@ export default function DiscordProfile() {
     // Orb Badge (gastou Orbs) - verificar em kv
     if (kv && (kv.orb_badge || kv.orb || kv.has_orb)) {
       badges.push({
-        name: "Orb",
+        name: t("badge_orb"),
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/orb.svg",
         icon: <Circle className="w-3 h-3" />,
         color: "text-cyan-400",
@@ -667,7 +668,7 @@ export default function DiscordProfile() {
     // Impulso de Servidor (Server Boosting) - verificar em kv
     if (kv && (kv.server_boost || kv.boosting || kv.has_boost)) {
       badges.push({
-        name: "Impulso de Servidor",
+        name: t("badge_server_boost"),
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/boosts/discordboost9.svg",
         icon: <Rocket className="w-4 h-4" />,
         color: "text-purple-400",
@@ -688,24 +689,24 @@ export default function DiscordProfile() {
     
     // Ordenar badges por import�ncia
     const badgeOrder = [
-      "Funcion�rio do Discord",
-      "Parceiro do Discord",
-      "Moderador Certificado",
-      "Desenvolvedor de Bot Verificado",
-      "Nitro",
-      "Nitro Classic",
-      "HypeSquad Events",
-      "HypeSquad Bravery",
-      "HypeSquad Brilliance",
-      "HypeSquad Balance",
-      "Desenvolvedor Ativo",
-      "Impulso de Servidor",
-      "Pomelo",
-      "Miss�o Completa",
-      "Orb",
-      "Bug Hunter N�vel 2",
-      "Bug Hunter N�vel 1",
-      "Early Supporter"
+      t("badge_discord_staff"),
+      t("badge_discord_partner"),
+      t("badge_certified_moderator"),
+      t("badge_verified_bot_developer"),
+      t("badge_nitro"),
+      t("badge_nitro_classic"),
+      t("badge_hypesquad_events"),
+      t("badge_hypesquad_bravery"),
+      t("badge_hypesquad_brilliance"),
+      t("badge_hypesquad_balance"),
+      t("badge_active_developer"),
+      t("badge_server_boost"),
+      t("badge_pomelo"),
+      t("badge_mission_complete"),
+      t("badge_orb"),
+      t("badge_bug_hunter_2"),
+      t("badge_bug_hunter_1"),
+      t("badge_early_supporter")
     ];
     
     return badges.sort((a, b) => {
@@ -734,9 +735,9 @@ export default function DiscordProfile() {
     );
     
     // Adicionar badges manuais se configuradas
-    if (ADDITIONAL_BADGES.nitro && !calculatedBadges.find(b => b.name === "Nitro" || b.name === "Nitro Classic")) {
+    if (ADDITIONAL_BADGES.nitro && !calculatedBadges.find(b => b.name === t("badge_nitro") || b.name === t("badge_nitro_classic"))) {
       calculatedBadges.push({
-        name: "Nitro",
+        name: t("badge_nitro"),
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/refs/heads/main/assets/subscriptions/badges/diamond.png",
         icon: <Gem className="w-4 h-4" />,
         color: "text-rose-400",
@@ -744,9 +745,9 @@ export default function DiscordProfile() {
       });
     }
     
-    if (ADDITIONAL_BADGES.pomelo && !calculatedBadges.find(b => b.name === "Pomelo")) {
+    if (ADDITIONAL_BADGES.pomelo && !calculatedBadges.find(b => b.name === t("badge_pomelo"))) {
       calculatedBadges.push({
-        name: "Pomelo",
+        name: t("badge_pomelo"),
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/username.png",
         icon: <Gift className="w-4 h-4" />,
         color: "text-fuchsia-400",
@@ -754,9 +755,9 @@ export default function DiscordProfile() {
       });
     }
     
-    if (ADDITIONAL_BADGES.orb && !calculatedBadges.find(b => b.name === "Orb")) {
+    if (ADDITIONAL_BADGES.orb && !calculatedBadges.find(b => b.name === t("badge_orb"))) {
       calculatedBadges.push({
-        name: "Orb",
+        name: t("badge_orb"),
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/orb.svg",
         icon: <Circle className="w-3 h-3" />,
         color: "text-cyan-400",
@@ -764,9 +765,9 @@ export default function DiscordProfile() {
       });
     }
     
-    if (ADDITIONAL_BADGES.impulso && !calculatedBadges.find(b => b.name === "Impulso de Servidor")) {
+    if (ADDITIONAL_BADGES.impulso && !calculatedBadges.find(b => b.name === t("badge_server_boost"))) {
       calculatedBadges.push({
-        name: "Impulso de Servidor",
+        name: t("badge_server_boost"),
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/boosts/discordboost9.svg",
         icon: <Rocket className="w-4 h-4" />,
         color: "text-purple-400",
@@ -776,7 +777,7 @@ export default function DiscordProfile() {
     
     if (ADDITIONAL_BADGES.missao && !calculatedBadges.find(b => b.name === "Miss�o Completa")) {
       calculatedBadges.push({
-        name: "Miss�o Completa",
+        name: t("badge_mission_complete"),
         iconUrl: "https://raw.githubusercontent.com/mezotv/discord-badges/main/assets/quest.png",
         icon: <Target className="w-4 h-4" />,
         color: "text-yellow-400",
@@ -785,30 +786,30 @@ export default function DiscordProfile() {
     }
     
     // Reordenar badges
-    const badgeOrder = [
-      "Funcion�rio do Discord",
-      "Parceiro do Discord",
-      "Moderador Certificado",
-      "Desenvolvedor de Bot Verificado",
-      "Nitro",
-      "Nitro Classic",
-      "HypeSquad Events",
-      "HypeSquad Bravery",
-      "HypeSquad Brilliance",
-      "HypeSquad Balance",
-      "Desenvolvedor Ativo",
-      "Impulso de Servidor",
-      "Pomelo",
-      "Miss�o Completa",
-      "Orb",
-      "Bug Hunter N�vel 2",
-      "Bug Hunter N�vel 1",
-      "Early Supporter"
+    const badgeOrdser = [
+      t("badge_discord_staff"),
+      t("badge_discord_partner"),
+      t("badge_certified_moderator"),
+      t("badge_verified_bot_developer"),
+      t("badge_nitro"),
+      t("badge_nitro_classic"),
+      t("badge_hypesquad_events"),
+      t("badge_hypesquad_bravery"),
+      t("badge_hypesquad_brilliance"),
+      t("badge_hypesquad_balance"),
+      t("badge_active_developer"),
+      t("badge_server_boost"),
+      t("badge_pomelo"),
+      t("badge_mission_complete"),
+      t("badge_orb"),
+      t("badge_bug_hunter_2"),
+      t("badge_bug_hunter_1"),
+      t("badge_early_supporter")
     ];
     
     calculatedBadges.sort((a, b) => {
-      const indexA = badgeOrder.indexOf(a.name);
-      const indexB = badgeOrder.indexOf(b.name);
+      const indexA = badgeOrdser.indexOf(a.name);
+      const indexB = badgeOrdser.indexOf(b.name);
       if (indexA === -1) return 1;
       if (indexB === -1) return -1;
       return indexA - indexB;
@@ -1035,7 +1036,7 @@ export default function DiscordProfile() {
                 {accountCreationInfo && (
                   <div className="flex items-center gap-1 mt-1">
                     <span className="text-xs text-gray-500">
-                      {t('discord_account_created_on')} {accountCreationInfo.formattedDate} ({accountCreationInfo.accountAge} {t('discord_account_age_ago')})
+                      {t('discord_account_created_on')} {accountCreationInfo.formattedDate}
                     </span>
                   </div>
                 )}
