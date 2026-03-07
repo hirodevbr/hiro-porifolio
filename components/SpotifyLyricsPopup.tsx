@@ -278,6 +278,13 @@ export default function SpotifyLyricsPopup() {
     }
   }, [spotify]);
 
+  // Ao voltar a ouvir a mesma faixa (ex.: pausou e deu play), limpar lastPlayed para nao mostrar como ultima tocada
+  useEffect(() => {
+    if (spotify && lastPlayed && spotify.track_id && spotify.track_id === lastPlayed.track_id) {
+      setLastPlayed(null);
+    }
+  }, [spotify, lastPlayed]);
+
   // Detecta mobile
   useEffect(() => {
     const update = () => setIsMobile(window.innerWidth <= 768);
