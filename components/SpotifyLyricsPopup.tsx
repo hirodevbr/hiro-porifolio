@@ -60,6 +60,8 @@ export default function SpotifyLyricsPopup() {
   const lastUserScrollAtRef = useRef<number>(0);
   const programmaticScrollRef = useRef(false);
   const prevTrackKeyRef = useRef<string>("");
+  const prevSpotifyRef = useRef<LanyardSpotify | null>(null);
+  const [lastPlayed, setLastPlayed] = useState<LanyardSpotify | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const syncOffsetRef = useRef<number>(0); // Offset de sincronização inicial
   const hasSyncedInitialRef = useRef<boolean>(false); // Flag para sincronização inicial
@@ -250,12 +252,18 @@ export default function SpotifyLyricsPopup() {
     }
 
     if (prevTrackKeyRef.current !== trackKey) {
+      if (prevSpotifyRef.current && prevTrackKeyRef.current) {
+        setLastPlayed(prevSpotifyRef.current);
+      }
+      prevSpotifyRef.current = spotify;
       prevTrackKeyRef.current = trackKey;
       setCollapsed(isMobile ? true : false);
       setLyricsRaw(null);
       setLyricsError(null);
       setFromCache(false);
       setPlayerOpen(false);
+    } else if (spotify) {
+      prevSpotifyRef.current = spotify;
     }
   }, [spotify, trackKey, isMobile]);
 
@@ -504,6 +512,7 @@ export default function SpotifyLyricsPopup() {
       closePlayer: isEn ? "Close player" : isEs ? "Cerrar reproductor" : "Fechar player",
       fontSizeDown: isEn ? "Decrease lyrics font size" : isEs ? "Reducir tamaño de letra" : "Diminuir tamanho da letra",
       fontSizeUp: isEn ? "Increase lyrics font size" : isEs ? "Aumentar tamaño de letra" : "Aumentar tamanho da letra",
+      lastPlayed: isEn ? "Last played" : isEs ? "Última reproducida" : "Última tocada",
     };
   }, [language]);
 
@@ -513,7 +522,7 @@ export default function SpotifyLyricsPopup() {
 
   const popupClass = isFullscreen
     ? "pointer-events-auto w-full max-w-5xl min-h-[70vh] max-h-[90vh] overflow-hidden rounded-2xl border border-white/10 bg-gray-900/80 shadow-2xl backdrop-blur-2xl flex flex-col relative z-10"
-    : "pointer-events-auto w-[360px] overflow-hidden rounded-2xl border border-white/10 bg-gray-900/70 shadow-2xl backdrop-blur-xl";
+    : "pointer-events-auto w-[400px] overflow-hidden rounded-2xl border border-white/10 bg-gray-900/70 shadow-2xl backdrop-blur-xl";
 
   const listHeightClass = isFullscreen ? "max-h-[60vh]" : "max-h-[260px]";
 
@@ -660,6 +669,35 @@ export default function SpotifyLyricsPopup() {
                   </button>
                 </div>
                 </div>
+                {lastPlayed && (
+                  <div className="mt-3 flex items-center gap-2 border-t border-white/10 pt-3">
+                    <p className="flex-shrink-0 text-[10px] font-medium uppercase tracking-wider text-white/50">
+                      {strings.lastPlayed}
+                    </p>
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                      <div className="relative h-9 w-9 flex-shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/20">
+                        {lastPlayed.album_art_url ? (
+                          <Image
+                            src={lastPlayed.album_art_url}
+                            alt={lastPlayed.album}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                            sizes="36px"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-white/50">
+                            <Music2 className="h-4 w-4" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs text-white/70">{lastPlayed.song}</p>
+                        <p className="truncate text-[11px] text-white/50">{lastPlayed.artist}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -759,18 +797,18 @@ export default function SpotifyLyricsPopup() {
                         )}
                         <button
                           type="button"
-                          onClick={() => setIsFullscreen((v) => !v)}
+                          onClick={handleExitFullscreen}
                           className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
-                          aria-label={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
-                          title={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
+                          aria-label={strings.exitFullscreen}
+                          title={strings.exitFullscreen}
                         >
-                          {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                          <Minimize2 className="h-4 w-4" />
                         </button>
                         <button
                           type="button"
                           onClick={() => setCollapsed((v) => !v)}
                           className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
-                          aria-label={collapsed ? "Expandir" : "Recolher"}
+                          aria-label={collapsed ? strings.expand : strings.collapse}
                         >
                           <ChevronDown className={collapsed ? "h-4 w-4 rotate-180" : "h-4 w-4"} />
                         </button>
@@ -886,6 +924,38 @@ export default function SpotifyLyricsPopup() {
                             <span>{formatTime(currentTime)}</span>
                             <span>-{formatTime(remainingSeconds)}</span>
                           </div>
+                          {lastPlayed && (
+                            <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                              <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-white/50">
+                                {strings.lastPlayed}
+                              </p>
+                              <div className="flex items-center gap-3">
+                                <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg border border-white/10">
+                                  {lastPlayed.album_art_url ? (
+                                    <Image
+                                      src={lastPlayed.album_art_url}
+                                      alt={lastPlayed.album}
+                                      fill
+                                      className="object-cover"
+                                      unoptimized
+                                      sizes="48px"
+                                    />
+                                  ) : (
+                                    <div className="flex h-full w-full items-center justify-center text-white/50">
+                                      <Music2 className="h-6 w-6" />
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-sm font-medium text-white/80">{lastPlayed.song}</p>
+                                  <p className="truncate text-xs text-white/55">{lastPlayed.artist}</p>
+                                  {lastPlayed.album && (
+                                    <p className="truncate text-[11px] text-white/40">{lastPlayed.album}</p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         {hasSynced ? (
@@ -1167,6 +1237,33 @@ export default function SpotifyLyricsPopup() {
                       <ChevronDown className={collapsed ? "h-4 w-4 rotate-180" : "h-4 w-4"} />
                     </button>
                   </div>
+                  {lastPlayed && (
+                    <div className="mt-4 flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
+                      <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg border border-white/10">
+                        {lastPlayed.album_art_url ? (
+                          <Image
+                            src={lastPlayed.album_art_url}
+                            alt={lastPlayed.album}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                            sizes="40px"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-white/50">
+                            <Music2 className="h-5 w-5" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1 text-left">
+                        <p className="text-[10px] font-medium uppercase tracking-wider text-white/50">
+                          {strings.lastPlayed}
+                        </p>
+                        <p className="truncate text-sm text-white/80">{lastPlayed.song}</p>
+                        <p className="truncate text-xs text-white/55">{lastPlayed.artist}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 </div>
               </div>
