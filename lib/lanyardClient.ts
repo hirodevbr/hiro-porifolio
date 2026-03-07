@@ -27,14 +27,17 @@ type State = {
 
 type Subscriber = (s: State) => void;
 
-// Gera uma assinatura simples para detectar mudanças relevantes
+// Gera assinatura para detectar mudanças (Spotify, status e atividades)
 function makeSignature(d: LanyardData | null): string {
   if (!d) return "";
+  const parts: string[] = [`status:${d.discord_status ?? "offline"}`];
   const sp = d.spotify;
-  if (!sp) return `status:${d.discord_status ?? "offline"}`;
-  
-  // Assinatura baseada em dados críticos do Spotify
-  return `spotify:${sp.track_id}:${sp.timestamps?.start ?? 0}:${sp.timestamps?.end ?? 0}:${sp.song}:${sp.artist}`;
+  if (sp) {
+    parts.push(`spotify:${sp.track_id}:${sp.timestamps?.start ?? 0}:${sp.timestamps?.end ?? 0}:${sp.song}:${sp.artist}`);
+  }
+  const acts = d.activities ?? [];
+  parts.push(`activities:${acts.length}:${acts.map((a: any) => `${a.name ?? ""}-${a.type ?? 0}-${a.timestamps?.start ?? 0}`).join(",")}`);
+  return parts.join("|");
 }
 
 class LanyardStore {
@@ -53,8 +56,8 @@ class LanyardStore {
   
   // Controle de polling (fallback)
   private pollingInterval: number | null = null;
-  private pollingDelay = 5000; // 5 segundos quando Spotify ativo
-  private pollingDelaySlow = 15000; // 15 segundos quando inativo
+  private pollingDelay = 3000; // 3 segundos quando Spotify ativo
+  private pollingDelaySlow = 6000; // 6 segundos quando inativo (atividades/jogos)
   
   // Controle de refs
   private refCount = 0;

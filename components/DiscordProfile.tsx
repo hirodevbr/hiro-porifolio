@@ -50,6 +50,31 @@ interface DiscordActivity {
   application_id?: string;
 }
 
+interface LastPlayedActivity {
+  name: string;
+  type: number;
+  details?: string;
+  state?: string;
+  startTimestamp: number;
+  endTimestamp: number;
+  durationSeconds: number;
+  imageUrl: string | null;
+}
+
+/** Usado no effect de lastPlayed (antes do early return) para nao depender de getActivityImageUrls. */
+function getFirstActivityImageUrl(activity: DiscordActivity): string | null {
+  const largeImage = activity.assets?.large_image;
+  const applicationId = activity.application_id;
+  if (!largeImage && applicationId) {
+    return `https://cdn.discordapp.com/app-icons/${applicationId}/${applicationId}.png`;
+  }
+  if (!largeImage) return null;
+  if (applicationId && !largeImage.startsWith("mp:")) {
+    return `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.png`;
+  }
+  return null;
+}
+
 interface DiscordData {
   discord_user: {
     username: string;
@@ -101,6 +126,9 @@ export default function DiscordProfile() {
   
   // Estado para controlar se já animou (evita piscar em re-renders)
   const [hasAnimated, setHasAnimated] = useState(false);
+  // Últimas atividades que pararam (jogando/ouvindo/assistindo) para exibir tempo jogado e quando parou
+  const [lastPlayedActivities, setLastPlayedActivities] = useState<LastPlayedActivity[]>([]);
+  const prevActivitiesRef = useRef<DiscordActivity[]>([]);
   
   useEffect(() => {
     if (inView && !hasAnimated) {
@@ -415,6 +443,35 @@ export default function DiscordProfile() {
   };
 
   // Fun��o para formatar tempo em minutos e segundos (para m�sica)
+  const formatDuration = (totalSeconds: number): string => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    if (hours > 0) {
+      return `${hours}h ${minutes}min ${seconds}s`;
+    }
+    if (minutes > 0) {
+      return `${minutes}min ${seconds}s`;
+    }
+    return `${seconds}s`;
+  };
+
+  const formatStoppedAgo = (endTimestamp: number): string => {
+    const now = Date.now();
+    const elapsedMs = now - endTimestamp;
+    const elapsedSeconds = Math.floor(elapsedMs / 1000);
+    const hours = Math.floor(elapsedSeconds / 3600);
+    const minutes = Math.floor((elapsedSeconds % 3600) / 60);
+    const seconds = elapsedSeconds % 60;
+    if (hours > 0) {
+      return `${hours}h ${minutes}min ${seconds}s`;
+    }
+    if (minutes > 0) {
+      return `${minutes}min ${seconds}s`;
+    }
+    return `${seconds}s`;
+  };
+
   const formatMusicTime = (seconds: number): string => {
     // Garante que o valor seja sempre não-negativo e válido
     const safeSeconds = Math.max(0, Math.floor(seconds || 0));
@@ -828,6 +885,41 @@ export default function DiscordProfile() {
     discordData?.discord_user?.primary_guild
   ]);
 
+  const activitiesForLastPlayed = discordData?.activities ?? [];
+  const activitiesSignature = activitiesForLastPlayed
+    .filter((a) => a.type !== 4 && !(a.name?.toLowerCase().includes("spotify")))
+    .map((a) => `${a.name}-${a.type}-${a.timestamps?.start ?? 0}`)
+    .sort()
+    .join("|");
+  useEffect(() => {
+    const filtered = activitiesForLastPlayed
+      .filter((a) => a.type !== 4)
+      .filter((a) => !(a.name?.toLowerCase().includes("spotify")));
+    const prev = prevActivitiesRef.current;
+    const key = (a: DiscordActivity) => `${a.name}-${a.type}-${a.timestamps?.start ?? 0}`;
+    const currentKeys = new Set(filtered.map(key));
+    const ended = prev.filter((a) => !currentKeys.has(key(a)));
+    if (ended.length > 0) {
+      const now = Date.now();
+      const newEntries: LastPlayedActivity[] = ended.map((a) => {
+        const start = a.timestamps?.start ?? now;
+        const durationSeconds = Math.floor((now - start) / 1000);
+        return {
+          name: a.name,
+          type: a.type,
+          details: a.details,
+          state: a.state,
+          startTimestamp: start,
+          endTimestamp: now,
+          durationSeconds,
+          imageUrl: getFirstActivityImageUrl(a),
+        };
+      });
+      setLastPlayedActivities((prevList) => [...newEntries, ...prevList].slice(0, 10));
+    }
+    prevActivitiesRef.current = filtered;
+  }, [activitiesSignature, activitiesForLastPlayed]);
+
   if (loading) {
     return (
       <section
@@ -875,7 +967,10 @@ export default function DiscordProfile() {
   }
 
   const { discord_user, discord_status, activities = [], spotify, kv } = discordData;
-  
+  const filteredActivitiesForDisplay = activities
+    .filter((a) => a.type !== 4)
+    .filter((a) => !(a.name?.toLowerCase().includes("spotify")));
+
   // Avatar do Discord - suporta GIF animado
   const avatarUrl = discord_user.avatar
     ? discord_user.avatar.startsWith("a_")
@@ -1351,20 +1446,13 @@ export default function DiscordProfile() {
           )}
 
           {/* Atividades */}
-          {activities && activities.length > 0 ? (
+          {filteredActivitiesForDisplay.length > 0 ? (
             <div className="space-y-4 px-6 pb-6">
               <h4 className="text-lg font-semibold text-white flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-gray-200" aria-hidden="true" />
                 {t("discord_activities")}
               </h4>
-              {activities
-                .filter((activity) => activity.type !== 4) // Filtrar atividades customizadas
-                .filter((activity) => {
-                  // Remover Spotify da lista de atividades (j� tem card dedicado)
-                  const activityName = activity.name?.toLowerCase() || '';
-                  return !activityName.includes('spotify');
-                })
-                .map((activity, index) => {
+              {filteredActivitiesForDisplay.map((activity, index) => {
                   // Componente para timer em tempo real
                   const ActivityTimer = ({ startTimestamp }: { startTimestamp: number }) => {
                     const [elapsedTime, setElapsedTime] = useState(formatElapsedTime(startTimestamp));
@@ -1555,6 +1643,98 @@ export default function DiscordProfile() {
                     </motion.div>
                   );
                 })}
+
+              {lastPlayedActivities.length > 0 && (
+                <>
+                  <h4 className="text-lg font-semibold text-white flex items-center gap-2 mt-6">
+                    <Clock className="w-5 h-5 text-gray-200" aria-hidden="true" />
+                    {t("discord_last_played_activities")}
+                  </h4>
+                  <div className="space-y-3">
+                    {lastPlayedActivities.map((item, index) => (
+                      <motion.div
+                        key={`${item.name}-${item.endTimestamp}-${index}`}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={inView ? { opacity: 1, x: 0 } : {}}
+                        transition={{ duration: 0.3 }}
+                        className="p-3 bg-gray-700/20 rounded-lg border border-gray-600/40 flex items-center gap-3"
+                      >
+                        <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg border border-gray-600/50 bg-gray-700/50">
+                          {item.imageUrl ? (
+                            <Image
+                              src={item.imageUrl}
+                              alt={item.name}
+                              fill
+                              className="object-cover"
+                              unoptimized
+                              sizes="56px"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-gray-400">
+                              <Gamepad2 className="h-6 w-6" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white font-semibold truncate">{item.name}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {t("discord_stopped_ago")} {formatStoppedAgo(item.endTimestamp)}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {t("discord_played_for")}: {formatDuration(item.durationSeconds)}
+                          </p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          ) : lastPlayedActivities.length > 0 ? (
+            <div className="space-y-4 px-6 pb-6">
+              <h4 className="text-lg font-semibold text-white flex items-center gap-2">
+                <Clock className="w-5 h-5 text-gray-200" aria-hidden="true" />
+                {t("discord_last_played_activities")}
+              </h4>
+              <div className="space-y-3">
+                {lastPlayedActivities.map((item, index) => (
+                  <motion.div
+                    key={`${item.name}-${item.endTimestamp}-${index}`}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={inView ? { opacity: 1, x: 0 } : {}}
+                    transition={{ duration: 0.3 }}
+                    className="p-3 bg-gray-700/20 rounded-lg border border-gray-600/40 flex items-center gap-3"
+                  >
+                    <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg border border-gray-600/50 bg-gray-700/50">
+                      {item.imageUrl ? (
+                        <Image
+                          src={item.imageUrl}
+                          alt={item.name}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                          sizes="56px"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-gray-400">
+                          <Gamepad2 className="h-6 w-6" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-semibold truncate">{item.name}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {t("discord_stopped_ago")} {formatStoppedAgo(item.endTimestamp)}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {t("discord_played_for")}: {formatDuration(item.durationSeconds)}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </div>
           ) : (
             <div className="text-center py-8 px-6">

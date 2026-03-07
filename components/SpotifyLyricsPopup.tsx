@@ -267,6 +267,17 @@ export default function SpotifyLyricsPopup() {
     }
   }, [spotify, trackKey, isMobile]);
 
+  // Ao parar de ouvir: guardar última música e mostrar popup compacto
+  useEffect(() => {
+    if (!spotify && prevSpotifyRef.current) {
+      setLastPlayed(prevSpotifyRef.current);
+      prevSpotifyRef.current = null;
+    }
+    if (!spotify) {
+      setIsFullscreen(false);
+    }
+  }, [spotify]);
+
   // Detecta mobile
   useEffect(() => {
     const update = () => setIsMobile(window.innerWidth <= 768);
@@ -513,6 +524,7 @@ export default function SpotifyLyricsPopup() {
       fontSizeDown: isEn ? "Decrease lyrics font size" : isEs ? "Reducir tamaño de letra" : "Diminuir tamanho da letra",
       fontSizeUp: isEn ? "Increase lyrics font size" : isEs ? "Aumentar tamaño de letra" : "Aumentar tamanho da letra",
       lastPlayed: isEn ? "Last played" : isEs ? "Última reproducida" : "Última tocada",
+      wasListening: isEn ? "Me were listening to" : isEs ? "Estabas escuchando" : "Eu estava ouvindo",
     };
   }, [language]);
 
@@ -552,6 +564,11 @@ export default function SpotifyLyricsPopup() {
 
   const showInstrumental = false;
 
+  const showPopup = spotify || lastPlayed;
+  const idleMode = !spotify && !!lastPlayed;
+  // No mostrar "ltima tocada" quando for a mesma faixa que a atual (ex.: ao pausar)
+  const showLastPlayedSection = !!lastPlayed && (!spotify || spotify.track_id !== lastPlayed.track_id);
+
   return (
     <div className={containerClass}>
       {isFullscreen && spotify && (
@@ -563,10 +580,10 @@ export default function SpotifyLyricsPopup() {
         />
       )}
       <AnimatePresence>
-        {spotify && (
+        {showPopup && (
           <motion.div
             ref={isFullscreen ? fullscreenModalRef : null}
-            className={popupClass}
+            className={idleMode ? "pointer-events-auto w-[320px] overflow-hidden rounded-2xl border border-white/10 bg-gray-900/70 shadow-2xl backdrop-blur-xl" : popupClass}
             initial={{ opacity: 0, y: 18, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 18, scale: 0.98 }}
@@ -574,9 +591,45 @@ export default function SpotifyLyricsPopup() {
             data-spotify-lyrics-popup="1"
             role="dialog"
             aria-modal={isFullscreen}
-            aria-label="Letra sincronizada do Spotify"
+            aria-label={idleMode ? "Última música ouvida no Spotify" : "Letra sincronizada do Spotify"}
           >
-            {!isFullscreen && (
+            {idleMode ? (
+              <div className="border-b border-white/10 px-4 py-3">
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="flex h-5 w-5 flex-shrink-0" aria-hidden>
+                    <svg viewBox="0 0 24 24" className="h-5 w-5 text-[#1DB954]" fill="currentColor" role="img" aria-label="Spotify">
+                      <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
+                    </svg>
+                  </span>
+                  <span className="text-xs font-medium text-white/80">{strings.wasListening}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl border border-white/10 bg-black/20">
+                    {lastPlayed.album_art_url ? (
+                      <Image
+                        src={lastPlayed.album_art_url}
+                        alt={lastPlayed.album}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                        sizes="56px"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-white/60">
+                        <Music2 className="h-6 w-6" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-white">{lastPlayed.song}</p>
+                    <p className="truncate text-xs text-white/60">{lastPlayed.artist}</p>
+                    {lastPlayed.album && (
+                      <p className="truncate text-[11px] text-white/45">{lastPlayed.album}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : !isFullscreen && spotify ? (
               <div className="border-b border-white/10 px-4 py-3">
                 <div className="mb-3 flex items-center gap-2">
                   <span className="flex h-5 w-5 flex-shrink-0" aria-hidden>
@@ -669,7 +722,7 @@ export default function SpotifyLyricsPopup() {
                   </button>
                 </div>
                 </div>
-                {lastPlayed && (
+                {showLastPlayedSection && (
                   <div className="mt-3 flex items-center gap-2 border-t border-white/10 pt-3">
                     <p className="flex-shrink-0 text-[10px] font-medium uppercase tracking-wider text-white/50">
                       {strings.lastPlayed}
@@ -699,7 +752,7 @@ export default function SpotifyLyricsPopup() {
                   </div>
                 )}
               </div>
-            )}
+            ) : null}
 
             {spotify && !collapsed && (
               <div className="px-4 py-3">
@@ -924,7 +977,7 @@ export default function SpotifyLyricsPopup() {
                             <span>{formatTime(currentTime)}</span>
                             <span>-{formatTime(remainingSeconds)}</span>
                           </div>
-                          {lastPlayed && (
+                          {showLastPlayedSection && (
                             <div className="rounded-xl border border-white/10 bg-white/5 p-3">
                               <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-white/50">
                                 {strings.lastPlayed}
@@ -1237,7 +1290,7 @@ export default function SpotifyLyricsPopup() {
                       <ChevronDown className={collapsed ? "h-4 w-4 rotate-180" : "h-4 w-4"} />
                     </button>
                   </div>
-                  {lastPlayed && (
+                  {showLastPlayedSection && (
                     <div className="mt-4 flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
                       <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg border border-white/10">
                         {lastPlayed.album_art_url ? (
