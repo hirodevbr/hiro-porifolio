@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
@@ -1323,11 +1323,11 @@ export default function DiscordProfile() {
                           {spotify.artist}
                         </p>
                         
-                        {/* Barra de progresso com animação fluida (igual ao pop-up) */}
+                        {/* Barra de progresso (cor Spotify padronizada) */}
                         <div className="mb-1">
-                          <div className="w-full h-1.5 bg-gray-700/50 rounded-full overflow-hidden">
+                          <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
                             <div
-                              className="h-full rounded-full bg-white/40"
+                              className="h-full rounded-full bg-[#1DB954]/90"
                               style={{ 
                                 width: `${clamp((displayTime / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
                               }}

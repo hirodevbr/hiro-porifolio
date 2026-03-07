@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { ChevronDown, ExternalLink, Loader2, Maximize2, Minimize2, Music2, Play } from "lucide-react";
@@ -40,6 +40,11 @@ export default function SpotifyLyricsPopup() {
   const [playerOpen, setPlayerOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  /** Tamanho da letra no fullscreen: 0 = base, 1 = maior, 2 = ainda maior (e negativos para menor) */
+  const [lyricsFontSizeStep, setLyricsFontSizeStep] = useState(0);
+
+  const fullscreenTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const fullscreenModalRef = useRef<HTMLDivElement | null>(null);
 
   const [lyricsRaw, setLyricsRaw] = useState<string | null>(null);
   const [lyricsError, setLyricsError] = useState<string | null>(null);
@@ -262,6 +267,56 @@ export default function SpotifyLyricsPopup() {
     return () => window.removeEventListener("resize", update);
   }, []);
 
+  // Escape sai do fullscreen
+  useEffect(() => {
+    if (!spotify || !isFullscreen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      setIsFullscreen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [spotify, isFullscreen]);
+
+  // Focus trap no fullscreen: mantém Tab dentro do modal
+  useEffect(() => {
+    if (!isFullscreen || !fullscreenModalRef.current) return;
+    const el = fullscreenModalRef.current;
+    const focusable = "button, [href], input, select, textarea, [tabindex]:not([tabindex=\"-1\"])";
+    const getFocusable = () => Array.from(el.querySelectorAll<HTMLElement>(focusable)).filter((n) => !n.hasAttribute("disabled") && n.offsetParent !== null);
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      const nodes = getFocusable();
+      if (nodes.length === 0) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    el.addEventListener("keydown", onKeyDown);
+    return () => el.removeEventListener("keydown", onKeyDown);
+  }, [isFullscreen]);
+
+  // Restaurar foco no botão que abriu o fullscreen ao sair
+  useEffect(() => {
+    if (!isFullscreen && spotify) {
+      const id = requestAnimationFrame(() => {
+        fullscreenTriggerRef.current?.focus({ preventScroll: true });
+      });
+      return () => cancelAnimationFrame(id);
+    }
+  }, [isFullscreen, spotify]);
+
   // Carrega do cache
   useEffect(() => {
     if (!spotify) return;
@@ -447,33 +502,69 @@ export default function SpotifyLyricsPopup() {
       collapse: isEn ? "Collapse" : isEs ? "Recolher" : "Recolher",
       openPlayer: isEn ? "Open player" : isEs ? "Abrir reproductor" : "Abrir player",
       closePlayer: isEn ? "Close player" : isEs ? "Cerrar reproductor" : "Fechar player",
+      fontSizeDown: isEn ? "Decrease lyrics font size" : isEs ? "Reducir tamaño de letra" : "Diminuir tamanho da letra",
+      fontSizeUp: isEn ? "Increase lyrics font size" : isEs ? "Aumentar tamaño de letra" : "Aumentar tamanho da letra",
     };
   }, [language]);
 
   const containerClass = isFullscreen
-    ? "pointer-events-none fixed inset-0 z-[9998] flex items-center justify-center p-4"
+    ? "fixed inset-0 z-[9998] flex items-center justify-center p-4 pointer-events-auto"
     : "pointer-events-none fixed bottom-4 right-4 z-[9998]";
 
   const popupClass = isFullscreen
-    ? "pointer-events-auto w-full max-w-5xl min-h-[70vh] max-h-[90vh] overflow-hidden rounded-2xl border border-white/10 bg-gray-900/80 shadow-2xl backdrop-blur-2xl flex flex-col"
+    ? "pointer-events-auto w-full max-w-5xl min-h-[70vh] max-h-[90vh] overflow-hidden rounded-2xl border border-white/10 bg-gray-900/80 shadow-2xl backdrop-blur-2xl flex flex-col relative z-10"
     : "pointer-events-auto w-[360px] overflow-hidden rounded-2xl border border-white/10 bg-gray-900/70 shadow-2xl backdrop-blur-xl";
 
   const listHeightClass = isFullscreen ? "max-h-[60vh]" : "max-h-[260px]";
+
+  const lyricsTextSizeClass = useMemo(() => {
+    const steps: Record<number, string> = {
+      [-2]: "text-xs",
+      [-1]: "text-sm",
+      0: "text-base",
+      1: "text-lg",
+      2: "text-xl",
+    };
+    return steps[lyricsFontSizeStep] ?? "text-base";
+  }, [lyricsFontSizeStep]);
+
+  const handleExitFullscreen = useCallback(() => {
+    fullscreenTriggerRef.current?.focus({ preventScroll: true });
+    setIsFullscreen(false);
+  }, []);
+
+  const handleBackdropClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.target !== e.currentTarget) return;
+      handleExitFullscreen();
+    },
+    [handleExitFullscreen],
+  );
 
   const showInstrumental = false;
 
   return (
     <div className={containerClass}>
+      {isFullscreen && spotify && (
+        <div
+          role="presentation"
+          aria-hidden
+          className="absolute inset-0 z-0 bg-black/70"
+          onClick={handleBackdropClick}
+        />
+      )}
       <AnimatePresence>
         {spotify && (
           <motion.div
+            ref={isFullscreen ? fullscreenModalRef : null}
             className={popupClass}
             initial={{ opacity: 0, y: 18, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 18, scale: 0.98 }}
-            transition={{ type: "spring", stiffness: 260, damping: 28 }}
+            transition={{ type: "spring", stiffness: 300, damping: 26 }}
             data-spotify-lyrics-popup="1"
             role="dialog"
+            aria-modal={isFullscreen}
             aria-label="Letra sincronizada do Spotify"
           >
             {!isFullscreen && (
@@ -507,9 +598,12 @@ export default function SpotifyLyricsPopup() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-white">{title}</p>
                   <p className="truncate text-xs text-white/60">{subtitle}</p>
-                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                  {spotify.album && (
+                    <p className="truncate text-[11px] text-white/45">{spotify.album}</p>
+                  )}
+                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
                     <div
-                      className="h-full rounded-full bg-white/40"
+                      className="h-full rounded-full bg-[#1DB954]/90"
                       style={{
                         width: `${clamp((displayTime / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
                       }}
@@ -547,6 +641,7 @@ export default function SpotifyLyricsPopup() {
                     </a>
                   )}
                   <button
+                    ref={fullscreenTriggerRef}
                     type="button"
                     onClick={() => setIsFullscreen((v) => !v)}
                     className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
@@ -626,9 +721,9 @@ export default function SpotifyLyricsPopup() {
                           <p className="text-sm text-white/60">{strings.errorNoLyrics}</p>
                         )}
                       </div>
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-white/20">
                         <div
-                          className="h-full rounded-full bg-white/40"
+                          className="h-full rounded-full bg-[#1DB954]/90"
                           style={{
                             width: `${clamp((displayTime / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
                           }}
@@ -685,11 +780,42 @@ export default function SpotifyLyricsPopup() {
                 )}
 
                 {!loadingLyrics && !lyricsError && lyricsRaw && (
-                  <>
+                  <div className="contents">
                     {isFullscreen ? (
-                      <div className="flex flex-col lg:flex-row gap-6">
-                        <div className="w-full lg:w-2/5 space-y-4">
-                          <div className="relative w-full max-w-[360px] aspect-square rounded-2xl overflow-hidden border border-white/10">
+                      <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                        <div className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <span className="flex h-5 w-5 flex-shrink-0" aria-hidden>
+                              <svg viewBox="0 0 24 24" className="h-5 w-5 text-[#1DB954]" fill="currentColor" role="img" aria-label="Spotify">
+                                <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
+                              </svg>
+                            </span>
+                            <span className="truncate text-sm font-medium text-white/80">{strings.nowListening}</span>
+                          </div>
+                          <div className="flex flex-shrink-0 items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setLyricsFontSizeStep((s) => Math.max(-2, s - 1))}
+                              className="rounded px-2 py-1 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white"
+                              aria-label={strings.fontSizeDown}
+                              title={strings.fontSizeDown}
+                            >
+                              A−
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setLyricsFontSizeStep((s) => Math.min(2, s + 1))}
+                              className="rounded px-2 py-1 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white"
+                              aria-label={strings.fontSizeUp}
+                              title={strings.fontSizeUp}
+                            >
+                              A+
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row lg:gap-6 lg:overflow-auto lg:px-4 lg:py-3">
+                          <div className="flex-shrink-0 space-y-4 px-4 py-3 lg:py-3 lg:w-2/5">
+                            <div className="relative w-full max-w-[360px] aspect-square rounded-2xl overflow-hidden border border-white/10">
                             <Image
                               src={spotify.album_art_url ?? "/profile/profile.avif"}
                               alt={spotify.album}
@@ -699,10 +825,13 @@ export default function SpotifyLyricsPopup() {
                               unoptimized
                             />
                           </div>
-                          <div className="text-center space-y-2">
-                            <p className="text-xl font-semibold text-white truncate">{title}</p>
-                            <p className="text-sm text-white/70 truncate">{subtitle}</p>
-                            <div className="flex items-center justify-center gap-2 flex-wrap">
+                          <div className="space-y-2 text-center">
+                            <p className="truncate text-xl font-semibold text-white">{title}</p>
+                            <p className="truncate text-sm text-white/70">{subtitle}</p>
+                            {spotify.album && (
+                              <p className="truncate text-xs text-white/50">{spotify.album}</p>
+                            )}
+                            <div className="flex flex-wrap justify-center gap-2">
                               {spotifyEmbedUrl && (
                                 <button
                                   type="button"
@@ -728,12 +857,12 @@ export default function SpotifyLyricsPopup() {
                               )}
                               <button
                                 type="button"
-                                onClick={() => setIsFullscreen((v) => !v)}
+                                onClick={handleExitFullscreen}
                                 className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
-                                aria-label={isFullscreen ? strings.exitFullscreen : strings.fullscreen}
-                                title={isFullscreen ? strings.exitFullscreen : strings.fullscreen}
+                                aria-label={strings.exitFullscreen}
+                                title={strings.exitFullscreen}
                               >
-                                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                                <Minimize2 className="h-4 w-4" />
                               </button>
                               <button
                                 type="button"
@@ -745,9 +874,9 @@ export default function SpotifyLyricsPopup() {
                               </button>
                             </div>
                           </div>
-                          <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                          <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/20">
                             <div
-                              className="h-full rounded-full bg-white/40"
+                              className="h-full rounded-full bg-[#1DB954]/90"
                               style={{
                                 width: `${clamp((displayTime / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
                               }}
@@ -763,7 +892,7 @@ export default function SpotifyLyricsPopup() {
                           <LayoutGroup>
                             <motion.div
                               ref={listRef}
-                              className={`${listHeightClass} flex-1 overflow-y-auto pr-1`}
+                              className={`${listHeightClass} flex-1 overflow-y-auto pr-1 scroll-smooth ${lyricsTextSizeClass}`}
                               data-lyrics-scroll="synced"
                               onPointerDown={() => {
                                 lastUserScrollAtRef.current = Date.now();
@@ -821,7 +950,7 @@ export default function SpotifyLyricsPopup() {
                                         />
                                       )}
                                       <motion.span
-                                        className={active ? "relative text-lg font-semibold" : "relative text-base"}
+                                        className={active ? "relative font-semibold" : "relative opacity-90"}
                                         animate={{
                                           opacity: active ? 1 : 0.78,
                                           scale: active ? 1.02 : 1,
@@ -839,7 +968,7 @@ export default function SpotifyLyricsPopup() {
                         ) : (
                           <motion.div
                             ref={plainRef}
-                            className={`${listHeightClass} flex-1 overflow-y-auto whitespace-pre-wrap text-base text-white/70`}
+                            className={`${listHeightClass} flex-1 overflow-y-auto whitespace-pre-wrap text-white/70 scroll-smooth ${lyricsTextSizeClass}`}
                             data-lyrics-scroll="plain"
                             onPointerDown={() => {
                               lastUserScrollAtRef.current = Date.now();
@@ -857,14 +986,15 @@ export default function SpotifyLyricsPopup() {
                             {lyricsRaw}
                           </motion.div>
                         )}
+                        </div>
                       </div>
                     ) : (
-                      <>
+                      <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
                         {hasSynced ? (
                           <LayoutGroup>
                             <motion.div
                               ref={listRef}
-                              className={`${listHeightClass} overflow-y-auto pr-1`}
+                              className={`${listHeightClass} overflow-y-auto pr-1 scroll-smooth`}
                               data-lyrics-scroll="synced"
                               onPointerDown={() => {
                                 lastUserScrollAtRef.current = Date.now();
@@ -940,7 +1070,7 @@ export default function SpotifyLyricsPopup() {
                         ) : (
                           <motion.div
                             ref={plainRef}
-                            className={`${listHeightClass} overflow-y-auto whitespace-pre-wrap text-sm text-white/70`}
+                            className={`${listHeightClass} overflow-y-auto whitespace-pre-wrap text-sm text-white/70 scroll-smooth`}
                             data-lyrics-scroll="plain"
                             onPointerDown={() => {
                               lastUserScrollAtRef.current = Date.now();
@@ -958,15 +1088,24 @@ export default function SpotifyLyricsPopup() {
                             {lyricsRaw}
                           </motion.div>
                         )}
-                      </>
+                      </div>
                     )}
-                  </>
+                  </div>
                 )}
               </div>
             )}
 
             {spotify && isFullscreen && collapsed && (
-              <div className="px-4 py-6 flex-1 flex flex-col items-center justify-center gap-6">
+              <div className="flex flex-1 flex-col overflow-hidden">
+                <div className="flex flex-shrink-0 items-center gap-2 border-b border-white/10 px-4 py-3">
+                  <span className="flex h-5 w-5 flex-shrink-0" aria-hidden>
+                    <svg viewBox="0 0 24 24" className="h-5 w-5 text-[#1DB954]" fill="currentColor" role="img" aria-label="Spotify">
+                      <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
+                    </svg>
+                  </span>
+                  <span className="text-sm font-medium text-white/80">{strings.nowListening}</span>
+                </div>
+                <div className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-6">
                 <div className="w-full max-w-md space-y-4 text-center">
                   <div className="relative w-full aspect-square rounded-2xl overflow-hidden border border-white/10 mx-auto">
                     <Image
@@ -981,10 +1120,13 @@ export default function SpotifyLyricsPopup() {
                   <div className="space-y-1">
                     <p className="text-2xl font-semibold text-white truncate">{title}</p>
                     <p className="text-sm text-white/70 truncate">{subtitle}</p>
+                    {spotify.album && (
+                      <p className="text-xs text-white/50 truncate">{spotify.album}</p>
+                    )}
                   </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/20">
                     <div
-                      className="h-full rounded-full bg-white/40"
+                      className="h-full rounded-full bg-[#1DB954]/90"
                       style={{
                         width: `${clamp((displayTime / Math.max(1, totalSeconds)) * 100, 0, 100)}%`,
                       }}
@@ -994,7 +1136,7 @@ export default function SpotifyLyricsPopup() {
                     <span>{formatTime(currentTime)}</span>
                     <span>-{formatTime(remainingSeconds)}</span>
                   </div>
-                  <div className="flex items-center justify-center gap-2 flex-wrap">
+                  <div className="flex flex-wrap justify-center gap-2">
                     {spotifyOpenUrl && (
                       <a
                         href={spotifyOpenUrl}
@@ -1009,12 +1151,12 @@ export default function SpotifyLyricsPopup() {
                     )}
                     <button
                       type="button"
-                      onClick={() => setIsFullscreen((v) => !v)}
+                      onClick={handleExitFullscreen}
                       className="rounded-full p-2 text-white/70 hover:bg-white/10 hover:text-white"
-                      aria-label={isFullscreen ? strings.exitFullscreen : strings.fullscreen}
-                      title={isFullscreen ? strings.exitFullscreen : strings.fullscreen}
+                      aria-label={strings.exitFullscreen}
+                      title={strings.exitFullscreen}
                     >
-                      {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                      <Minimize2 className="h-4 w-4" />
                     </button>
                     <button
                       type="button"
@@ -1025,6 +1167,7 @@ export default function SpotifyLyricsPopup() {
                       <ChevronDown className={collapsed ? "h-4 w-4 rotate-180" : "h-4 w-4"} />
                     </button>
                   </div>
+                </div>
                 </div>
               </div>
             )}
