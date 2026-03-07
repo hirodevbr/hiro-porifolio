@@ -2,20 +2,35 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
+const FETCH_TIMEOUT_MS = 12_000;
+
 async function fetchJson(url: string) {
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent": "portfolio/1.0 (Next.js)",
-      Accept: "application/json",
-    },
-    // Cache no servidor: reduz latência e carga. Cliente ainda pode ter cache local.
-    next: { revalidate: 60 * 60 * 24 }, // 24h
-  });
-  return { res, json: await res.json().catch(() => null) };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "portfolio/1.0 (Next.js)",
+        Accept: "application/json",
+      },
+      signal: controller.signal,
+      next: { revalidate: 60 * 60 * 24 },
+    });
+    const json = await res.json().catch(() => null);
+    return { res, json };
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function normalizeSpaces(s: string) {
   return s.replace(/\s+/g, " ").trim();
+}
+
+/** Usa o primeiro artista quando o nome vem como "Artista1; Artista2; ..." (ex.: Spotify) */
+function primaryArtist(artist: string): string {
+  const first = artist.split(/;\s*/)[0];
+  return normalizeSpaces(first || artist);
 }
 
 function stripFeaturing(s: string) {
@@ -81,18 +96,24 @@ export async function GET(req: Request) {
     );
   }
 
-  const candidates = buildCandidates(artistName, trackName);
-  const ovhUrl = `https://api.lyrics.ovh/v1/${encodeURIComponent(artistName)}/${encodeURIComponent(trackName)}`;
+  const artist = primaryArtist(artistName);
+  const candidates = buildCandidates(artist, trackName);
+  const ovhUrl = `https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(trackName)}`;
 
   try {
     // 1) Tentativa: LRCLIB (sincronizada) com múltiplas normalizações
     let bestLrclib: any | null = null;
     let lrclibStatus = 0;
     for (const c of candidates) {
-      const lrclibUrl = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(
-        c.artist,
-      )}&track_name=${encodeURIComponent(c.track)}`;
-      const lrclib = await fetchJson(lrclibUrl);
+      let lrclib: { res: Response; json: any };
+      try {
+        const lrclibUrl = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(
+          c.artist,
+        )}&track_name=${encodeURIComponent(c.track)}`;
+        lrclib = await fetchJson(lrclibUrl);
+      } catch {
+        continue;
+      }
       lrclibStatus = lrclib.res.status;
       if (!lrclib.res.ok || !lrclib.json) continue;
 
@@ -113,7 +134,12 @@ export async function GET(req: Request) {
     }
 
     // 2) Backup: lyrics.ovh (apenas não sincronizada)
-    const ovh = await fetchJson(ovhUrl);
+    let ovh: { res: Response; json: any };
+    try {
+      ovh = await fetchJson(ovhUrl);
+    } catch {
+      ovh = { res: new Response(null, { status: 502 }), json: null };
+    }
     if (ovh.res.ok && ovh.json?.lyrics) {
       return NextResponse.json(
         {
@@ -146,6 +172,7 @@ export async function GET(req: Request) {
 
     // Se ambos falharam:
     const status = ovh.res.status || lrclibStatus || 404;
+    const httpStatus = status >= 400 && status < 600 ? status : 404;
     return NextResponse.json(
       {
         error: "Letra não encontrada",
@@ -155,10 +182,13 @@ export async function GET(req: Request) {
           lyricsOvh: ovh.res.status,
         },
       },
-      { status: status || 404 },
+      { status: httpStatus },
     );
-  } catch {
-    return NextResponse.json({ error: "Falha ao consultar LRCLIB" }, { status: 502 });
+  } catch (err) {
+    return NextResponse.json(
+      { error: "Falha ao consultar APIs de letra (timeout ou rede)." },
+      { status: 502 },
+    );
   }
 }
 
