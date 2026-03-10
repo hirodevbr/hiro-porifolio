@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, type ReactNode } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Image from "next/image";
 import { DISCORD_USER_ID } from "@/lib/config";
@@ -91,19 +91,118 @@ function loadLastPlayedActivitiesFromStorage(): LastPlayedActivity[] {
   }
 }
 
-/** Usado no effect de lastPlayed. Não gera URL quando application_id é o user ID (evita 404). */
+/** Usado no effect de lastPlayed. Só retorna URL quando tem hash (large_image); senão mostra ícone gamepad. */
 function getFirstActivityImageUrl(activity: DiscordActivity, discordUserId?: string | null): string | null {
   const largeImage = activity.assets?.large_image;
   const applicationId = activity.application_id;
   if (discordUserId && applicationId === discordUserId) return null;
-  if (!largeImage && applicationId) {
-    return `https://cdn.discordapp.com/app-icons/${applicationId}/${applicationId}.png`;
-  }
   if (!largeImage) return null;
   if (applicationId && !largeImage.startsWith("mp:")) {
     return `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.png?size=160&keep_aspect_ratio=false`;
   }
   return null;
+}
+
+/** Componente estável para ícone da atividade (evita piscar quando o pai re-renderiza a cada 1s). */
+function ActivityImageBlock({
+  activity,
+  getActivityImageUrls,
+  getActivityIcon,
+  discordUserId,
+}: {
+  activity: DiscordActivity;
+  getActivityImageUrls: (a: DiscordActivity) => string[];
+  getActivityIcon: (a: DiscordActivity) => ReactNode;
+  discordUserId?: string | null;
+}) {
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
+  const [showFallback, setShowFallback] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadedImageUrl, setLoadedImageUrl] = useState<string | null>(null);
+  const prevImageKeyRef = useRef<string>("");
+
+  useEffect(() => {
+    const urls = getActivityImageUrls(activity);
+    const validUrls = urls.filter((url) => {
+      if (url.includes("mp:external") && url.includes("discordapp.com")) return false;
+      if (discordUserId && (url.includes(`/${discordUserId}/`) || url.includes(`/${discordUserId}.`))) return false;
+      return true;
+    });
+    const currentImageKey = `${activity.assets?.large_image || "no-image"}-${activity.application_id || "no-app-id"}`;
+    if (prevImageKeyRef.current !== currentImageKey) {
+      setImageUrls(validUrls);
+      setCurrentUrlIndex(0);
+      setShowFallback(false);
+      setImageError(false);
+      setIsLoading(true);
+      setLoadedImageUrl(null);
+      prevImageKeyRef.current = currentImageKey;
+    }
+  // getActivityImageUrls omitido das deps para evitar re-run a cada tick do pai
+  }, [activity.assets?.large_image, activity.application_id, discordUserId, activity]);
+
+  const handleImageError = () => {
+    if (loadedImageUrl) return;
+    setCurrentUrlIndex((prev) => {
+      if (prev < imageUrls.length - 1) return prev + 1;
+      setShowFallback(true);
+      setImageError(true);
+      setIsLoading(false);
+      return prev;
+    });
+    setImageError(false);
+  };
+
+  const handleImageLoad = () => {
+    if (imageUrls[currentUrlIndex]) setLoadedImageUrl(imageUrls[currentUrlIndex]);
+    setIsLoading(false);
+    setImageError(false);
+  };
+
+  if (showFallback || imageUrls.length === 0) {
+    const activityIcon = getActivityIcon(activity);
+    if (!activityIcon) return null;
+    return (
+      <div className="w-20 h-20 bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
+        <div className="text-gray-200">{activityIcon}</div>
+      </div>
+    );
+  }
+
+  const imageUrlToUse =
+    loadedImageUrl && loadedImageUrl === imageUrls[currentUrlIndex] ? loadedImageUrl : imageUrls[currentUrlIndex];
+  if (!imageUrlToUse) {
+    const activityIcon = getActivityIcon(activity);
+    if (!activityIcon) return null;
+    return (
+      <div className="w-20 h-20 bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
+        <div className="text-gray-200">{activityIcon}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative w-20 h-20">
+      {isLoading && !loadedImageUrl && (
+        <div className="absolute inset-0 bg-gray-700 rounded-lg animate-pulse z-10" />
+      )}
+      <Image
+        key={imageUrlToUse}
+        src={imageUrlToUse}
+        alt={activity.name || activity.details || "Activity"}
+        fill
+        className={`rounded-lg object-cover flex-shrink-0 ${isLoading && !loadedImageUrl ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}
+        loading="lazy"
+        unoptimized
+        sizes="80px"
+        onError={handleImageError}
+        onLoad={handleImageLoad}
+        referrerPolicy="no-referrer"
+      />
+    </div>
+  );
 }
 
 interface DiscordData {
@@ -255,9 +354,6 @@ export default function DiscordProfile() {
     if (!largeImage && applicationId) {
       // Tentar formatos conhecidos do Discord (podem n�o funcionar sem o hash correto)
       urls.push(
-        `https://cdn.discordapp.com/app-icons/${applicationId}/${applicationId}.png`,
-        `https://cdn.discordapp.com/app-icons/${applicationId}/${applicationId}.png?size=512`,
-        `https://cdn.discordapp.com/app-icons/${applicationId}/${applicationId}.png?size=1024`,
         `https://cdn.discordapp.com/app-icons/${applicationId}/icon.png`,
         `https://cdn.discordapp.com/app-icons/${applicationId}/icon.png?size=512`,
         `https://cdn.discordapp.com/app-icons/${applicationId}/icon.png?size=1024`,
@@ -1549,143 +1645,21 @@ export default function DiscordProfile() {
                     );
                   };
 
-                  // Componente para exibir a imagem da atividade
-                  const ActivityImage = () => {
-                    const [imageUrls, setImageUrls] = useState<string[]>([]);
-                    const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
-                    const [showFallback, setShowFallback] = useState(false);
-                    const [imageError, setImageError] = useState(false);
-                    const [isLoading, setIsLoading] = useState(true);
-                    const [loadedImageUrl, setLoadedImageUrl] = useState<string | null>(null);
-                    const prevImageKeyRef = useRef<string>('');
-
-                    useEffect(() => {
-                      const urls = getActivityImageUrls(activity);
-                      const discordUserId = discordData?.discord_user?.id;
-                      // Filtrar URLs inv�lidas que cont�m "mp:" no meio (n�o devem estar no Discord CDN)
-                      const validUrls = urls.filter(url => {
-                        // Se a URL cont�m "mp:external" e tamb�m cont�m "discordapp.com", � inv�lida
-                        if (url.includes('mp:external') && url.includes('discordapp.com')) return false;
-                        if (discordUserId && (url.includes(`/${discordUserId}/`) || url.includes(`/${discordUserId}.`))) return false;
-                        return true;
-                      });
-                      
-                      const currentImageKey = `${activity.assets?.large_image || 'no-image'}-${activity.application_id || 'no-app-id'}`;
-                      
-                      // S� resetar se a imagem realmente mudou
-                      if (prevImageKeyRef.current !== currentImageKey) {
-                        setImageUrls(validUrls);
-                        setCurrentUrlIndex(0);
-                        setShowFallback(false);
-                        setImageError(false);
-                        setIsLoading(true);
-                        setLoadedImageUrl(null);
-                        prevImageKeyRef.current = currentImageKey;
-                      }
-                      // eslint-disable-next-line react-hooks/exhaustive-deps
-                    }, [activity.assets?.large_image, activity.application_id, discordData?.discord_user?.id]);
-
-                    const handleImageError = () => {
-                      // Se j� temos uma imagem carregada, n�o tentar outras URLs para evitar piscar
-                      if (loadedImageUrl) {
-                        return;
-                      }
-
-                      // Tentar pr�xima URL imediatamente
-                      setCurrentUrlIndex((prev) => {
-                        if (prev < imageUrls.length - 1) {
-                          return prev + 1;
-                        } else {
-                          setShowFallback(true);
-                          setImageError(true);
-                          setIsLoading(false);
-                          return prev;
-                        }
-                      });
-                      setImageError(false);
-                    };
-
-                    const handleImageLoad = () => {
-                      // Salvar URL da imagem carregada com sucesso
-                      if (imageUrls[currentUrlIndex]) {
-                        setLoadedImageUrl(imageUrls[currentUrlIndex]);
-                      }
-                      
-                      // Atualizar estado imediatamente
-                      setIsLoading(false);
-                      setImageError(false);
-                    };
-
-                    // Se todas as URLs falharam ou n�o h� URLs, mostrar fallback com �cone apropriado
-                    if (showFallback || imageUrls.length === 0) {
-                      const activityIcon = getActivityIcon(activity);
-                      // Se n�o h� �cone (ex: watching), n�o mostrar fallback
-                      if (!activityIcon) {
-                        return null;
-                      }
-                      return (
-                        <div className="w-20 h-20 bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <div className="text-gray-200">
-                            {activityIcon}
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    // Se j� temos uma imagem carregada e a URL atual � diferente, usar a carregada
-                    const imageUrlToUse = loadedImageUrl && loadedImageUrl === imageUrls[currentUrlIndex] 
-                      ? loadedImageUrl 
-                      : imageUrls[currentUrlIndex];
-
-                    // Se n�o h� URL v�lida, mostrar fallback
-                    if (!imageUrlToUse) {
-                      const activityIcon = getActivityIcon(activity);
-                      // Se n�o h� �cone (ex: watching), n�o mostrar fallback
-                      if (!activityIcon) {
-                        return null;
-                      }
-                      return (
-                        <div className="w-20 h-20 bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <div className="text-gray-200">
-                            {activityIcon}
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <div className="relative w-20 h-20">
-                        {isLoading && !loadedImageUrl && (
-                          <div className="absolute inset-0 bg-gray-700 rounded-lg animate-pulse z-10" />
-                        )}
-                        <Image
-                          key={imageUrlToUse} // Key para for�ar re-render quando URL muda
-                          src={imageUrlToUse}
-                          alt={activity.name || activity.details || 'Activity'}
-                          fill
-                          className={`rounded-lg object-cover flex-shrink-0 ${isLoading && !loadedImageUrl ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
-                          loading="lazy"
-                          unoptimized
-                          sizes="80px"
-                          onError={handleImageError}
-                          onLoad={handleImageLoad}
-                          referrerPolicy="no-referrer"
-                        />
-                      </div>
-                    );
-                  };
-
                   return (
                     <motion.div
-                      key={index}
+                      key={`${activity.name}-${activity.application_id ?? ""}-${activity.timestamps?.start ?? 0}`}
                       initial={{ opacity: 0, x: -20 }}
                       animate={inView ? { opacity: 1, x: 0 } : {}}
                       transition={{ duration: 0.3 }}
                       className="p-4 bg-gray-700/30 rounded-lg border border-gray-600/50"
                     >
                       <div className="flex items-start gap-4">
-                        {/* Imagem grande da atividade */}
-                        <ActivityImage />
+                        <ActivityImageBlock
+                          activity={activity}
+                          getActivityImageUrls={getActivityImageUrls}
+                          getActivityIcon={getActivityIcon}
+                          discordUserId={discordData?.discord_user?.id}
+                        />
                         
                         {/* Conte�do da atividade */}
                         <div className="flex-1 min-w-0">
@@ -1734,7 +1708,8 @@ export default function DiscordProfile() {
                         <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg border border-gray-600/50 bg-gray-700/50">
                           {(() => {
                             const uid = discordData?.discord_user?.id;
-                            const safeUrl = item.imageUrl && (!uid || (!item.imageUrl.includes(`/${uid}/`) && !item.imageUrl.includes(`/${uid}.`))) ? item.imageUrl : null;
+                            const badPattern = /cdn\.discordapp\.com\/app-icons\/(\d+)\/\1\.png/;
+                            const safeUrl = item.imageUrl && !badPattern.test(item.imageUrl) && (!uid || (!item.imageUrl.includes(`/${uid}/`) && !item.imageUrl.includes(`/${uid}.`))) ? item.imageUrl : null;
                             return safeUrl ? (
                             <Image
                               src={safeUrl}
@@ -1787,7 +1762,8 @@ export default function DiscordProfile() {
                     <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg border border-gray-600/50 bg-gray-700/50">
                       {(() => {
                         const uid = discordData?.discord_user?.id;
-                        const safeUrl = item.imageUrl && (!uid || (!item.imageUrl.includes(`/${uid}/`) && !item.imageUrl.includes(`/${uid}.`))) ? item.imageUrl : null;
+                        const badPattern = /cdn\.discordapp\.com\/app-icons\/(\d+)\/\1\.png/;
+                        const safeUrl = item.imageUrl && !badPattern.test(item.imageUrl) && (!uid || (!item.imageUrl.includes(`/${uid}/`) && !item.imageUrl.includes(`/${uid}.`))) ? item.imageUrl : null;
                         return safeUrl ? (
                         <Image
                           src={safeUrl}
