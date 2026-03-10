@@ -1053,11 +1053,13 @@ export default function DiscordProfile() {
           imageUrl,
         };
       });
-      setLastPlayedActivities((prevList) =>
-        [...newEntries, ...prevList]
+      setLastPlayedActivities((prevList) => {
+        const namesToReplace = new Set(newEntries.map((e) => `${e.name}-${e.type}`));
+        const dedupedPrev = prevList.filter((a) => !namesToReplace.has(`${a.name}-${a.type}`));
+        return [...newEntries, ...dedupedPrev]
           .filter((a) => now - a.endTimestamp <= LAST_PLAYED_MAX_AGE_MS)
-          .slice(0, LAST_PLAYED_MAX_ITEMS)
-      );
+          .slice(0, LAST_PLAYED_MAX_ITEMS);
+      });
     }
     prevActivitiesRef.current = filtered;
   }, [activitiesSignature, activitiesForLastPlayed, discordData?.discord_user?.id]);
@@ -1068,11 +1070,18 @@ export default function DiscordProfile() {
     if (stored.length > 0) setLastPlayedActivities(stored);
   }, []);
 
-  // Lista visível: só jogos dos últimos 7 dias (como no Discord)
+  // Lista visível: só jogos dos últimos 7 dias, sem duplicatas (mantém a mais recente por nome+tipo)
   const visibleLastPlayedActivities = useMemo(() => {
     const now = Date.now();
+    const seen = new Set<string>();
     return lastPlayedActivities
       .filter((a) => now - a.endTimestamp <= LAST_PLAYED_MAX_AGE_MS)
+      .filter((a) => {
+        const k = `${a.name}-${a.type}`;
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      })
       .slice(0, LAST_PLAYED_MAX_ITEMS);
   }, [lastPlayedActivities]);
 
