@@ -84,7 +84,7 @@ function DiscordServers() {
       {
         name: "VoiD",
         invite: "https://discord.gg/AESBEcNSrV",
-        icon: "/server-icons/voiD.png",
+        icon: "/server-icons/VoiD.jpg",
         description: t("discord_servers_friends_desc"),
         verified: false,
       },
