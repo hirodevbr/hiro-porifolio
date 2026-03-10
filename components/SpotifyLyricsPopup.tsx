@@ -32,6 +32,23 @@ function safeKey(s: string) {
   return s.trim().toLowerCase();
 }
 
+const SPOTIFY_LAST_PLAYED_KEY = "spotify_last_played";
+
+function loadLastPlayedFromStorage(): LanyardSpotify | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(SPOTIFY_LAST_PLAYED_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as LanyardSpotify;
+    if (parsed?.track_id != null && parsed?.song != null && parsed?.artist != null && parsed?.timestamps?.start != null) {
+      return parsed;
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
 export default function SpotifyLyricsPopup() {
   const { language } = useLanguage();
   const { data } = useLanyardUser(DISCORD_USER_ID);
@@ -61,7 +78,7 @@ export default function SpotifyLyricsPopup() {
   const programmaticScrollRef = useRef(false);
   const prevTrackKeyRef = useRef<string>("");
   const prevSpotifyRef = useRef<LanyardSpotify | null>(null);
-  const [lastPlayed, setLastPlayed] = useState<LanyardSpotify | null>(null);
+  const [lastPlayed, setLastPlayed] = useState<LanyardSpotify | null>(loadLastPlayedFromStorage);
   const animationFrameRef = useRef<number | null>(null);
   const syncOffsetRef = useRef<number>(0); // Offset de sincronização inicial
   const hasSyncedInitialRef = useRef<boolean>(false); // Flag para sincronização inicial
@@ -278,12 +295,17 @@ export default function SpotifyLyricsPopup() {
     }
   }, [spotify]);
 
-  // Ao voltar a ouvir a mesma faixa (ex.: pausou e deu play), limpar lastPlayed para nao mostrar como ultima tocada
+  // Persistir última música no localStorage para sobreviver ao F5
   useEffect(() => {
-    if (spotify && lastPlayed && spotify.track_id && spotify.track_id === lastPlayed.track_id) {
-      setLastPlayed(null);
+    if (typeof window === "undefined") return;
+    if (lastPlayed) {
+      try {
+        localStorage.setItem(SPOTIFY_LAST_PLAYED_KEY, JSON.stringify(lastPlayed));
+      } catch {
+        // ignore
+      }
     }
-  }, [spotify, lastPlayed]);
+  }, [lastPlayed]);
 
   // Detecta mobile
   useEffect(() => {

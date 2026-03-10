@@ -61,6 +61,27 @@ interface LastPlayedActivity {
   imageUrl: string | null;
 }
 
+const DISCORD_LAST_PLAYED_ACTIVITIES_KEY = "discord_last_played_activities";
+
+function loadLastPlayedActivitiesFromStorage(): LastPlayedActivity[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(DISCORD_LAST_PLAYED_ACTIVITIES_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (a: unknown): a is LastPlayedActivity =>
+        a != null &&
+        typeof (a as LastPlayedActivity).name === "string" &&
+        typeof (a as LastPlayedActivity).type === "number" &&
+        typeof (a as LastPlayedActivity).startTimestamp === "number"
+    ).slice(0, 10);
+  } catch {
+    return [];
+  }
+}
+
 /** Usado no effect de lastPlayed (antes do early return) para nao depender de getActivityImageUrls. */
 function getFirstActivityImageUrl(activity: DiscordActivity): string | null {
   const largeImage = activity.assets?.large_image;
@@ -127,7 +148,7 @@ export default function DiscordProfile() {
   // Estado para controlar se já animou (evita piscar em re-renders)
   const [hasAnimated, setHasAnimated] = useState(false);
   // Últimas atividades que pararam (jogando/ouvindo/assistindo) para exibir tempo jogado e quando parou
-  const [lastPlayedActivities, setLastPlayedActivities] = useState<LastPlayedActivity[]>([]);
+  const [lastPlayedActivities, setLastPlayedActivities] = useState<LastPlayedActivity[]>(loadLastPlayedActivitiesFromStorage);
   const prevActivitiesRef = useRef<DiscordActivity[]>([]);
   
   useEffect(() => {
@@ -919,6 +940,18 @@ export default function DiscordProfile() {
     }
     prevActivitiesRef.current = filtered;
   }, [activitiesSignature, activitiesForLastPlayed]);
+
+  // Persistir últimas atividades no localStorage para sobreviver ao F5
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (lastPlayedActivities.length > 0) {
+      try {
+        localStorage.setItem(DISCORD_LAST_PLAYED_ACTIVITIES_KEY, JSON.stringify(lastPlayedActivities));
+      } catch {
+        // ignore
+      }
+    }
+  }, [lastPlayedActivities]);
 
   if (loading) {
     return (
