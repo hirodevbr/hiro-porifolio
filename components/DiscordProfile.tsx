@@ -91,16 +91,17 @@ function loadLastPlayedActivitiesFromStorage(): LastPlayedActivity[] {
   }
 }
 
-/** Usado no effect de lastPlayed (antes do early return) para nao depender de getActivityImageUrls. */
-function getFirstActivityImageUrl(activity: DiscordActivity): string | null {
+/** Usado no effect de lastPlayed. Não gera URL quando application_id é o user ID (evita 404). */
+function getFirstActivityImageUrl(activity: DiscordActivity, discordUserId?: string | null): string | null {
   const largeImage = activity.assets?.large_image;
   const applicationId = activity.application_id;
+  if (discordUserId && applicationId === discordUserId) return null;
   if (!largeImage && applicationId) {
     return `https://cdn.discordapp.com/app-icons/${applicationId}/${applicationId}.png`;
   }
   if (!largeImage) return null;
   if (applicationId && !largeImage.startsWith("mp:")) {
-    return `https://cdn.discordapp.com/app-assets/${applicationId}/${largeImage}.png`;
+    return `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.png?size=160&keep_aspect_ratio=false`;
   }
   return null;
 }
@@ -244,6 +245,8 @@ export default function DiscordProfile() {
     
     const largeImage = activity.assets?.large_image;
     const applicationId = activity.application_id;
+    const discordUserId = discordData?.discord_user?.id;
+    if (applicationId && discordUserId && applicationId === discordUserId) return urls;
 
     // CASO ESPECIAL: Se n�o tem large_image mas tem application_id (ex: Valorant)
     // Para jogos como Valorant que n�o enviam large_image, tentar buscar o �cone do app
@@ -328,6 +331,7 @@ export default function DiscordProfile() {
     if (applicationId && largeImage && !largeImage.startsWith("mp:")) {
       // PRIORIDADE M�XIMA: app-icons primeiro (usado por Valorant e outros jogos para o �cone do app)
       urls.push(
+        `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.png?size=160&keep_aspect_ratio=false`,
         `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.png`,
         `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.png?size=512`,
         `https://cdn.discordapp.com/app-icons/${applicationId}/${largeImage}.png?size=1024`,
@@ -941,8 +945,7 @@ export default function DiscordProfile() {
       const newEntries: LastPlayedActivity[] = ended.map((a) => {
         const start = a.timestamps?.start ?? now;
         const durationSeconds = Math.floor((now - start) / 1000);
-        let imageUrl = getFirstActivityImageUrl(a);
-        if (discordUserId && imageUrl && (imageUrl.includes(`/${discordUserId}/`) || imageUrl.includes(`/${discordUserId}.`))) imageUrl = null;
+        const imageUrl = getFirstActivityImageUrl(a, discordUserId);
         return {
           name: a.name,
           type: a.type,
@@ -1729,9 +1732,12 @@ export default function DiscordProfile() {
                         className="p-3 bg-gray-700/20 rounded-lg border border-gray-600/40 flex items-center gap-3"
                       >
                         <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg border border-gray-600/50 bg-gray-700/50">
-                          {item.imageUrl ? (
+                          {(() => {
+                            const uid = discordData?.discord_user?.id;
+                            const safeUrl = item.imageUrl && (!uid || (!item.imageUrl.includes(`/${uid}/`) && !item.imageUrl.includes(`/${uid}.`))) ? item.imageUrl : null;
+                            return safeUrl ? (
                             <Image
-                              src={item.imageUrl}
+                              src={safeUrl}
                               alt={item.name}
                               fill
                               className="object-cover"
@@ -1743,7 +1749,8 @@ export default function DiscordProfile() {
                             <div className="flex h-full w-full items-center justify-center text-gray-400">
                               <Gamepad2 className="h-6 w-6" />
                             </div>
-                          )}
+                          );
+                          })()}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-white font-semibold truncate">{item.name}</p>
@@ -1778,9 +1785,12 @@ export default function DiscordProfile() {
                     className="p-3 bg-gray-700/20 rounded-lg border border-gray-600/40 flex items-center gap-3"
                   >
                     <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg border border-gray-600/50 bg-gray-700/50">
-                      {item.imageUrl ? (
+                      {(() => {
+                        const uid = discordData?.discord_user?.id;
+                        const safeUrl = item.imageUrl && (!uid || (!item.imageUrl.includes(`/${uid}/`) && !item.imageUrl.includes(`/${uid}.`))) ? item.imageUrl : null;
+                        return safeUrl ? (
                         <Image
-                          src={item.imageUrl}
+                          src={safeUrl}
                           alt={item.name}
                           fill
                           className="object-cover"
@@ -1792,7 +1802,8 @@ export default function DiscordProfile() {
                         <div className="flex h-full w-full items-center justify-center text-gray-400">
                           <Gamepad2 className="h-6 w-6" />
                         </div>
-                      )}
+                      );
+                      })()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-white font-semibold truncate">{item.name}</p>
