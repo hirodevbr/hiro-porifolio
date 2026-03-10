@@ -1664,10 +1664,8 @@ export default function DiscordProfile() {
                     const now = Date.now();
                     const totalMs = Math.max(0, end - start);
                     const elapsedMs = Math.max(0, Math.min(now - start, totalMs));
-                    const remainingMs = Math.max(0, end - now);
                     const totalSec = Math.floor(totalMs / 1000);
                     const elapsedSec = Math.floor(elapsedMs / 1000);
-                    const remainingSec = Math.floor(remainingMs / 1000);
                     const progress = totalMs > 0 ? (elapsedMs / totalMs) * 100 : 0;
                     return (
                       <div className="mt-2 space-y-1.5">
@@ -1681,9 +1679,6 @@ export default function DiscordProfile() {
                             style={{ width: `${progress}%` }}
                           />
                         </div>
-                        <p className="text-xs text-gray-500">
-                          {t("discord_time_left")} {formatMusicTime(remainingSec)}
-                        </p>
                       </div>
                     );
                   };
