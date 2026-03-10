@@ -62,6 +62,10 @@ interface LastPlayedActivity {
 }
 
 const DISCORD_LAST_PLAYED_ACTIVITIES_KEY = "discord_last_played_activities";
+/** Idade máxima para mostrar jogos na lista (igual ao Discord: ~1 semana). */
+const LAST_PLAYED_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+/** Quantidade máxima de jogos na lista (estilo Discord). */
+const LAST_PLAYED_MAX_ITEMS = 20;
 
 function loadLastPlayedActivitiesFromStorage(): LastPlayedActivity[] {
   if (typeof window === "undefined") return [];
@@ -70,13 +74,18 @@ function loadLastPlayedActivitiesFromStorage(): LastPlayedActivity[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (a: unknown): a is LastPlayedActivity =>
-        a != null &&
-        typeof (a as LastPlayedActivity).name === "string" &&
-        typeof (a as LastPlayedActivity).type === "number" &&
-        typeof (a as LastPlayedActivity).startTimestamp === "number"
-    ).slice(0, 10);
+    const now = Date.now();
+    return parsed
+      .filter(
+        (a: unknown): a is LastPlayedActivity =>
+          a != null &&
+          typeof (a as LastPlayedActivity).name === "string" &&
+          typeof (a as LastPlayedActivity).type === "number" &&
+          typeof (a as LastPlayedActivity).startTimestamp === "number" &&
+          typeof (a as LastPlayedActivity).endTimestamp === "number"
+      )
+      .filter((a) => now - (a as LastPlayedActivity).endTimestamp <= LAST_PLAYED_MAX_AGE_MS)
+      .slice(0, LAST_PLAYED_MAX_ITEMS);
   } catch {
     return [];
   }
@@ -477,20 +486,20 @@ export default function DiscordProfile() {
     return `${seconds}s`;
   };
 
+  // Formato estilo Discord: "52s", "5m", "3h", "3d", "2w"
   const formatStoppedAgo = (endTimestamp: number): string => {
     const now = Date.now();
     const elapsedMs = now - endTimestamp;
     const elapsedSeconds = Math.floor(elapsedMs / 1000);
-    const hours = Math.floor(elapsedSeconds / 3600);
-    const minutes = Math.floor((elapsedSeconds % 3600) / 60);
-    const seconds = elapsedSeconds % 60;
-    if (hours > 0) {
-      return `${hours}h ${minutes}min ${seconds}s`;
-    }
-    if (minutes > 0) {
-      return `${minutes}min ${seconds}s`;
-    }
-    return `${seconds}s`;
+    if (elapsedSeconds < 60) return `${elapsedSeconds}s`;
+    const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+    if (elapsedMinutes < 60) return `${elapsedMinutes}m`;
+    const elapsedHours = Math.floor(elapsedSeconds / 3600);
+    if (elapsedHours < 24) return `${elapsedHours}h`;
+    const elapsedDays = Math.floor(elapsedSeconds / 86400);
+    if (elapsedDays < 7) return `${elapsedDays}d`;
+    const elapsedWeeks = Math.floor(elapsedDays / 7);
+    return `${elapsedWeeks}w`;
   };
 
   const formatMusicTime = (seconds: number): string => {
@@ -936,7 +945,11 @@ export default function DiscordProfile() {
           imageUrl: getFirstActivityImageUrl(a),
         };
       });
-      setLastPlayedActivities((prevList) => [...newEntries, ...prevList].slice(0, 10));
+      setLastPlayedActivities((prevList) =>
+        [...newEntries, ...prevList]
+          .filter((a) => now - a.endTimestamp <= LAST_PLAYED_MAX_AGE_MS)
+          .slice(0, LAST_PLAYED_MAX_ITEMS)
+      );
     }
     prevActivitiesRef.current = filtered;
   }, [activitiesSignature, activitiesForLastPlayed]);
@@ -947,17 +960,25 @@ export default function DiscordProfile() {
     if (stored.length > 0) setLastPlayedActivities(stored);
   }, []);
 
-  // Persistir últimas atividades no localStorage para sobreviver ao F5
+  // Lista visível: só jogos dos últimos 7 dias (como no Discord)
+  const visibleLastPlayedActivities = useMemo(() => {
+    const now = Date.now();
+    return lastPlayedActivities
+      .filter((a) => now - a.endTimestamp <= LAST_PLAYED_MAX_AGE_MS)
+      .slice(0, LAST_PLAYED_MAX_ITEMS);
+  }, [lastPlayedActivities]);
+
+  // Persistir últimas atividades no localStorage (apenas as ainda válidas por idade)
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (lastPlayedActivities.length > 0) {
+    if (visibleLastPlayedActivities.length > 0) {
       try {
-        localStorage.setItem(DISCORD_LAST_PLAYED_ACTIVITIES_KEY, JSON.stringify(lastPlayedActivities));
+        localStorage.setItem(DISCORD_LAST_PLAYED_ACTIVITIES_KEY, JSON.stringify(visibleLastPlayedActivities));
       } catch {
         // ignore
       }
     }
-  }, [lastPlayedActivities]);
+  }, [visibleLastPlayedActivities]);
 
   if (loading) {
     return (
@@ -1683,14 +1704,14 @@ export default function DiscordProfile() {
                   );
                 })}
 
-              {lastPlayedActivities.length > 0 && (
+              {visibleLastPlayedActivities.length > 0 && (
                 <>
                   <h4 className="text-lg font-semibold text-white flex items-center gap-2 mt-6">
                     <Clock className="w-5 h-5 text-gray-200" aria-hidden="true" />
                     {t("discord_last_played_activities")}
                   </h4>
                   <div className="space-y-3">
-                    {lastPlayedActivities.map((item, index) => (
+                    {visibleLastPlayedActivities.map((item, index) => (
                       <motion.div
                         key={`${item.name}-${item.endTimestamp}-${index}`}
                         initial={{ opacity: 0, x: -20 }}
@@ -1718,7 +1739,9 @@ export default function DiscordProfile() {
                         <div className="flex-1 min-w-0">
                           <p className="text-white font-semibold truncate">{item.name}</p>
                           <p className="text-xs text-gray-400 mt-0.5">
-                            {t("discord_stopped_ago")} {formatStoppedAgo(item.endTimestamp)}
+                            {language === "en_US"
+                              ? `${t("discord_stopped_ago")} ${formatStoppedAgo(item.endTimestamp)} ${t("discord_ago")}`
+                              : `${t("discord_stopped_ago")} ${formatStoppedAgo(item.endTimestamp)}`}
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5">
                             {t("discord_played_for")}: {formatDuration(item.durationSeconds)}
@@ -1730,14 +1753,14 @@ export default function DiscordProfile() {
                 </>
               )}
             </div>
-          ) : lastPlayedActivities.length > 0 ? (
+          ) : visibleLastPlayedActivities.length > 0 ? (
             <div className="space-y-4 px-6 pb-6">
               <h4 className="text-lg font-semibold text-white flex items-center gap-2">
                 <Clock className="w-5 h-5 text-gray-200" aria-hidden="true" />
                 {t("discord_last_played_activities")}
               </h4>
               <div className="space-y-3">
-                {lastPlayedActivities.map((item, index) => (
+                {visibleLastPlayedActivities.map((item, index) => (
                   <motion.div
                     key={`${item.name}-${item.endTimestamp}-${index}`}
                     initial={{ opacity: 0, x: -20 }}
@@ -1765,7 +1788,9 @@ export default function DiscordProfile() {
                     <div className="flex-1 min-w-0">
                       <p className="text-white font-semibold truncate">{item.name}</p>
                       <p className="text-xs text-gray-400 mt-0.5">
-                        {t("discord_stopped_ago")} {formatStoppedAgo(item.endTimestamp)}
+                        {language === "en_US"
+                              ? `${t("discord_stopped_ago")} ${formatStoppedAgo(item.endTimestamp)} ${t("discord_ago")}`
+                              : `${t("discord_stopped_ago")} ${formatStoppedAgo(item.endTimestamp)}`}
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5">
                         {t("discord_played_for")}: {formatDuration(item.durationSeconds)}
