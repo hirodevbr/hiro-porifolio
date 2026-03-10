@@ -159,7 +159,13 @@ export default function DiscordProfile() {
   // Últimas atividades que pararam (jogando/ouvindo/assistindo) para exibir tempo jogado e quando parou
   const [lastPlayedActivities, setLastPlayedActivities] = useState<LastPlayedActivity[]>([]);
   const prevActivitiesRef = useRef<DiscordActivity[]>([]);
-  
+  // Atualiza a cada segundo para o "Stopped X Ago" andar sem precisar recarregar a página
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     if (inView && !hasAnimated) {
       setHasAnimated(true);
@@ -931,9 +937,12 @@ export default function DiscordProfile() {
     const ended = prev.filter((a) => !currentKeys.has(key(a)));
     if (ended.length > 0) {
       const now = Date.now();
+      const discordUserId = discordData?.discord_user?.id;
       const newEntries: LastPlayedActivity[] = ended.map((a) => {
         const start = a.timestamps?.start ?? now;
         const durationSeconds = Math.floor((now - start) / 1000);
+        let imageUrl = getFirstActivityImageUrl(a);
+        if (discordUserId && imageUrl && (imageUrl.includes(`/${discordUserId}/`) || imageUrl.includes(`/${discordUserId}.`))) imageUrl = null;
         return {
           name: a.name,
           type: a.type,
@@ -942,7 +951,7 @@ export default function DiscordProfile() {
           startTimestamp: start,
           endTimestamp: now,
           durationSeconds,
-          imageUrl: getFirstActivityImageUrl(a),
+          imageUrl,
         };
       });
       setLastPlayedActivities((prevList) =>
@@ -952,7 +961,7 @@ export default function DiscordProfile() {
       );
     }
     prevActivitiesRef.current = filtered;
-  }, [activitiesSignature, activitiesForLastPlayed]);
+  }, [activitiesSignature, activitiesForLastPlayed, discordData?.discord_user?.id]);
 
   // Carregar últimas atividades do localStorage após hidratação (evita React #418)
   useEffect(() => {
@@ -1549,12 +1558,12 @@ export default function DiscordProfile() {
 
                     useEffect(() => {
                       const urls = getActivityImageUrls(activity);
+                      const discordUserId = discordData?.discord_user?.id;
                       // Filtrar URLs inv�lidas que cont�m "mp:" no meio (n�o devem estar no Discord CDN)
                       const validUrls = urls.filter(url => {
                         // Se a URL cont�m "mp:external" e tamb�m cont�m "discordapp.com", � inv�lida
-                        if (url.includes('mp:external') && url.includes('discordapp.com')) {
-                          return false;
-                        }
+                        if (url.includes('mp:external') && url.includes('discordapp.com')) return false;
+                        if (discordUserId && (url.includes(`/${discordUserId}/`) || url.includes(`/${discordUserId}.`))) return false;
                         return true;
                       });
                       
@@ -1571,7 +1580,7 @@ export default function DiscordProfile() {
                         prevImageKeyRef.current = currentImageKey;
                       }
                       // eslint-disable-next-line react-hooks/exhaustive-deps
-                    }, [activity.assets?.large_image, activity.application_id]);
+                    }, [activity.assets?.large_image, activity.application_id, discordData?.discord_user?.id]);
 
                     const handleImageError = () => {
                       // Se j� temos uma imagem carregada, n�o tentar outras URLs para evitar piscar
