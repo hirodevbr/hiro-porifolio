@@ -148,7 +148,7 @@ export default function DiscordProfile() {
   // Estado para controlar se já animou (evita piscar em re-renders)
   const [hasAnimated, setHasAnimated] = useState(false);
   // Últimas atividades que pararam (jogando/ouvindo/assistindo) para exibir tempo jogado e quando parou
-  const [lastPlayedActivities, setLastPlayedActivities] = useState<LastPlayedActivity[]>(loadLastPlayedActivitiesFromStorage);
+  const [lastPlayedActivities, setLastPlayedActivities] = useState<LastPlayedActivity[]>([]);
   const prevActivitiesRef = useRef<DiscordActivity[]>([]);
   
   useEffect(() => {
@@ -940,6 +940,12 @@ export default function DiscordProfile() {
     }
     prevActivitiesRef.current = filtered;
   }, [activitiesSignature, activitiesForLastPlayed]);
+
+  // Carregar últimas atividades do localStorage após hidratação (evita React #418)
+  useEffect(() => {
+    const stored = loadLastPlayedActivitiesFromStorage();
+    if (stored.length > 0) setLastPlayedActivities(stored);
+  }, []);
 
   // Persistir últimas atividades no localStorage para sobreviver ao F5
   useEffect(() => {

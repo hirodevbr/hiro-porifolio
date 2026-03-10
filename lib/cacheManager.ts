@@ -14,10 +14,11 @@ export function clearOldCaches() {
 
   try {
     const keysToKeep = [
-      // Manter preferências do usuário
+      // Preferências do usuário
       "language_preference",
-      // Não limpar cache de letras (pode ser útil)
-      // "spotifyLyricsCache:v1",
+      // Última música e últimas atividades (persistência ao F5)
+      "spotify_last_played",
+      "discord_last_played_activities",
     ];
 
     const keysToRemove: string[] = [];

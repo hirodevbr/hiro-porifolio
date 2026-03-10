@@ -78,7 +78,7 @@ export default function SpotifyLyricsPopup() {
   const programmaticScrollRef = useRef(false);
   const prevTrackKeyRef = useRef<string>("");
   const prevSpotifyRef = useRef<LanyardSpotify | null>(null);
-  const [lastPlayed, setLastPlayed] = useState<LanyardSpotify | null>(loadLastPlayedFromStorage);
+  const [lastPlayed, setLastPlayed] = useState<LanyardSpotify | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const syncOffsetRef = useRef<number>(0); // Offset de sincronização inicial
   const hasSyncedInitialRef = useRef<boolean>(false); // Flag para sincronização inicial
@@ -294,6 +294,12 @@ export default function SpotifyLyricsPopup() {
       setIsFullscreen(false);
     }
   }, [spotify]);
+
+  // Carregar última música do localStorage após hidratação (evita React #418)
+  useEffect(() => {
+    const stored = loadLastPlayedFromStorage();
+    if (stored) setLastPlayed(stored);
+  }, []);
 
   // Persistir última música no localStorage para sobreviver ao F5
   useEffect(() => {
