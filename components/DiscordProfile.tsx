@@ -1636,26 +1636,54 @@ export default function DiscordProfile() {
                 {t("discord_activities")}
               </h4>
               {filteredActivitiesForDisplay.map((activity, index) => {
-                  // Componente para timer em tempo real
+                  const hasVideoEnd = activity.timestamps?.start != null && activity.timestamps?.end != null;
+
                   const ActivityTimer = ({ startTimestamp }: { startTimestamp: number }) => {
                     const [elapsedTime, setElapsedTime] = useState(formatElapsedTime(startTimestamp));
-
                     useEffect(() => {
-                      // Atualizar imediatamente
                       setElapsedTime(formatElapsedTime(startTimestamp));
-                      
-                      // Atualizar a cada segundo
-                      const interval = setInterval(() => {
-                        setElapsedTime(formatElapsedTime(startTimestamp));
-                      }, 1000);
-
+                      const interval = setInterval(() => setElapsedTime(formatElapsedTime(startTimestamp)), 1000);
                       return () => clearInterval(interval);
                     }, [startTimestamp]);
-
                     return (
                       <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
                         <Clock className="w-3 h-3" aria-hidden="true" />
                         <span>{t("discord_ago")} {elapsedTime}</span>
+                      </div>
+                    );
+                  };
+
+                  const VideoProgress = () => {
+                    const start = activity.timestamps!.start!;
+                    const end = activity.timestamps!.end!;
+                    const [, setTick] = useState(0);
+                    useEffect(() => {
+                      const interval = setInterval(() => setTick((t) => t + 1), 1000);
+                      return () => clearInterval(interval);
+                    }, []);
+                    const now = Date.now();
+                    const totalMs = Math.max(0, end - start);
+                    const elapsedMs = Math.max(0, Math.min(now - start, totalMs));
+                    const remainingMs = Math.max(0, end - now);
+                    const totalSec = Math.floor(totalMs / 1000);
+                    const elapsedSec = Math.floor(elapsedMs / 1000);
+                    const remainingSec = Math.floor(remainingMs / 1000);
+                    const progress = totalMs > 0 ? (elapsedMs / totalMs) * 100 : 0;
+                    return (
+                      <div className="mt-2 space-y-1.5">
+                        <div className="flex items-center justify-between text-xs text-gray-400">
+                          <span>{formatMusicTime(elapsedSec)}</span>
+                          <span>{formatMusicTime(totalSec)}</span>
+                        </div>
+                        <div className="h-1.5 w-full rounded-full bg-gray-600 overflow-hidden">
+                          <div
+                            className="h-full bg-white/70 rounded-full transition-all duration-1000"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          {t("discord_time_left")} {formatMusicTime(remainingSec)}
+                        </p>
                       </div>
                     );
                   };
@@ -1696,7 +1724,8 @@ export default function DiscordProfile() {
                               {activity.state}
                             </p>
                           )}
-                          {activity.timestamps?.start && (
+                          {hasVideoEnd && <VideoProgress />}
+                          {!hasVideoEnd && activity.timestamps?.start != null && (
                             <ActivityTimer startTimestamp={activity.timestamps.start} />
                           )}
                         </div>
